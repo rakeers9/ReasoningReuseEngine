@@ -1,0 +1,6 @@
+{
+  "id": "ss_beam_udl_max_deflection",
+  "source": "cache eval corpus seed q068 (engineering)",
+  "question": "A simply supported steel beam spans 6.0 m and carries a uniform load of 12 kN/m. With E = 200 GPa and I = 8.0 × 10⁻⁵ m⁴, what is the maximum deflection?",
+  "golden_label": "12.66 mm"
+}

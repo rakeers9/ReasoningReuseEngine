@@ -1,0 +1,6 @@
+{
+  "id": "upc_intestate_spouse_share",
+  "source": "cache eval corpus seed q237 (law)",
+  "question": "Under the Uniform Probate Code (using its base dollar amounts), a man dies without a will, leaving an estate of $900,000. He is survived by his wife and two children from a prior marriage who are not her children. How much does the wife inherit?",
+  "golden_label": "$525,000.00 (UPC §2-102(4): first $150,000 plus half the balance)"
+}

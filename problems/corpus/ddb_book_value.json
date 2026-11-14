@@ -1,0 +1,6 @@
+{
+  "id": "ddb_book_value",
+  "source": "cache eval corpus seed q279 (accounting)",
+  "question": "Equipment costs $80,000, has a salvage value of $8,000, and a useful life of 6 years. Using double-declining-balance depreciation, what is its book value at the end of year 3?",
+  "golden_label": "$23,703.70"
+}

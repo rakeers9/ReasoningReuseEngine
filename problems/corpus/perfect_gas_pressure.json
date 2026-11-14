@@ -1,0 +1,6 @@
+{
+  "id": "perfect_gas_pressure",
+  "source": "cache eval corpus seed q001 (chemistry)",
+  "question": "Suppose that 10.0 mol C2H6(g) is confined to 4.860 dm3 at 27°C. Predict the pressure exerted by the ethane from the perfect gas equation.",
+  "golden_label": "50.68 atm"
+}

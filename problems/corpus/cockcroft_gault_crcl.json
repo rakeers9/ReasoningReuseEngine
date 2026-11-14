@@ -1,0 +1,6 @@
+{
+  "id": "cockcroft_gault_crcl",
+  "source": "cache eval corpus seed q321 (medicine)",
+  "question": "Using the Cockcroft-Gault equation, estimate the creatinine clearance of a 68-year-old woman who weighs 62 kg and has a serum creatinine of 1.4 mg/dL.",
+  "golden_label": "37.64 mL/min"
+}

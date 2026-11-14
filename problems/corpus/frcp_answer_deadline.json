@@ -1,0 +1,6 @@
+{
+  "id": "frcp_answer_deadline",
+  "source": "cache eval corpus seed q258 (law)",
+  "question": "Under Federal Rule of Civil Procedure 12(a), a defendant who did not waive service is served with the summons and complaint on Friday, March 6, 2026. What is the last day to serve an answer?",
+  "golden_label": "Friday, March 27, 2026"
+}

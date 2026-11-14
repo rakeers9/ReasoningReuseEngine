@@ -1,0 +1,6 @@
+{
+  "id": "loan_payment_total_interest",
+  "source": "cache eval corpus seed q174 (finance)",
+  "question": "A $350,000 mortgage has a 6.25% annual interest rate, compounded monthly, over 30 years. What is the monthly payment, and how much total interest is paid over the life of the loan?",
+  "golden_label": "Payment $2,155.01/month; total interest $425,803.67"
+}

@@ -1,0 +1,196 @@
+{
+  "name": "gas_law",
+  "functions": [
+    {
+      "id": "convert_a_gas_sample_volume_given_in_dm3_b75ba4",
+      "description": "Convert a gas sample volume given in dm3, L, cm3 or m3 into cubic metres.",
+      "inputs": [
+        "the volume of the gas sample with unit (dm3, L, cm3 or m3)"
+      ],
+      "outputs": [
+        "the volume of the gas sample in cubic metres (m3)"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law"
+    },
+    {
+      "id": "convert_a_temperature_given_in_degrees_c_824eb3",
+      "description": "Convert a temperature given in degrees Celsius or kelvin into kelvin.",
+      "inputs": [
+        "the temperature of the gas with unit (\u00b0C or K)"
+      ],
+      "outputs": [
+        "the temperature of the gas in kelvin (K)"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law"
+    },
+    {
+      "id": "provide_the_molar_gas_constant_r_in_si_u_2f5eb8",
+      "description": "Provide the molar gas constant R in SI units of J K-1 mol-1.",
+      "inputs": [],
+      "outputs": [
+        "the molar gas constant R in J K-1 mol-1"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law"
+    },
+    {
+      "id": "compute_the_pressure_in_pascals_of_a_per_2521b7",
+      "description": "Compute the pressure in pascals of a perfect gas from pV = nRT given amount, gas constant, kelvin temperature and volume in cubic metres.",
+      "inputs": [
+        "the amount of substance of the gas n with unit (mol)",
+        "the molar gas constant R in J K-1 mol-1",
+        "the temperature of the gas in kelvin (K)",
+        "the volume of the gas sample in cubic metres (m3)"
+      ],
+      "outputs": [
+        "the perfect gas pressure in pascals (Pa)"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law"
+    },
+    {
+      "id": "convert_a_pressure_in_pascals_into_atmos_e1776c",
+      "description": "Convert a pressure in pascals into atmospheres.",
+      "inputs": [
+        "the perfect gas pressure in pascals (Pa)"
+      ],
+      "outputs": [
+        "the perfect gas pressure in atmospheres (atm)"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law"
+    },
+    {
+      "id": "cross_check_a_perfect_gas_pressure_in_at_2c68ca",
+      "description": "Cross-check a perfect gas pressure in atmospheres by recomputing p = nRT/V with R in L atm K-1 mol-1 and volume in litres, then compare it with the primary result.",
+      "inputs": [
+        "the amount of substance of the gas n with unit (mol)",
+        "the temperature of the gas in kelvin (K)",
+        "the volume of the gas sample with unit (dm3, L, cm3 or m3)",
+        "the perfect gas pressure in atmospheres (atm)"
+      ],
+      "outputs": [
+        "the cross-check pressure in atmospheres (atm)",
+        "agreement of the cross-check with the primary pressure"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law"
+    },
+    {
+      "id": "predict_the_pressure_exerted_by_a_perfec_2b1867",
+      "description": "Predict the pressure exerted by a perfect gas from its amount, identity, volume and temperature.",
+      "inputs": [
+        "the amount of substance of the gas n with unit (mol)",
+        "the chemical identity of the gas as a name or formula with state (gas phase)",
+        "the volume of the gas sample with unit (dm3, L, cm3 or m3)",
+        "the temperature of the gas with unit (\u00b0C or K)"
+      ],
+      "outputs": [
+        "the predicted pressure of the perfect gas in atmospheres (atm)",
+        "the predicted pressure of the perfect gas in pascals (Pa)"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "Suppose that \u25cf1 of \u25cf2 is confined to \u25cf3 at \u25cf4. Predict the pressure exerted by the \u25cf2 from the perfect gas.",
+      "kind": "template",
+      "root_id": "predict_the_pressure_exerted_by_a_perfec_2b1867",
+      "params": [
+        {
+          "description": "the amount of substance of the gas n with unit (mol)",
+          "format_examples": [
+            "10.0 mol",
+            "2.5 mol",
+            "0.750 mol"
+          ],
+          "original_value": "10.0 mol",
+          "validity_range": "Strictly positive real number (n > 0) in moles; a zero or negative amount has no physical pressure, and very large amounts are valid only while the perfect gas approximation holds."
+        },
+        {
+          "description": "the chemical identity of the gas as a name or formula with state (gas phase)",
+          "format_examples": [
+            "C2H6(g)",
+            "N2(g)",
+            "argon gas"
+          ],
+          "original_value": "C2H6(g)",
+          "validity_range": "Any substance that can be treated as a perfect gas at the given conditions; the perfect gas model is most accurate for light, weakly interacting gases far from condensation, and the identity does not otherwise enter the ideal gas calculation."
+        },
+        {
+          "description": "the volume of the gas sample with unit (dm3, L, cm3 or m3)",
+          "format_examples": [
+            "4.860 dm3",
+            "250 cm3",
+            "0.0821 m3"
+          ],
+          "original_value": "4.860 dm3",
+          "validity_range": "Strictly positive volume (V > 0) with a unit convertible to m3 or L; a zero volume would give an unbounded pressure, so the value must be positive and physically meaningful for the sample."
+        },
+        {
+          "description": "the temperature of the gas with unit (\u00b0C or K)",
+          "format_examples": [
+            "27\u00b0C",
+            "298.15 K",
+            "-10 \u00b0C"
+          ],
+          "original_value": "27\u00b0C",
+          "validity_range": "Temperature must be above absolute zero, i.e. greater than -273.15 \u00b0C or greater than 0 K; the result is only physically meaningful for temperatures where the gas remains gaseous and behaves as a perfect gas."
+        }
+      ],
+      "problem_id": "gas_law"
+    },
+    {
+      "text": "Suppose that 10.0 mol C2H6(g) is confined to 4.860 dm3 at 27\u00b0C. Predict the pressure exerted by the ethane from the perfect gas.",
+      "kind": "original",
+      "root_id": "predict_the_pressure_exerted_by_a_perfec_2b1867",
+      "params": [
+        {
+          "description": "the amount of substance of the gas n with unit (mol)",
+          "format_examples": [
+            "10.0 mol",
+            "2.5 mol",
+            "0.750 mol"
+          ],
+          "original_value": "10.0 mol",
+          "validity_range": "Strictly positive real number (n > 0) in moles; a zero or negative amount has no physical pressure, and very large amounts are valid only while the perfect gas approximation holds."
+        },
+        {
+          "description": "the chemical identity of the gas as a name or formula with state (gas phase)",
+          "format_examples": [
+            "C2H6(g)",
+            "N2(g)",
+            "argon gas"
+          ],
+          "original_value": "C2H6(g)",
+          "validity_range": "Any substance that can be treated as a perfect gas at the given conditions; the perfect gas model is most accurate for light, weakly interacting gases far from condensation, and the identity does not otherwise enter the ideal gas calculation."
+        },
+        {
+          "description": "the volume of the gas sample with unit (dm3, L, cm3 or m3)",
+          "format_examples": [
+            "4.860 dm3",
+            "250 cm3",
+            "0.0821 m3"
+          ],
+          "original_value": "4.860 dm3",
+          "validity_range": "Strictly positive volume (V > 0) with a unit convertible to m3 or L; a zero volume would give an unbounded pressure, so the value must be positive and physically meaningful for the sample."
+        },
+        {
+          "description": "the temperature of the gas with unit (\u00b0C or K)",
+          "format_examples": [
+            "27\u00b0C",
+            "298.15 K",
+            "-10 \u00b0C"
+          ],
+          "original_value": "27\u00b0C",
+          "validity_range": "Temperature must be above absolute zero, i.e. greater than -273.15 \u00b0C or greater than 0 K; the result is only physically meaningful for temperatures where the gas remains gaseous and behaves as a perfect gas."
+        }
+      ],
+      "problem_id": "gas_law"
+    }
+  ]
+}

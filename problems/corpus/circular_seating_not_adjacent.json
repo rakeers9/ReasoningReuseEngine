@@ -1,0 +1,6 @@
+{
+  "id": "circular_seating_not_adjacent",
+  "source": "cache eval corpus seed q111 (math)",
+  "question": "In how many ways can 8 people be seated around a round table if two particular people, A and B, refuse to sit next to each other?",
+  "golden_label": "3,600"
+}

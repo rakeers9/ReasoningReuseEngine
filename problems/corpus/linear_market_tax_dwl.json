@@ -1,0 +1,6 @@
+{
+  "id": "linear_market_tax_dwl",
+  "source": "cache eval corpus seed q342 (economics)",
+  "question": "Demand is Q = 120 − 2P and supply is Q = 3P − 30. A $5 per-unit tax is imposed on sellers. What is the new price buyers pay, and what is the deadweight loss?",
+  "golden_label": "Buyers pay $33.00; DWL = $15.00"
+}

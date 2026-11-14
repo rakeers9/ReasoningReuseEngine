@@ -1,0 +1,6 @@
+{
+  "id": "bond_price_semiannual",
+  "source": "cache eval corpus seed q216 (finance)",
+  "question": "A 10-year bond with a $1,000 face value pays a 5% annual coupon in semiannual installments. If the market yield is 6.2% (annual, compounded semiannually), what is the bond's price?",
+  "golden_label": "$911.55"
+}

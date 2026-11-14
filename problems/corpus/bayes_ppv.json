@@ -1,0 +1,6 @@
+{
+  "id": "bayes_ppv",
+  "source": "cache eval corpus seed q132 (probability)",
+  "question": "A disease affects 1.5% of a population. A test for it has 92% sensitivity and 96% specificity. If a randomly chosen person tests positive, what is the probability they actually have the disease?",
+  "golden_label": "0.2594"
+}

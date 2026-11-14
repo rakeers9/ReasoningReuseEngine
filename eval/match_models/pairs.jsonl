@@ -1,0 +1,53 @@
+{"field": "deliverable", "a": "pressure of the gas", "b": "pressure exerted by the gas", "same": true}
+{"field": "deliverable", "a": "pressure of the gas", "b": "what pressure it exerts on the container", "same": true}
+{"field": "deliverable", "a": "pressure of the gas", "b": "temperature of the gas", "same": false}
+{"field": "deliverable", "a": "pressure of the gas", "b": "change in pressure of the gas", "same": false}
+{"field": "deliverable", "a": "pressure of the gas", "b": "density of the gas", "same": false}
+{"field": "deliverable", "a": "positive predictive value", "b": "probability of disease given a positive test", "same": true}
+{"field": "deliverable", "a": "positive predictive value", "b": "negative predictive value", "same": false}
+{"field": "deliverable", "a": "positive predictive value", "b": "probability of a positive test given disease", "same": false}
+{"field": "deliverable", "a": "monthly loan payment", "b": "monthly repayment amount", "same": true}
+{"field": "deliverable", "a": "monthly loan payment", "b": "total interest paid over the loan", "same": false}
+{"field": "deliverable", "a": "maximum deflection of the beam", "b": "largest deflection at midspan", "same": true}
+{"field": "deliverable", "a": "maximum deflection of the beam", "b": "maximum bending moment of the beam", "same": false}
+{"field": "deliverable", "a": "deadline to file an answer", "b": "last day to respond to the complaint", "same": true}
+{"field": "deliverable", "a": "deadline to file an answer", "b": "deadline to file an appeal", "same": false}
+{"field": "deliverable", "a": "plain-English summary of the contract", "b": "simple explanation of what the contract says", "same": true}
+{"field": "deliverable", "a": "plain-English summary of the contract", "b": "Spanish translation of the contract", "same": false}
+{"field": "deliverable", "a": "SQL query returning top 10 customers by revenue", "b": "SQL to list the 10 highest-revenue customers", "same": true}
+{"field": "deliverable", "a": "SQL query returning top 10 customers by revenue", "b": "SQL query returning bottom 10 customers by revenue", "same": false}
+{"field": "deliverable", "a": "number of integers divisible by 3", "b": "how many integers are multiples of 3", "same": true}
+{"field": "deliverable", "a": "number of integers divisible by 3", "b": "number of integers not divisible by 3", "same": false}
+{"field": "deliverable", "a": "book value after year 3", "b": "carrying amount at the end of the third year", "same": true}
+{"field": "deliverable", "a": "book value after year 3", "b": "depreciation expense in year 3", "same": false}
+{"field": "deliverable", "a": "price of the bond", "b": "what the bond is worth today", "same": true}
+{"field": "deliverable", "a": "price of the bond", "b": "yield to maturity of the bond", "same": false}
+{"field": "deliverable", "a": "expected number of carriers", "b": "how many people are heterozygous carriers", "same": true}
+{"field": "deliverable", "a": "expected number of carriers", "b": "frequency of the recessive allele", "same": false}
+{"field": "method", "a": "perfect gas law", "b": "ideal gas equation", "same": true}
+{"field": "method", "a": "perfect gas law", "b": "pV = nRT", "same": true}
+{"field": "method", "a": "perfect gas law", "b": "van der Waals equation", "same": false}
+{"field": "method", "a": "perfect gas law", "b": "ideal gas law with compressibility factor Z", "same": false}
+{"field": "method", "a": "double-declining balance depreciation", "b": "200% declining balance", "same": true}
+{"field": "method", "a": "double-declining balance depreciation", "b": "straight-line depreciation", "same": false}
+{"field": "method", "a": "one-sample t-test", "b": "single-sample Student's t test", "same": true}
+{"field": "method", "a": "one-sample t-test", "b": "one-sample z-test", "same": false}
+{"field": "method", "a": "Uniform Probate Code intestacy rules", "b": "UPC intestate succession", "same": true}
+{"field": "method", "a": "Uniform Probate Code intestacy rules", "b": "community property rules", "same": false}
+{"field": "condition", "a": "one gas in one fixed state", "b": "a single gas at fixed conditions", "same": true}
+{"field": "condition", "a": "one gas in one fixed state", "b": "gas compressed from one volume to another", "same": false}
+{"field": "condition", "a": "one gas in one fixed state", "b": "mixture of two gases", "same": false}
+{"field": "condition", "a": "seats arranged in a circle", "b": "people seated around a round table", "same": true}
+{"field": "condition", "a": "seats arranged in a circle", "b": "seats arranged in a straight row", "same": false}
+{"field": "condition", "a": "no two of them sit next to each other", "b": "none of them are adjacent", "same": true}
+{"field": "condition", "a": "no two of them sit next to each other", "b": "all of them sit next to each other", "same": false}
+{"field": "condition", "a": "payments made at the end of each month", "b": "monthly payments in arrears", "same": true}
+{"field": "condition", "a": "payments made at the end of each month", "b": "payments made at the start of each month", "same": false}
+{"field": "condition", "a": "coupons paid semiannually", "b": "coupons paid twice a year", "same": true}
+{"field": "condition", "a": "coupons paid semiannually", "b": "coupons paid annually", "same": false}
+{"field": "condition", "a": "decedent survived by spouse and children of both", "b": "surviving spouse, and all children are also the spouse's", "same": true}
+{"field": "condition", "a": "decedent survived by spouse and children of both", "b": "surviving spouse and a child from a prior marriage", "same": false}
+{"field": "output_form", "a": "pressure in atm", "b": "pressure in kPa", "same": true}
+{"field": "output_form", "a": "pressure in atm", "b": "density in g/dm3", "same": false}
+{"field": "output_form", "a": "a single SELECT statement", "b": "one SQL select query", "same": true}
+{"field": "output_form", "a": "a single SELECT statement", "b": "a stored procedure", "same": false}

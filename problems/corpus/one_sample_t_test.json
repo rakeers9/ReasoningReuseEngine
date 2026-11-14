@@ -1,0 +1,6 @@
+{
+  "id": "one_sample_t_test",
+  "source": "cache eval corpus seed q153 (statistics)",
+  "question": "A sample of 36 bolts has a mean length of 50.4 mm and a sample standard deviation of 1.2 mm. At α = 0.05, test whether the true mean length differs from 50 mm. Give the test statistic and your conclusion.",
+  "golden_label": "t = 2.000 (df = 35), p = 0.0533; fail to reject H0 at α = 0.05"
+}

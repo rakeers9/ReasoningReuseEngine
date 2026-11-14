@@ -1,0 +1,155 @@
+{
+  "name": "paper_gas_law",
+  "functions": [
+    {
+      "id": "convert_a_temperature_value_from_celsius_7d947e",
+      "description": "Convert a temperature value from Celsius or Kelvin to Kelvin.",
+      "inputs": [
+        "the temperature value with unit"
+      ],
+      "outputs": [
+        "the temperature in Kelvin"
+      ],
+      "aliases": [],
+      "origin": "paper Figure 5a"
+    },
+    {
+      "id": "convert_a_pressure_value_from_kpa_to_mul_8a9b43",
+      "description": "Convert a pressure value from kPa to multiple common units including MPa, bar, and atm.",
+      "inputs": [
+        "the pressure value in kilopascals (kPa)"
+      ],
+      "outputs": [
+        "the pressure in MPa",
+        "the pressure in bar",
+        "the pressure in atm"
+      ],
+      "aliases": [],
+      "origin": "paper (described, not printed)"
+    },
+    {
+      "id": "calculate_the_pressure_exerted_by_a_gas_d0b51f",
+      "description": "Calculate the pressure exerted by a gas using PV = nRT, rearranged to P = nRT/V.",
+      "inputs": [
+        "the molar amount of gas with unit",
+        "the volume of the container with unit",
+        "the temperature with unit",
+        "the common name of the gas",
+        "the gas model or assumption to use"
+      ],
+      "outputs": [
+        "the calculated pressure in kPa"
+      ],
+      "aliases": [],
+      "origin": "paper Figure 6"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "Suppose that \u25cf1 of \u25cf4 is confined to \u25cf2 at \u25cf3. Predict the pressure exerted by the \u25cf4 from the \u25cf5.",
+      "kind": "template",
+      "root_id": "calculate_the_pressure_exerted_by_a_gas_d0b51f",
+      "params": [
+        {
+          "description": "the molar amount of gas with unit",
+          "format_examples": [
+            "10.0 mol",
+            "2.5 mol"
+          ],
+          "original_value": "10.0 mol",
+          "validity_range": "> 0 mol"
+        },
+        {
+          "description": "the volume of the container with unit",
+          "format_examples": [
+            "4.860 dm3",
+            "12 L"
+          ],
+          "original_value": "4.860 dm3",
+          "validity_range": "> 0"
+        },
+        {
+          "description": "the temperature with unit",
+          "format_examples": [
+            "27\u00b0C",
+            "300 K"
+          ],
+          "original_value": "27\u00b0C",
+          "validity_range": "above absolute zero"
+        },
+        {
+          "description": "the common name of the gas",
+          "format_examples": [
+            "ethane",
+            "nitrogen"
+          ],
+          "original_value": "ethane",
+          "validity_range": "any gas"
+        },
+        {
+          "description": "the gas model or assumption to use",
+          "format_examples": [
+            "perfect gas",
+            "ideal gas"
+          ],
+          "original_value": "perfect gas",
+          "validity_range": "perfect/ideal gas"
+        }
+      ],
+      "problem_id": "gas_law"
+    },
+    {
+      "text": "Suppose that 10.0 mol C2H6(g) is confined to 4.860 dm3 at 27\u00b0C. Predict the pressure exerted by the ethane from the perfect gas.",
+      "kind": "original",
+      "root_id": "calculate_the_pressure_exerted_by_a_gas_d0b51f",
+      "params": [
+        {
+          "description": "the molar amount of gas with unit",
+          "format_examples": [
+            "10.0 mol",
+            "2.5 mol"
+          ],
+          "original_value": "10.0 mol",
+          "validity_range": "> 0 mol"
+        },
+        {
+          "description": "the volume of the container with unit",
+          "format_examples": [
+            "4.860 dm3",
+            "12 L"
+          ],
+          "original_value": "4.860 dm3",
+          "validity_range": "> 0"
+        },
+        {
+          "description": "the temperature with unit",
+          "format_examples": [
+            "27\u00b0C",
+            "300 K"
+          ],
+          "original_value": "27\u00b0C",
+          "validity_range": "above absolute zero"
+        },
+        {
+          "description": "the common name of the gas",
+          "format_examples": [
+            "ethane",
+            "nitrogen"
+          ],
+          "original_value": "ethane",
+          "validity_range": "any gas"
+        },
+        {
+          "description": "the gas model or assumption to use",
+          "format_examples": [
+            "perfect gas",
+            "ideal gas"
+          ],
+          "original_value": "perfect gas",
+          "validity_range": "perfect/ideal gas"
+        }
+      ],
+      "problem_id": "gas_law"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "id": "projectile_range_from_height",
+  "source": "cache eval corpus seed q047 (physics)",
+  "question": "A ball is launched from the top of a 20.0 m cliff at 25.0 m/s, 35° above the horizontal. Taking g = 9.81 m/s², how far from the base of the cliff does it land?",
+  "golden_label": "80.98 m"
+}

@@ -1,0 +1,6 @@
+{
+  "id": "buffer_ph_after_strong_acid",
+  "source": "cache eval corpus seed q026 (chemistry)",
+  "question": "A buffer is made by dissolving 0.150 mol acetic acid and 0.100 mol sodium acetate in water to make 500 mL of solution. Ka for acetic acid is 1.8 × 10⁻⁵. What is the pH after 0.020 mol HCl is added?",
+  "golden_label": "4.417 pH"
+}

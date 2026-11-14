@@ -1,0 +1,236 @@
+{
+  "name": "master",
+  "functions": [
+    {
+      "id": "split_a_physical_quantity_string_such_as_32e873",
+      "description": "Split a physical quantity string such as '10.0 mol' or '27\u00b0C' into its numeric value and its unit.",
+      "inputs": [
+        "the quantity string with value and unit"
+      ],
+      "outputs": [
+        "the numeric value",
+        "the unit string"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law"
+    },
+    {
+      "id": "convert_an_amount_of_substance_given_wit_0d1813",
+      "description": "Convert an amount of substance given with a unit (mol, mmol, kmol, umol, nmol) to moles.",
+      "inputs": [
+        "the amount value",
+        "the amount unit"
+      ],
+      "outputs": [
+        "the amount in moles"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law"
+    },
+    {
+      "id": "convert_a_volume_given_in_a_common_unit_54d7f7",
+      "description": "Convert a volume given in a common unit (dm3, L, cm3, mL, m3) to cubic metres.",
+      "inputs": [
+        "the volume value",
+        "the volume unit"
+      ],
+      "outputs": [
+        "the volume in cubic metres"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law"
+    },
+    {
+      "id": "convert_a_temperature_given_in_celsius_f_00c70e",
+      "description": "Convert a temperature given in Celsius, Fahrenheit, Rankine or kelvin to kelvin.",
+      "inputs": [
+        "the temperature value",
+        "the temperature unit"
+      ],
+      "outputs": [
+        "the temperature in kelvin"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law"
+    },
+    {
+      "id": "apply_the_perfect_gas_law_p_nrt_v_in_si_8fcc18",
+      "description": "Apply the perfect gas law p = nRT/V in SI units with R = 8.314 J K-1 mol-1 to obtain the pressure in pascals.",
+      "inputs": [
+        "the amount in moles",
+        "the temperature in kelvin",
+        "the volume in cubic metres"
+      ],
+      "outputs": [
+        "the pressure in pascals"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law"
+    },
+    {
+      "id": "convert_a_pressure_in_pascals_to_atmosph_ec37bc",
+      "description": "Convert a pressure in pascals to atmospheres, bar, kilopascals and megapascals.",
+      "inputs": [
+        "the pressure in pascals"
+      ],
+      "outputs": [
+        "the pressure in atmospheres",
+        "the pressure in bar",
+        "the pressure in kilopascals",
+        "the pressure in megapascals"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law"
+    },
+    {
+      "id": "cross_check_the_perfect_gas_pressure_usi_5acfeb",
+      "description": "Cross-check the perfect gas pressure using R = 0.08206 dm3 atm K-1 mol-1 with volume in dm3 and compare it with the SI-derived pressure in atmospheres.",
+      "inputs": [
+        "the amount in moles",
+        "the temperature in kelvin",
+        "the volume in cubic metres",
+        "the pressure in atmospheres"
+      ],
+      "outputs": [
+        "the check pressure in atmospheres",
+        "whether the two results agree"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law"
+    },
+    {
+      "id": "predict_the_pressure_exerted_by_a_gas_co_f479ed",
+      "description": "Predict the pressure exerted by a gas confined to a given volume at a given temperature using the perfect gas law, reporting it in pascals, megapascals and atmospheres.",
+      "inputs": [
+        "the amount of gas with unit",
+        "the chemical formula of the gas with its phase",
+        "the volume of the gas with unit",
+        "the temperature of the gas with unit",
+        "the common name of the gas"
+      ],
+      "outputs": [
+        "the final pressure answer"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "Suppose that \u25cf1 \u25cf2 is confined to \u25cf3 at \u25cf4. Predict the pressure exerted by the \u25cf5 from the perfect gas.",
+      "kind": "template",
+      "root_id": "predict_the_pressure_exerted_by_a_gas_co_f479ed",
+      "params": [
+        {
+          "description": "the amount of gas with unit",
+          "format_examples": [
+            "10.0 mol",
+            "250 mmol",
+            "2.5 mol"
+          ],
+          "original_value": "10.0 mol",
+          "validity_range": "Positive amount of substance (> 0), typically in mol or mmol; must be convertible to moles."
+        },
+        {
+          "description": "the chemical formula of the gas with its phase",
+          "format_examples": [
+            "C2H6(g)",
+            "CO2(g)",
+            "N2(g)"
+          ],
+          "original_value": "C2H6(g)",
+          "validity_range": "Any gaseous chemical species; under the perfect gas model the identity does not affect the result."
+        },
+        {
+          "description": "the volume of the gas with unit",
+          "format_examples": [
+            "4.860 dm3",
+            "1.00 L",
+            "500 cm3"
+          ],
+          "original_value": "4.860 dm3",
+          "validity_range": "Positive volume (> 0) in a recognizable unit such as dm3, L, cm3, mL or m3."
+        },
+        {
+          "description": "the temperature of the gas with unit",
+          "format_examples": [
+            "27\u00b0C",
+            "300 K",
+            "98.6\u00b0F"
+          ],
+          "original_value": "27\u00b0C",
+          "validity_range": "Temperature above absolute zero (T > 0 K) after conversion to kelvin; given in \u00b0C, K or \u00b0F."
+        },
+        {
+          "description": "the common name of the gas",
+          "format_examples": [
+            "ethane",
+            "carbon dioxide",
+            "nitrogen"
+          ],
+          "original_value": "ethane",
+          "validity_range": "Name consistent with the gas formula; descriptive only, does not affect the calculation."
+        }
+      ],
+      "problem_id": "gas_law"
+    },
+    {
+      "text": "Suppose that 10.0 mol C2H6(g) is confined to 4.860 dm3 at 27\u00b0C. Predict the pressure exerted by the ethane from the perfect gas.",
+      "kind": "original",
+      "root_id": "predict_the_pressure_exerted_by_a_gas_co_f479ed",
+      "params": [
+        {
+          "description": "the amount of gas with unit",
+          "format_examples": [
+            "10.0 mol",
+            "250 mmol",
+            "2.5 mol"
+          ],
+          "original_value": "10.0 mol",
+          "validity_range": "Positive amount of substance (> 0), typically in mol or mmol; must be convertible to moles."
+        },
+        {
+          "description": "the chemical formula of the gas with its phase",
+          "format_examples": [
+            "C2H6(g)",
+            "CO2(g)",
+            "N2(g)"
+          ],
+          "original_value": "C2H6(g)",
+          "validity_range": "Any gaseous chemical species; under the perfect gas model the identity does not affect the result."
+        },
+        {
+          "description": "the volume of the gas with unit",
+          "format_examples": [
+            "4.860 dm3",
+            "1.00 L",
+            "500 cm3"
+          ],
+          "original_value": "4.860 dm3",
+          "validity_range": "Positive volume (> 0) in a recognizable unit such as dm3, L, cm3, mL or m3."
+        },
+        {
+          "description": "the temperature of the gas with unit",
+          "format_examples": [
+            "27\u00b0C",
+            "300 K",
+            "98.6\u00b0F"
+          ],
+          "original_value": "27\u00b0C",
+          "validity_range": "Temperature above absolute zero (T > 0 K) after conversion to kelvin; given in \u00b0C, K or \u00b0F."
+        },
+        {
+          "description": "the common name of the gas",
+          "format_examples": [
+            "ethane",
+            "carbon dioxide",
+            "nitrogen"
+          ],
+          "original_value": "ethane",
+          "validity_range": "Name consistent with the gas formula; descriptive only, does not affect the calculation."
+        }
+      ],
+      "problem_id": "gas_law"
+    }
+  ]
+}

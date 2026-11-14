@@ -1,0 +1,6 @@
+{
+  "id": "hardy_weinberg_carriers",
+  "source": "cache eval corpus seed q300 (biology)",
+  "question": "In a population of 2,500 people, 196 have cystic fibrosis, a recessive condition. Assuming Hardy-Weinberg equilibrium, how many people are expected to be carriers?",
+  "golden_label": "1,008 people"
+}

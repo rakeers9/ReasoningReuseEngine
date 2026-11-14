@@ -1,0 +1,10 @@
+.venv/
+.env
+__pycache__/
+*.pyc
+runs/
+.DS_Store
+CLAUDE.md
+.claude/
+*.md
+!NOTES.md

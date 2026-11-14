@@ -1,0 +1,6 @@
+{
+  "id": "count_divisible_or_not",
+  "source": "cache eval corpus seed q089 (math)",
+  "question": "How many positive integers less than 1000 are divisible by 3 or 5 but not by 7?",
+  "golden_label": "400"
+}

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ARC Experiments</title>
+<link rel="stylesheet" href="style.css">
+<script>
+  // Apply the saved theme before first paint.
+  try { var t = localStorage.getItem('arc-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="#run" aria-label="ARC experiments"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 2 4 13.5h6.2L9.5 22 20 9.8h-6.4z"/></svg></a>
+  <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
+  <div class="spacer"></div>
+  <a class="running-pill" id="running-pill" href="#run"><span class="dot"></span><span id="running-text">running</span></a>
+  <button class="search-btn" id="search-btn" type="button" aria-label="Search experiments and views">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span>Search…</span><kbd>⌘K</kbd></button>
+  <button class="btn sm" id="theme-btn" type="button" title="Theme">Theme: auto</button>
+</header>
+<div class="shell">
+  <nav class="rail" aria-label="Views">
+    <a href="#run" data-nav="run" title="Run" aria-label="Run"><svg viewBox="0 0 24 24"><path d="m5 8 4 4-4 4M12 17h7"/><rect x="3" y="4" width="18" height="16" rx="2"/></svg></a>
+    <a href="#experiments" data-nav="experiments" title="Experiments" aria-label="Experiments"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg></a>
+    <a href="#compare" data-nav="compare" title="Compare" aria-label="Compare"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="16" rx="1.5"/><rect x="14" y="4" width="7" height="16" rx="1.5"/></svg></a>
+  </nav>
+  <aside class="side" id="side" aria-label="Section navigation"></aside>
+  <main id="app"></main>
+</div>
+
+<dialog id="confirm-dlg">
+  <h2 id="confirm-title">Run this?</h2>
+  <p id="confirm-body" style="margin-top:10px;line-height:1.5"></p>
+  <div class="row">
+    <button class="btn" type="button" id="confirm-no">Cancel</button>
+    <button class="btn primary" type="button" id="confirm-yes">Run</button>
+  </div>
+</dialog>
+
+<dialog id="palette" aria-label="Search">
+  <input id="pal-q" type="search" placeholder="Jump to an experiment or view…" autocomplete="off">
+  <div id="pal-list"></div>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>

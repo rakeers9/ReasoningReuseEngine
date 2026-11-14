@@ -1,0 +1,6 @@
+{
+  "id": "gas_law",
+  "source": "SciBench, worked example in paper Appendix A (Figures 3-8)",
+  "question": "Suppose that 10.0 mol C2H6(g) is confined to 4.860 dm3 at 27°C. Predict the pressure exerted by the ethane from the perfect gas.",
+  "golden_label": "50.7 atm (approximately 5130 kPa, 5.13 MPa)"
+}
