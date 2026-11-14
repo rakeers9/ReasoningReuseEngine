@@ -8,3 +8,5 @@ CLAUDE.md
 .claude/
 *.md
 !NOTES.md
+Reference/
+*.pdf
