@@ -1,0 +1,240 @@
+{
+  "name": "npv_annuity_salvage",
+  "functions": [
+    {
+      "id": "normalize_raw_project_cash_flow_inputs_i_569c83",
+      "description": "Normalize raw project cash flow inputs into a positive outlay, numeric inflow, numeric salvage, decimal discount rate, and integer project life.",
+      "inputs": [
+        "the initial investment outlay at time zero with currency unit",
+        "the annual cash inflow received at the end of each year with currency unit",
+        "the project life in whole years over which annual inflows and salvage occur",
+        "the salvage value received at the end of the project life with currency unit",
+        "the discount rate as a percentage or decimal for the project cash flows"
+      ],
+      "outputs": [
+        "the initial outlay as a positive amount",
+        "the annual cash inflow as a number",
+        "the salvage value as a number",
+        "the discount rate as a decimal",
+        "the project life as an integer number of years"
+      ],
+      "aliases": [],
+      "origin": "builder:npv_annuity_salvage"
+    },
+    {
+      "id": "compute_the_discount_factor_1_r_n_for_a_a9427d",
+      "description": "Compute the discount factor (1+r)^-n for a decimal discount rate and a number of periods.",
+      "inputs": [
+        "the discount rate as a decimal",
+        "the number of periods until the cash is received"
+      ],
+      "outputs": [
+        "the discount factor for the given periods"
+      ],
+      "aliases": [],
+      "origin": "builder:npv_annuity_salvage"
+    },
+    {
+      "id": "compute_the_annuity_present_value_factor_5350ed",
+      "description": "Compute the annuity present value factor for a decimal discount rate and a number of periods.",
+      "inputs": [
+        "the discount rate as a decimal",
+        "the number of periods until the cash is received"
+      ],
+      "outputs": [
+        "the annuity present value factor"
+      ],
+      "aliases": [],
+      "origin": "builder:npv_annuity_salvage"
+    },
+    {
+      "id": "compute_the_present_value_of_a_level_ann_42d523",
+      "description": "Compute the present value of a level annuity of equal end-of-period cash payments over a given number of periods.",
+      "inputs": [
+        "the annual cash inflow as a number",
+        "the discount rate as a decimal",
+        "the project life as an integer number of years"
+      ],
+      "outputs": [
+        "the present value of the annual inflows"
+      ],
+      "aliases": [],
+      "origin": "builder:npv_annuity_salvage"
+    },
+    {
+      "id": "compute_the_present_value_of_a_single_fu_4a716c",
+      "description": "Compute the present value of a single future cash amount received after a given number of periods.",
+      "inputs": [
+        "the salvage value as a number",
+        "the discount rate as a decimal",
+        "the project life as an integer number of years"
+      ],
+      "outputs": [
+        "the present value of the salvage value"
+      ],
+      "aliases": [],
+      "origin": "builder:npv_annuity_salvage"
+    },
+    {
+      "id": "compute_the_net_present_value_by_summing_fdb4ad",
+      "description": "Compute the net present value by summing the present values of future inflows and subtracting the initial outlay.",
+      "inputs": [
+        "the initial outlay as a positive amount",
+        "the present value of the annual inflows",
+        "the present value of the salvage value"
+      ],
+      "outputs": [
+        "the net present value of the project"
+      ],
+      "aliases": [],
+      "origin": "builder:npv_annuity_salvage"
+    },
+    {
+      "id": "apply_the_accept_if_positive_decision_ru_299b02",
+      "description": "Apply the accept-if-positive decision rule to a net present value.",
+      "inputs": [
+        "the net present value of the project"
+      ],
+      "outputs": [
+        "the accept or reject decision"
+      ],
+      "aliases": [],
+      "origin": "builder:npv_annuity_salvage"
+    },
+    {
+      "id": "evaluate_the_net_present_value_of_a_proj_51e009",
+      "description": "Evaluate the net present value of a project with an upfront outlay, level annual inflows, and a salvage value, then decide whether to accept it.",
+      "inputs": [
+        "the initial investment outlay at time zero with currency unit",
+        "the annual cash inflow received at the end of each year with currency unit",
+        "the project life in whole years over which annual inflows and salvage occur",
+        "the salvage value received at the end of the project life with currency unit",
+        "the discount rate as a percentage or decimal for the project cash flows"
+      ],
+      "outputs": [
+        "the net present value of the project",
+        "the accept or reject decision"
+      ],
+      "aliases": [],
+      "origin": "builder:npv_annuity_salvage"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "A project costs \u25cf1 upfront and returns \u25cf2 at the end of each year for \u25cf3 years, plus a \u25cf4 salvage value at the end of year \u25cf3. At a discount rate of \u25cf5, what is the NPV, and should the project be accepted?",
+      "kind": "template",
+      "root_id": "evaluate_the_net_present_value_of_a_proj_51e009",
+      "params": [
+        {
+          "description": "the initial investment outlay at time zero with currency unit",
+          "format_examples": [
+            "$120,000",
+            "85000 USD",
+            "$2,500,000.00"
+          ],
+          "original_value": "$120,000",
+          "validity_range": "Must be a non-negative monetary amount, normally strictly positive for a real project; zero means no upfront cost and a negative value would be a cash inflow at time zero, which breaks the standard outlay interpretation."
+        },
+        {
+          "description": "the annual cash inflow received at the end of each year with currency unit",
+          "format_examples": [
+            "$35,000",
+            "12000 dollars",
+            "$950.50"
+          ],
+          "original_value": "$35,000",
+          "validity_range": "Must be a real monetary amount, typically non-negative; a value of zero gives an annuity of nothing, and negative values represent net outflows each year, which the same formula still handles mathematically."
+        },
+        {
+          "description": "the project life in whole years over which annual inflows and salvage occur",
+          "format_examples": [
+            "5 years",
+            "10",
+            "3"
+          ],
+          "original_value": "5",
+          "validity_range": "Must be a positive integer (at least 1) because the formulas discount discrete end-of-year periods from year 1 through year n; fractional or zero lives are not meaningful under this model."
+        },
+        {
+          "description": "the salvage value received at the end of the project life with currency unit",
+          "format_examples": [
+            "$10,000",
+            "0",
+            "$5,500.25"
+          ],
+          "original_value": "$10,000",
+          "validity_range": "Must be a non-negative monetary amount; zero means no salvage, and a negative value would represent a closure cost paid at the end of the project, which the same discounting formula still accommodates."
+        },
+        {
+          "description": "the discount rate as a percentage or decimal for the project cash flows",
+          "format_examples": [
+            "8%",
+            "0.08",
+            "12.5 percent"
+          ],
+          "original_value": "8%",
+          "validity_range": "Must be greater than -100% so that the discount factor (1+r) raised to the power of the period count is defined and nonzero; in practice a non-negative rate, typically between 0% and 100%, is used, and the rate must be expressed consistently as a decimal in the formulas."
+        }
+      ],
+      "problem_id": "npv_annuity_salvage"
+    },
+    {
+      "text": "A project costs $120,000 upfront and returns $35,000 at the end of each year for 5 years, plus a $10,000 salvage value at the end of year 5. At a discount rate of 8%, what is the NPV, and should the project be accepted?",
+      "kind": "original",
+      "root_id": "evaluate_the_net_present_value_of_a_proj_51e009",
+      "params": [
+        {
+          "description": "the initial investment outlay at time zero with currency unit",
+          "format_examples": [
+            "$120,000",
+            "85000 USD",
+            "$2,500,000.00"
+          ],
+          "original_value": "$120,000",
+          "validity_range": "Must be a non-negative monetary amount, normally strictly positive for a real project; zero means no upfront cost and a negative value would be a cash inflow at time zero, which breaks the standard outlay interpretation."
+        },
+        {
+          "description": "the annual cash inflow received at the end of each year with currency unit",
+          "format_examples": [
+            "$35,000",
+            "12000 dollars",
+            "$950.50"
+          ],
+          "original_value": "$35,000",
+          "validity_range": "Must be a real monetary amount, typically non-negative; a value of zero gives an annuity of nothing, and negative values represent net outflows each year, which the same formula still handles mathematically."
+        },
+        {
+          "description": "the project life in whole years over which annual inflows and salvage occur",
+          "format_examples": [
+            "5 years",
+            "10",
+            "3"
+          ],
+          "original_value": "5",
+          "validity_range": "Must be a positive integer (at least 1) because the formulas discount discrete end-of-year periods from year 1 through year n; fractional or zero lives are not meaningful under this model."
+        },
+        {
+          "description": "the salvage value received at the end of the project life with currency unit",
+          "format_examples": [
+            "$10,000",
+            "0",
+            "$5,500.25"
+          ],
+          "original_value": "$10,000",
+          "validity_range": "Must be a non-negative monetary amount; zero means no salvage, and a negative value would represent a closure cost paid at the end of the project, which the same discounting formula still accommodates."
+        },
+        {
+          "description": "the discount rate as a percentage or decimal for the project cash flows",
+          "format_examples": [
+            "8%",
+            "0.08",
+            "12.5 percent"
+          ],
+          "original_value": "8%",
+          "validity_range": "Must be greater than -100% so that the discount factor (1+r) raised to the power of the period count is defined and nonzero; in practice a non-negative rate, typically between 0% and 100%, is used, and the rate must be expressed consistently as a decimal in the formulas."
+        }
+      ],
+      "problem_id": "npv_annuity_salvage"
+    }
+  ]
+}

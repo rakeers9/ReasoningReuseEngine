@@ -1,0 +1,210 @@
+{
+  "name": "loan_payment_total_interest",
+  "functions": [
+    {
+      "id": "convert_the_nominal_annual_interest_rate_9929a6",
+      "description": "Convert the nominal annual interest rate percentage into a periodic interest rate per compounding period.",
+      "inputs": [
+        "the nominal annual interest rate as a percentage",
+        "the compounding frequency of the interest per year"
+      ],
+      "outputs": [
+        "the periodic interest rate per compounding period"
+      ],
+      "aliases": [],
+      "origin": "builder:loan_payment_total_interest"
+    },
+    {
+      "id": "compute_the_total_number_of_payment_peri_c187c6",
+      "description": "Compute the total number of payment periods from the loan term in years and the compounding frequency per year.",
+      "inputs": [
+        "the loan term in years",
+        "the compounding frequency of the interest per year"
+      ],
+      "outputs": [
+        "the total number of payment periods"
+      ],
+      "aliases": [],
+      "origin": "builder:loan_payment_total_interest"
+    },
+    {
+      "id": "evaluate_the_natural_logarithm_of_one_pl_111b02",
+      "description": "Evaluate the natural logarithm of one plus a small periodic interest rate by series expansion.",
+      "inputs": [
+        "the periodic interest rate per compounding period"
+      ],
+      "outputs": [
+        "the natural logarithm of one plus the periodic rate"
+      ],
+      "aliases": [],
+      "origin": "builder:loan_payment_total_interest"
+    },
+    {
+      "id": "compute_the_compound_growth_factor_1_r_n_4e3f6c",
+      "description": "Compute the compound growth factor (1+r)^n for a periodic rate r and a number of periods n.",
+      "inputs": [
+        "the periodic interest rate per compounding period",
+        "the total number of payment periods"
+      ],
+      "outputs": [
+        "the compound growth factor (1+r)^n"
+      ],
+      "aliases": [],
+      "origin": "builder:loan_payment_total_interest"
+    },
+    {
+      "id": "compute_the_fixed_periodic_payment_of_an_16d524",
+      "description": "Compute the fixed periodic payment of an amortizing loan from the principal, the periodic interest rate and the compound growth factor.",
+      "inputs": [
+        "the principal amount of the loan with currency unit",
+        "the periodic interest rate per compounding period",
+        "the compound growth factor (1+r)^n"
+      ],
+      "outputs": [
+        "the fixed monthly payment amount"
+      ],
+      "aliases": [],
+      "origin": "builder:loan_payment_total_interest"
+    },
+    {
+      "id": "compute_the_total_interest_paid_over_the_47ac4d",
+      "description": "Compute the total interest paid over the life of a loan from the periodic payment, the number of payments and the principal.",
+      "inputs": [
+        "the fixed monthly payment amount",
+        "the total number of payment periods",
+        "the principal amount of the loan with currency unit"
+      ],
+      "outputs": [
+        "the total interest paid over the life of the loan"
+      ],
+      "aliases": [],
+      "origin": "builder:loan_payment_total_interest"
+    },
+    {
+      "id": "round_a_monetary_amount_to_the_nearest_c_52eef5",
+      "description": "Round a monetary amount to the nearest cent for reporting.",
+      "inputs": [
+        "the monetary amount to be rounded"
+      ],
+      "outputs": [
+        "the rounded monetary amount in dollars and cents"
+      ],
+      "aliases": [],
+      "origin": "builder:loan_payment_total_interest"
+    },
+    {
+      "id": "compute_the_monthly_payment_and_total_in_ff6c6f",
+      "description": "Compute the monthly payment and total interest of a fixed-rate amortizing mortgage from principal, nominal annual rate, compounding frequency and loan term by chaining the registered loan steps.",
+      "inputs": [
+        "the principal amount of the loan with currency unit",
+        "the nominal annual interest rate as a percentage",
+        "the compounding frequency of the interest per year",
+        "the loan term in years"
+      ],
+      "outputs": [
+        "the monthly payment amount",
+        "the total interest paid over the life of the loan"
+      ],
+      "aliases": [],
+      "origin": "builder:loan_payment_total_interest"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "A \u25cf1 mortgage has a \u25cf2 annual interest rate, compounded \u25cf3, over \u25cf4. What is the monthly payment, and how much total interest is paid over the life of the loan?",
+      "kind": "template",
+      "root_id": "compute_the_monthly_payment_and_total_in_ff6c6f",
+      "params": [
+        {
+          "description": "the principal amount of the loan with currency unit",
+          "format_examples": [
+            "$350,000",
+            "$250000 USD",
+            "\u20ac180,000.50"
+          ],
+          "original_value": "$350,000",
+          "validity_range": "Must be a strictly positive monetary amount; a zero or negative principal does not describe a meaningful loan."
+        },
+        {
+          "description": "the nominal annual interest rate as a percentage",
+          "format_examples": [
+            "6.25%",
+            "4 percent",
+            "0.0525 as a decimal rate"
+          ],
+          "original_value": "6.25%",
+          "validity_range": "Non-negative in practice; a zero rate reduces the payment to principal divided by the number of periods, and the periodic rate must satisfy 1 + r > 0. Realistic mortgage rates lie roughly between 0% and 30%."
+        },
+        {
+          "description": "the compounding frequency of the interest per year",
+          "format_examples": [
+            "monthly",
+            "quarterly",
+            "semi-annually"
+          ],
+          "original_value": "monthly",
+          "validity_range": "Must correspond to a positive integer number of compounding periods per year, such as 1 (annually), 2 (semi-annually), 4 (quarterly), 12 (monthly), 26 or 52 (weekly variants), or 365 (daily)."
+        },
+        {
+          "description": "the loan term in years",
+          "format_examples": [
+            "30 years",
+            "15 years",
+            "7.5 years"
+          ],
+          "original_value": "30 years",
+          "validity_range": "Must be strictly positive; the total number of payments n = years \u00d7 periods per year must be a positive integer for the standard fixed-payment schedule to apply."
+        }
+      ],
+      "problem_id": "loan_payment_total_interest"
+    },
+    {
+      "text": "A $350,000 mortgage has a 6.25% annual interest rate, compounded monthly, over 30 years. What is the monthly payment, and how much total interest is paid over the life of the loan?",
+      "kind": "original",
+      "root_id": "compute_the_monthly_payment_and_total_in_ff6c6f",
+      "params": [
+        {
+          "description": "the principal amount of the loan with currency unit",
+          "format_examples": [
+            "$350,000",
+            "$250000 USD",
+            "\u20ac180,000.50"
+          ],
+          "original_value": "$350,000",
+          "validity_range": "Must be a strictly positive monetary amount; a zero or negative principal does not describe a meaningful loan."
+        },
+        {
+          "description": "the nominal annual interest rate as a percentage",
+          "format_examples": [
+            "6.25%",
+            "4 percent",
+            "0.0525 as a decimal rate"
+          ],
+          "original_value": "6.25%",
+          "validity_range": "Non-negative in practice; a zero rate reduces the payment to principal divided by the number of periods, and the periodic rate must satisfy 1 + r > 0. Realistic mortgage rates lie roughly between 0% and 30%."
+        },
+        {
+          "description": "the compounding frequency of the interest per year",
+          "format_examples": [
+            "monthly",
+            "quarterly",
+            "semi-annually"
+          ],
+          "original_value": "monthly",
+          "validity_range": "Must correspond to a positive integer number of compounding periods per year, such as 1 (annually), 2 (semi-annually), 4 (quarterly), 12 (monthly), 26 or 52 (weekly variants), or 365 (daily)."
+        },
+        {
+          "description": "the loan term in years",
+          "format_examples": [
+            "30 years",
+            "15 years",
+            "7.5 years"
+          ],
+          "original_value": "30 years",
+          "validity_range": "Must be strictly positive; the total number of payments n = years \u00d7 periods per year must be a positive integer for the standard fixed-payment schedule to apply."
+        }
+      ],
+      "problem_id": "loan_payment_total_interest"
+    }
+  ]
+}

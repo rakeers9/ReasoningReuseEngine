@@ -8,6 +8,7 @@
     python -m arc compile gas_law        Step 6: static compilation to plain Python
     python -m arc all     gas_law        Steps 3-6 in order
     python -m arc costs                  Cost by role for this process (printed at the end)
+    python -m arc families               Which backlog task families are worth building (free)
 """
 
 from __future__ import annotations
@@ -30,7 +31,10 @@ def load_problem(pid: str) -> dict:
 
 
 def _rel(path) -> str:
-    return str(path.relative_to(config.ROOT))
+    try:
+        return str(path.relative_to(config.ROOT))
+    except ValueError:   # outside the project (custom paths)
+        return str(path)
 
 
 def header(title: str) -> None:
@@ -102,6 +106,34 @@ def cmd_solve(args) -> None:
     print(f"\n(thinking summary saved separately; ${t.cost:.4f}) -> {_rel(config.problem_dir(problem['id']))}/transcript.md")
 
 
+def _record_build(problem_id: str, accepted: bool) -> None:
+    """Log this build's measured cost for the cache-worthiness threshold (arc/families.py)."""
+    from . import families
+    families.record_build_cost(problem_id, llm.LEDGER.cost(), accepted,
+                               {role: round(r["cost"], 6) for role, r in llm.LEDGER.by_role().items()})
+
+
+def cmd_families(args) -> None:
+    from . import backlog, families
+    from pathlib import Path
+    tracker = families.FamilyTracker()
+    path = Path(args.backlog) if args.backlog else backlog.default_path()
+    if args.reset:
+        tracker = families.FamilyTracker(path=tracker.path)
+        tracker.families, tracker.ingested_lines, tracker.seen_ids, tracker.latest = {}, 0, set(), 0.0
+    added = tracker.ingest(path)
+    tracker.save()
+    cost = families.effective_build_cost()
+    rows = tracker.readiness(now=args.now)
+    if args.json:
+        from dataclasses import asdict
+        print(json.dumps({"build_cost": cost, "families": [asdict(r) for r in rows]}, indent=2, default=str))
+        return
+    print(f"Read {added} new records from {path}; {len(tracker.families)} families "
+          f"(state: {_rel(tracker.path)})\n")
+    print(families.format_report(rows, cost, limit=args.limit))
+
+
 def cmd_build(args) -> None:
     from . import source
     from .builder import Builder, BuildError
@@ -115,6 +147,7 @@ def cmd_build(args) -> None:
         cache = b.build()
     except BuildError as e:
         b.save_report()
+        _record_build(problem["id"], False)
         print(f"\nBUILD FAILED: {e}\n(report: {_rel(config.problem_dir(problem['id']))}/build_report.json)")
         sys.exit(1)
     b.save_report()
@@ -129,9 +162,12 @@ def cmd_build(args) -> None:
                   f"vs {c.candidate[-60:]!r} (judge {c.judge_said}, numbers {c.number_status})")
         print(f"\nCertificate: {'ACCEPTED' if cert.accepted else 'REJECTED'} ({cert.reason}); ${cert.cost:.4f}")
         print(f"Diagnostics only (golden label): {cert.golden_diagnostic}")
+        _record_build(problem["id"], cert.accepted)
         if not cert.accepted:
             print("Entry NOT merged into master: questions like this keep going to the source model.")
             sys.exit(2)
+    if verify != "agreement":
+        _record_build(problem["id"], True)
     master_dir = config.CACHE_ROOT / "master"
     master = Cache.load(master_dir) if (master_dir / "registry.json").exists() else Cache("master")
     master.merge(cache)
@@ -217,6 +253,13 @@ def main() -> None:
             p.add_argument("--cache", default="master")
         if name in ("compile", "all"):
             p.add_argument("--extract", action="store_true", help="extract parameters with the target model")
+    p = sub.add_parser("families", help="cache-worthiness report from the backlog (no API calls)")
+    p.add_argument("--backlog", default="", help="backlog .jsonl (default runs/<namespace>/backlog.jsonl)")
+    p.add_argument("--reset", action="store_true", help="forget saved families and re-read the whole backlog")
+    p.add_argument("--now", type=float, default=None, help="unix time to evaluate at (default: newest record)")
+    p.add_argument("--limit", type=int, default=30)
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(fn=cmd_families)
     p = sub.add_parser("ask")
     p.add_argument("cache")
     p.add_argument("question")

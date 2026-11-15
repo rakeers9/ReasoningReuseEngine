@@ -1,0 +1,198 @@
+{
+  "name": "ddb_book_value",
+  "functions": [
+    {
+      "id": "derive_the_annual_declining_balance_depr_f6ef35",
+      "description": "Derive the annual declining-balance depreciation rate from the useful life and the method's acceleration factor.",
+      "inputs": [
+        "the useful life of the asset expressed in years",
+        "the name of the declining-balance depreciation method to apply with its acceleration factor"
+      ],
+      "outputs": [
+        "annual depreciation rate as a fraction"
+      ],
+      "aliases": [],
+      "origin": "builder:ddb_book_value"
+    },
+    {
+      "id": "compute_one_year_of_declining_balance_de_3ab169",
+      "description": "Compute one year of declining-balance depreciation from the beginning book value and annual rate, capped so the ending book value does not fall below the salvage value floor.",
+      "inputs": [
+        "beginning book value for the year",
+        "annual depreciation rate as a fraction",
+        "the salvage value (residual value) of the asset at the end of its useful life with currency unit"
+      ],
+      "outputs": [
+        "depreciation expense for the year",
+        "ending book value for the year"
+      ],
+      "aliases": [],
+      "origin": "builder:ddb_book_value"
+    },
+    {
+      "id": "run_the_year_by_year_declining_balance_s_c9a043",
+      "description": "Run the year-by-year declining-balance schedule from the acquisition cost up to the target year and return the book value at the end of that year.",
+      "inputs": [
+        "the original acquisition cost of the asset with currency unit",
+        "annual depreciation rate as a fraction",
+        "the salvage value (residual value) of the asset at the end of its useful life with currency unit",
+        "the target year number for which the end-of-year book value is requested"
+      ],
+      "outputs": [
+        "book value at end of target year from schedule"
+      ],
+      "aliases": [],
+      "origin": "builder:ddb_book_value"
+    },
+    {
+      "id": "cross_check_the_scheduled_book_value_aga_39121c",
+      "description": "Cross-check the scheduled book value against the closed-form expression cost times (1 - rate) raised to the target year, when the salvage floor is not reached.",
+      "inputs": [
+        "the original acquisition cost of the asset with currency unit",
+        "annual depreciation rate as a fraction",
+        "the target year number for which the end-of-year book value is requested",
+        "book value at end of target year from schedule",
+        "the salvage value (residual value) of the asset at the end of its useful life with currency unit"
+      ],
+      "outputs": [
+        "closed-form book value agrees with schedule flag"
+      ],
+      "aliases": [],
+      "origin": "builder:ddb_book_value"
+    },
+    {
+      "id": "compute_the_end_of_year_book_value_of_an_b26194",
+      "description": "Compute the end-of-year book value of an asset under declining-balance depreciation with a salvage-value floor, rounded to cents.",
+      "inputs": [
+        "the original acquisition cost of the asset with currency unit",
+        "the salvage value (residual value) of the asset at the end of its useful life with currency unit",
+        "the useful life of the asset expressed in years",
+        "the target year number for which the end-of-year book value is requested",
+        "the name of the declining-balance depreciation method to apply with its acceleration factor"
+      ],
+      "outputs": [
+        "end-of-year book value of the asset in dollars rounded to cents"
+      ],
+      "aliases": [],
+      "origin": "builder:ddb_book_value"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "Equipment costs \u25cf1, has a salvage value of \u25cf2, and a useful life of \u25cf3. Using \u25cf5 depreciation, what is its book value at the end of year \u25cf4?",
+      "kind": "template",
+      "root_id": "compute_the_end_of_year_book_value_of_an_b26194",
+      "params": [
+        {
+          "description": "the original acquisition cost of the asset with currency unit",
+          "format_examples": [
+            "$80,000",
+            "$120,500.00",
+            "45000 dollars"
+          ],
+          "original_value": "$80,000",
+          "validity_range": "Must be a positive monetary amount, strictly greater than the salvage value so that depreciable base is positive; a zero or negative cost is logically invalid."
+        },
+        {
+          "description": "the salvage value (residual value) of the asset at the end of its useful life with currency unit",
+          "format_examples": [
+            "$8,000",
+            "$0",
+            "2,500.00 USD"
+          ],
+          "original_value": "$8,000",
+          "validity_range": "Must be non-negative and strictly less than the acquisition cost; a salvage value equal to or above cost leaves no depreciable amount, and a negative salvage value is invalid."
+        },
+        {
+          "description": "the useful life of the asset expressed in years",
+          "format_examples": [
+            "6 years",
+            "10-year",
+            "5 years"
+          ],
+          "original_value": "6 years",
+          "validity_range": "Must be a positive whole number of years, at least 2 for declining-balance rates (2/n) not to exceed 100 percent; a zero, negative, or fractional life is logically invalid for this schedule."
+        },
+        {
+          "description": "the target year number for which the end-of-year book value is requested",
+          "format_examples": [
+            "year 3",
+            "the 4th year",
+            "5"
+          ],
+          "original_value": "3",
+          "validity_range": "Must be a positive integer; meaningful values run from 1 up to the useful life, and years beyond the useful life would simply return the salvage value by convention."
+        },
+        {
+          "description": "the name of the declining-balance depreciation method to apply with its acceleration factor",
+          "format_examples": [
+            "double-declining-balance",
+            "150% declining-balance",
+            "DDB"
+          ],
+          "original_value": "double-declining-balance",
+          "validity_range": "Must be a declining-balance method with a positive acceleration factor (for example factor 2 for double-declining-balance, 1.5 for 150%); straight-line or units-of-production methods do not fit this template because they do not apply a rate to the beginning book value."
+        }
+      ],
+      "problem_id": "ddb_book_value"
+    },
+    {
+      "text": "Equipment costs $80,000, has a salvage value of $8,000, and a useful life of 6 years. Using double-declining-balance depreciation, what is its book value at the end of year 3?",
+      "kind": "original",
+      "root_id": "compute_the_end_of_year_book_value_of_an_b26194",
+      "params": [
+        {
+          "description": "the original acquisition cost of the asset with currency unit",
+          "format_examples": [
+            "$80,000",
+            "$120,500.00",
+            "45000 dollars"
+          ],
+          "original_value": "$80,000",
+          "validity_range": "Must be a positive monetary amount, strictly greater than the salvage value so that depreciable base is positive; a zero or negative cost is logically invalid."
+        },
+        {
+          "description": "the salvage value (residual value) of the asset at the end of its useful life with currency unit",
+          "format_examples": [
+            "$8,000",
+            "$0",
+            "2,500.00 USD"
+          ],
+          "original_value": "$8,000",
+          "validity_range": "Must be non-negative and strictly less than the acquisition cost; a salvage value equal to or above cost leaves no depreciable amount, and a negative salvage value is invalid."
+        },
+        {
+          "description": "the useful life of the asset expressed in years",
+          "format_examples": [
+            "6 years",
+            "10-year",
+            "5 years"
+          ],
+          "original_value": "6 years",
+          "validity_range": "Must be a positive whole number of years, at least 2 for declining-balance rates (2/n) not to exceed 100 percent; a zero, negative, or fractional life is logically invalid for this schedule."
+        },
+        {
+          "description": "the target year number for which the end-of-year book value is requested",
+          "format_examples": [
+            "year 3",
+            "the 4th year",
+            "5"
+          ],
+          "original_value": "3",
+          "validity_range": "Must be a positive integer; meaningful values run from 1 up to the useful life, and years beyond the useful life would simply return the salvage value by convention."
+        },
+        {
+          "description": "the name of the declining-balance depreciation method to apply with its acceleration factor",
+          "format_examples": [
+            "double-declining-balance",
+            "150% declining-balance",
+            "DDB"
+          ],
+          "original_value": "double-declining-balance",
+          "validity_range": "Must be a declining-balance method with a positive acceleration factor (for example factor 2 for double-declining-balance, 1.5 for 150%); straight-line or units-of-production methods do not fit this template because they do not apply a rate to the beginning book value."
+        }
+      ],
+      "problem_id": "ddb_book_value"
+    }
+  ]
+}

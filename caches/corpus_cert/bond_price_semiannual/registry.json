@@ -1,0 +1,236 @@
+{
+  "name": "bond_price_semiannual",
+  "functions": [
+    {
+      "id": "map_a_payment_or_compounding_schedule_wo_3002c1",
+      "description": "Map a payment or compounding schedule word to its number of periods per year",
+      "inputs": [
+        "the schedule word describing the frequency, such as annual, semiannual, quarterly, or monthly"
+      ],
+      "outputs": [
+        "the number of periods per year as a positive integer"
+      ],
+      "aliases": [],
+      "origin": "builder:bond_price_semiannual"
+    },
+    {
+      "id": "convert_annual_bond_figures_into_per_per_8f4a65",
+      "description": "Convert annual bond figures into per-period figures: total number of periods, coupon per period, and periodic yield.",
+      "inputs": [
+        "the time to maturity of the bond in years, with unit",
+        "the face value (par value) of the bond with currency unit",
+        "the annual coupon rate of the bond as a percentage of face value",
+        "the frequency of coupon installments per year, as a payment schedule word",
+        "the annual market yield (required return) on the bond as a percentage",
+        "the compounding frequency of the market yield as a schedule word"
+      ],
+      "outputs": [
+        "the total number of coupon periods n",
+        "the coupon payment per period C in currency",
+        "the periodic yield i as a decimal"
+      ],
+      "aliases": [],
+      "origin": "builder:bond_price_semiannual"
+    },
+    {
+      "id": "compute_the_compound_growth_factor_1_i_r_10fa9d",
+      "description": "Compute the compound growth factor (1+i) raised to n and the present value discount factor v^n for a periodic yield over n periods, with a logarithm cross-check.",
+      "inputs": [
+        "the periodic yield i as a decimal",
+        "the total number of coupon periods n"
+      ],
+      "outputs": [
+        "the compound growth factor (1+i) raised to n",
+        "the present value discount factor v^n"
+      ],
+      "aliases": [],
+      "origin": "builder:bond_price_semiannual"
+    },
+    {
+      "id": "compute_the_present_value_of_a_level_per_9d3358",
+      "description": "Compute the present value of a level periodic coupon annuity plus the lump-sum face value repayment at maturity.",
+      "inputs": [
+        "the coupon payment per period C in currency",
+        "the periodic yield i as a decimal",
+        "the total number of coupon periods n",
+        "the face value (par value) of the bond with currency unit"
+      ],
+      "outputs": [
+        "the present value of the coupon payments",
+        "the present value of the face value",
+        "the total bond price as the sum of both present values"
+      ],
+      "aliases": [],
+      "origin": "builder:bond_price_semiannual"
+    },
+    {
+      "id": "classify_a_bond_as_trading_at_a_premium_d940c9",
+      "description": "Classify a bond as trading at a premium, at par, or at a discount by comparing its market yield with its coupon rate.",
+      "inputs": [
+        "the annual coupon rate of the bond as a percentage of face value",
+        "the annual market yield (required return) on the bond as a percentage"
+      ],
+      "outputs": [
+        "the price classification of the bond as premium, par, or discount"
+      ],
+      "aliases": [],
+      "origin": "builder:bond_price_semiannual"
+    },
+    {
+      "id": "compute_the_market_price_of_a_fixed_coup_1aa486",
+      "description": "Compute the market price of a fixed-coupon bond from its maturity, face value, coupon rate, coupon frequency, market yield and yield compounding frequency, and classify it as premium, par or discount.",
+      "inputs": [
+        "the time to maturity of the bond in years, with unit",
+        "the face value (par value) of the bond with currency unit",
+        "the annual coupon rate of the bond as a percentage of face value",
+        "the frequency of coupon installments per year, as a payment schedule word",
+        "the annual market yield (required return) on the bond as a percentage",
+        "the compounding frequency of the market yield as a schedule word"
+      ],
+      "outputs": [
+        "the market price of the bond in currency",
+        "the price classification of the bond as premium, par, or discount"
+      ],
+      "aliases": [],
+      "origin": "builder:bond_price_semiannual"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "A \u25cf1 bond with a \u25cf2 face value pays a \u25cf3 annual coupon in \u25cf4 installments. If the market yield is \u25cf5 (annual, compounded \u25cf6), what is the bond's price?",
+      "kind": "template",
+      "root_id": "compute_the_market_price_of_a_fixed_coup_1aa486",
+      "params": [
+        {
+          "description": "the time to maturity of the bond in years, with unit",
+          "format_examples": [
+            "10-year",
+            "5-year",
+            "30-year"
+          ],
+          "original_value": "10-year",
+          "validity_range": "Must be a positive duration in years. Non-integer values are allowed but the number of periods n = years times payments per year must come out as a positive number; very large values only make the discount factor small and do not break the formula."
+        },
+        {
+          "description": "the face value (par value) of the bond with currency unit",
+          "format_examples": [
+            "$1,000",
+            "$500",
+            "$10,000"
+          ],
+          "original_value": "$1,000",
+          "validity_range": "Must be a strictly positive monetary amount. A face value of zero would make the bond worthless as a claim and is outside the meaningful range."
+        },
+        {
+          "description": "the annual coupon rate of the bond as a percentage of face value",
+          "format_examples": [
+            "5%",
+            "3.25%",
+            "0%"
+          ],
+          "original_value": "5%",
+          "validity_range": "Must be a non-negative percentage. A value of 0% is valid and corresponds to a zero-coupon bond, where the coupon term vanishes. Values above roughly 100% are economically implausible but the formula still computes."
+        },
+        {
+          "description": "the frequency of coupon installments per year, as a payment schedule word",
+          "format_examples": [
+            "semiannual",
+            "quarterly",
+            "annual"
+          ],
+          "original_value": "semiannual",
+          "validity_range": "Must map to a positive integer number of payments per year: annual = 1, semiannual = 2, quarterly = 4, monthly = 12. Other integer frequencies are logically valid but uncommon."
+        },
+        {
+          "description": "the annual market yield (required return) on the bond as a percentage",
+          "format_examples": [
+            "6.2%",
+            "4%",
+            "8.75%"
+          ],
+          "original_value": "6.2%",
+          "validity_range": "Must be greater than -100% so that the periodic growth factor 1 + i is positive, which is required for the discounting formula to be defined. Practically it is a positive percentage; a yield equal to the coupon rate gives a par bond, a yield above the coupon rate gives a discount bond, and below gives a premium bond."
+        },
+        {
+          "description": "the compounding frequency of the market yield as a schedule word",
+          "format_examples": [
+            "semiannually",
+            "annually",
+            "quarterly"
+          ],
+          "original_value": "semiannually",
+          "validity_range": "Must map to a positive integer number of compounding periods per year: annually = 1, semiannually = 2, quarterly = 4, monthly = 12. It determines the periodic yield i = annual yield divided by this integer, and should normally match the coupon frequency so the periods align."
+        }
+      ],
+      "problem_id": "bond_price_semiannual"
+    },
+    {
+      "text": "A 10-year bond with a $1,000 face value pays a 5% annual coupon in semiannual installments. If the market yield is 6.2% (annual, compounded semiannually), what is the bond's price?",
+      "kind": "original",
+      "root_id": "compute_the_market_price_of_a_fixed_coup_1aa486",
+      "params": [
+        {
+          "description": "the time to maturity of the bond in years, with unit",
+          "format_examples": [
+            "10-year",
+            "5-year",
+            "30-year"
+          ],
+          "original_value": "10-year",
+          "validity_range": "Must be a positive duration in years. Non-integer values are allowed but the number of periods n = years times payments per year must come out as a positive number; very large values only make the discount factor small and do not break the formula."
+        },
+        {
+          "description": "the face value (par value) of the bond with currency unit",
+          "format_examples": [
+            "$1,000",
+            "$500",
+            "$10,000"
+          ],
+          "original_value": "$1,000",
+          "validity_range": "Must be a strictly positive monetary amount. A face value of zero would make the bond worthless as a claim and is outside the meaningful range."
+        },
+        {
+          "description": "the annual coupon rate of the bond as a percentage of face value",
+          "format_examples": [
+            "5%",
+            "3.25%",
+            "0%"
+          ],
+          "original_value": "5%",
+          "validity_range": "Must be a non-negative percentage. A value of 0% is valid and corresponds to a zero-coupon bond, where the coupon term vanishes. Values above roughly 100% are economically implausible but the formula still computes."
+        },
+        {
+          "description": "the frequency of coupon installments per year, as a payment schedule word",
+          "format_examples": [
+            "semiannual",
+            "quarterly",
+            "annual"
+          ],
+          "original_value": "semiannual",
+          "validity_range": "Must map to a positive integer number of payments per year: annual = 1, semiannual = 2, quarterly = 4, monthly = 12. Other integer frequencies are logically valid but uncommon."
+        },
+        {
+          "description": "the annual market yield (required return) on the bond as a percentage",
+          "format_examples": [
+            "6.2%",
+            "4%",
+            "8.75%"
+          ],
+          "original_value": "6.2%",
+          "validity_range": "Must be greater than -100% so that the periodic growth factor 1 + i is positive, which is required for the discounting formula to be defined. Practically it is a positive percentage; a yield equal to the coupon rate gives a par bond, a yield above the coupon rate gives a discount bond, and below gives a premium bond."
+        },
+        {
+          "description": "the compounding frequency of the market yield as a schedule word",
+          "format_examples": [
+            "semiannually",
+            "annually",
+            "quarterly"
+          ],
+          "original_value": "semiannually",
+          "validity_range": "Must map to a positive integer number of compounding periods per year: annually = 1, semiannually = 2, quarterly = 4, monthly = 12. It determines the periodic yield i = annual yield divided by this integer, and should normally match the coupon frequency so the periods align."
+        }
+      ],
+      "problem_id": "bond_price_semiannual"
+    }
+  ]
+}

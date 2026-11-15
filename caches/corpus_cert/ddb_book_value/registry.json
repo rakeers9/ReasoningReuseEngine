@@ -1,0 +1,196 @@
+{
+  "name": "ddb_book_value",
+  "functions": [
+    {
+      "id": "compute_the_double_declining_balance_dep_f7e502",
+      "description": "Compute the double-declining-balance depreciation rate per year from the useful life of an asset.",
+      "inputs": [
+        "the useful life of the asset in years"
+      ],
+      "outputs": [
+        "DDB depreciation rate per year"
+      ],
+      "aliases": [],
+      "origin": "builder:ddb_book_value"
+    },
+    {
+      "id": "compute_one_year_of_double_declining_bal_bbcef6",
+      "description": "Compute one year of double-declining-balance depreciation from the beginning book value and rate, limited so the ending book value never falls below salvage value.",
+      "inputs": [
+        "beginning-of-year book value",
+        "DDB depreciation rate per year",
+        "the salvage value of the asset (estimated residual value) with currency unit"
+      ],
+      "outputs": [
+        "depreciation charge for the year",
+        "ending book value for the year"
+      ],
+      "aliases": [],
+      "origin": "builder:ddb_book_value"
+    },
+    {
+      "id": "iterate_year_by_year_double_declining_ba_3627fe",
+      "description": "Iterate year-by-year double-declining-balance depreciation on the beginning book value up to the requested year, respecting the salvage floor.",
+      "inputs": [
+        "the original cost of the asset (basis) with currency unit",
+        "DDB depreciation rate per year",
+        "the salvage value of the asset (estimated residual value) with currency unit",
+        "the year at which the book value is requested (the target year, as a year number)"
+      ],
+      "outputs": [
+        "iterative book value at the end of the requested year"
+      ],
+      "aliases": [],
+      "origin": "builder:ddb_book_value"
+    },
+    {
+      "id": "verify_the_book_value_of_a_double_declin_98b577",
+      "description": "Verify the book value of a double-declining-balance depreciating asset at a requested year using the closed-form expression cost times one minus the rate raised to the year count, floored at salvage value.",
+      "inputs": [
+        "the original cost of the asset (basis) with currency unit",
+        "DDB depreciation rate per year",
+        "the salvage value of the asset (estimated residual value) with currency unit",
+        "the year at which the book value is requested (the target year, as a year number)"
+      ],
+      "outputs": [
+        "closed-form book value at the requested year"
+      ],
+      "aliases": [],
+      "origin": "builder:ddb_book_value"
+    },
+    {
+      "id": "determine_the_book_value_of_an_asset_at_386c1d",
+      "description": "Determine the book value of an asset at the end of a requested year under double-declining-balance depreciation with salvage value.",
+      "inputs": [
+        "the original cost of the asset (basis) with currency unit",
+        "the salvage value of the asset (estimated residual value) with currency unit",
+        "the useful life of the asset in years",
+        "the depreciation method to apply, which must be double-declining-balance depreciation",
+        "the year at which the book value is requested (the target year, as a year number)"
+      ],
+      "outputs": [
+        "book value at the end of the requested year"
+      ],
+      "aliases": [],
+      "origin": "builder:ddb_book_value"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "Equipment costs \u25cf1, has a salvage value of \u25cf2, and a useful life of \u25cf3. Using \u25cf4, what is its book value at the end of \u25cf5?",
+      "kind": "template",
+      "root_id": "determine_the_book_value_of_an_asset_at_386c1d",
+      "params": [
+        {
+          "description": "the original cost of the asset (basis) with currency unit",
+          "format_examples": [
+            "$80,000",
+            "$125,500.00",
+            "15000 dollars"
+          ],
+          "original_value": "$80,000",
+          "validity_range": "Positive real currency amount; must be strictly greater than the salvage value (\u25cf2), otherwise there is no depreciable base and the book value is trivially the cost."
+        },
+        {
+          "description": "the salvage value of the asset (estimated residual value) with currency unit",
+          "format_examples": [
+            "$8,000",
+            "$0",
+            "2500 dollars"
+          ],
+          "original_value": "$8,000",
+          "validity_range": "Non-negative currency amount, and strictly less than the original cost (\u25cf1); a salvage value of zero is allowed and simply removes the floor."
+        },
+        {
+          "description": "the useful life of the asset in years",
+          "format_examples": [
+            "6 years",
+            "10 years",
+            "5"
+          ],
+          "original_value": "6 years",
+          "validity_range": "Positive integer number of years, at least 2 so that the DDB rate 2/n does not exceed 1 (n=1 would imply a rate of 200%, which is meaningless beyond the salvage floor)."
+        },
+        {
+          "description": "the depreciation method to apply, which must be double-declining-balance depreciation",
+          "format_examples": [
+            "double-declining-balance depreciation",
+            "DDB",
+            "double declining balance method"
+          ],
+          "original_value": "double-declining-balance depreciation",
+          "validity_range": "Must denote the double-declining-balance method (rate equal to twice the straight-line rate 1/n applied to beginning book value); other methods such as straight-line or sum-of-years-digits require different calculations and are outside this template."
+        },
+        {
+          "description": "the year at which the book value is requested (the target year, as a year number)",
+          "format_examples": [
+            "year 3",
+            "the end of year 4",
+            "year 5"
+          ],
+          "original_value": "year 3",
+          "validity_range": "Non-negative integer year index, from 0 (cost itself, unchanged book value) up to the useful life (\u25cf3); beyond the useful life the asset is fully depreciated and the book value equals the salvage value."
+        }
+      ],
+      "problem_id": "ddb_book_value"
+    },
+    {
+      "text": "Equipment costs $80,000, has a salvage value of $8,000, and a useful life of 6 years. Using double-declining-balance depreciation, what is its book value at the end of year 3?",
+      "kind": "original",
+      "root_id": "determine_the_book_value_of_an_asset_at_386c1d",
+      "params": [
+        {
+          "description": "the original cost of the asset (basis) with currency unit",
+          "format_examples": [
+            "$80,000",
+            "$125,500.00",
+            "15000 dollars"
+          ],
+          "original_value": "$80,000",
+          "validity_range": "Positive real currency amount; must be strictly greater than the salvage value (\u25cf2), otherwise there is no depreciable base and the book value is trivially the cost."
+        },
+        {
+          "description": "the salvage value of the asset (estimated residual value) with currency unit",
+          "format_examples": [
+            "$8,000",
+            "$0",
+            "2500 dollars"
+          ],
+          "original_value": "$8,000",
+          "validity_range": "Non-negative currency amount, and strictly less than the original cost (\u25cf1); a salvage value of zero is allowed and simply removes the floor."
+        },
+        {
+          "description": "the useful life of the asset in years",
+          "format_examples": [
+            "6 years",
+            "10 years",
+            "5"
+          ],
+          "original_value": "6 years",
+          "validity_range": "Positive integer number of years, at least 2 so that the DDB rate 2/n does not exceed 1 (n=1 would imply a rate of 200%, which is meaningless beyond the salvage floor)."
+        },
+        {
+          "description": "the depreciation method to apply, which must be double-declining-balance depreciation",
+          "format_examples": [
+            "double-declining-balance depreciation",
+            "DDB",
+            "double declining balance method"
+          ],
+          "original_value": "double-declining-balance depreciation",
+          "validity_range": "Must denote the double-declining-balance method (rate equal to twice the straight-line rate 1/n applied to beginning book value); other methods such as straight-line or sum-of-years-digits require different calculations and are outside this template."
+        },
+        {
+          "description": "the year at which the book value is requested (the target year, as a year number)",
+          "format_examples": [
+            "year 3",
+            "the end of year 4",
+            "year 5"
+          ],
+          "original_value": "year 3",
+          "validity_range": "Non-negative integer year index, from 0 (cost itself, unchanged book value) up to the useful life (\u25cf3); beyond the useful life the asset is fully depreciated and the book value equals the salvage value."
+        }
+      ],
+      "problem_id": "ddb_book_value"
+    }
+  ]
+}

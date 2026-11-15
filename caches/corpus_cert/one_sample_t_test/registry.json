@@ -1,0 +1,217 @@
+{
+  "name": "one_sample_t_test",
+  "functions": [
+    {
+      "id": "compute_the_one_sample_t_statistic_degre_743380",
+      "description": "Compute the one-sample t statistic, degrees of freedom and standard error of the mean from the sample size, sample mean, sample standard deviation and hypothesized mean.",
+      "inputs": [
+        "the sample size n, the number of observations in the sample",
+        "the sample mean of the measured quantity with its unit",
+        "the sample standard deviation of the measured quantity with its unit",
+        "the hypothesized population mean under the null hypothesis, with its unit"
+      ],
+      "outputs": [
+        "the test statistic t",
+        "the degrees of freedom n-1",
+        "the standard error of the mean"
+      ],
+      "aliases": [],
+      "origin": "builder:one_sample_t_test"
+    },
+    {
+      "id": "look_up_the_two_tailed_critical_t_value_aa10ba",
+      "description": "Look up the two-tailed critical t value for a significance level and degrees of freedom.",
+      "inputs": [
+        "the significance level alpha for the two-tailed test",
+        "the degrees of freedom n-1"
+      ],
+      "outputs": [
+        "the two-tailed critical t value"
+      ],
+      "aliases": [],
+      "origin": "builder:one_sample_t_test"
+    },
+    {
+      "id": "compute_the_two_sided_p_value_of_a_t_sta_d107c9",
+      "description": "Compute the two-sided p-value of a t statistic with given degrees of freedom.",
+      "inputs": [
+        "the test statistic t",
+        "the degrees of freedom n-1"
+      ],
+      "outputs": [
+        "the two-sided p-value"
+      ],
+      "aliases": [],
+      "origin": "builder:one_sample_t_test"
+    },
+    {
+      "id": "decide_whether_to_reject_the_null_hypoth_6e8af7",
+      "description": "Decide whether to reject the null hypothesis by comparing the absolute test statistic with the two-tailed critical value.",
+      "inputs": [
+        "the test statistic t",
+        "the two-tailed critical t value"
+      ],
+      "outputs": [
+        "the reject or fail to reject decision"
+      ],
+      "aliases": [],
+      "origin": "builder:one_sample_t_test"
+    },
+    {
+      "id": "construct_a_confidence_interval_for_the_376f1b",
+      "description": "Construct a confidence interval for the population mean from the sample statistics and the two-tailed critical t value, and check whether the hypothesized mean lies inside it.",
+      "inputs": [
+        "the sample size n, the number of observations in the sample",
+        "the sample mean of the measured quantity with its unit",
+        "the sample standard deviation of the measured quantity with its unit",
+        "the hypothesized population mean under the null hypothesis, with its unit",
+        "the two-tailed critical t value"
+      ],
+      "outputs": [
+        "the confidence interval lower and upper bounds",
+        "the agreement between the interval and the test decision"
+      ],
+      "aliases": [],
+      "origin": "builder:one_sample_t_test"
+    },
+    {
+      "id": "test_whether_a_population_mean_differs_f_83f2ec",
+      "description": "Test whether a population mean differs from a hypothesized value at a given significance level and report the test statistic and conclusion.",
+      "inputs": [
+        "the sample size n, the number of observations in the sample",
+        "the sample mean of the measured quantity with its unit",
+        "the sample standard deviation of the measured quantity with its unit",
+        "the hypothesized population mean under the null hypothesis, with its unit",
+        "the significance level alpha for the two-tailed test"
+      ],
+      "outputs": [
+        "the test statistic t with degrees of freedom",
+        "the two-tailed critical values",
+        "the two-sided p-value",
+        "the reject or fail to reject decision",
+        "the confidence interval agreement check",
+        "the final reported conclusion about the mean"
+      ],
+      "aliases": [],
+      "origin": "builder:one_sample_t_test"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "A sample of \u25cf1 bolts has a mean length of \u25cf2 and a sample standard deviation of \u25cf3. At \u25cf5, test whether the true mean length differs from \u25cf4. Give the test statistic and your conclusion.",
+      "kind": "template",
+      "root_id": "test_whether_a_population_mean_differs_f_83f2ec",
+      "params": [
+        {
+          "description": "the sample size n, the number of observations in the sample",
+          "format_examples": [
+            "36",
+            "12",
+            "150"
+          ],
+          "original_value": "36",
+          "validity_range": "Must be an integer of at least 2, so that degrees of freedom n-1 is at least 1; larger n gives a more precise standard error, and very small n makes the t critical values large."
+        },
+        {
+          "description": "the sample mean of the measured quantity with its unit",
+          "format_examples": [
+            "50.4 mm",
+            "2.31 kg",
+            "-3.5 \u00b0C"
+          ],
+          "original_value": "50.4 mm",
+          "validity_range": "Any real number in the same unit as the hypothesized mean and the standard deviation; no sign restriction for a general measured quantity, but the unit must match the hypothesized mean."
+        },
+        {
+          "description": "the sample standard deviation of the measured quantity with its unit",
+          "format_examples": [
+            "1.2 mm",
+            "0.05 kg",
+            "4.0 \u00b0C"
+          ],
+          "original_value": "1.2 mm",
+          "validity_range": "Must be strictly positive (greater than 0); a zero standard deviation would make the t statistic undefined, and it must be expressed in the same unit as the sample mean."
+        },
+        {
+          "description": "the hypothesized population mean under the null hypothesis, with its unit",
+          "format_examples": [
+            "50 mm",
+            "10.0 kg",
+            "0 \u00b0C"
+          ],
+          "original_value": "50 mm",
+          "validity_range": "Any real number in the same unit as the sample mean; it is the value tested in the null hypothesis H0 that the true mean equals it."
+        },
+        {
+          "description": "the significance level alpha for the two-tailed test",
+          "format_examples": [
+            "\u03b1 = 0.05",
+            "alpha = 0.01",
+            "significance level 0.10"
+          ],
+          "original_value": "\u03b1 = 0.05",
+          "validity_range": "Must lie strictly between 0 and 1; conventional values are 0.01, 0.05 and 0.10, and smaller alpha gives larger critical values and a stricter rejection rule."
+        }
+      ],
+      "problem_id": "one_sample_t_test"
+    },
+    {
+      "text": "A sample of 36 bolts has a mean length of 50.4 mm and a sample standard deviation of 1.2 mm. At \u03b1 = 0.05, test whether the true mean length differs from 50 mm. Give the test statistic and your conclusion.",
+      "kind": "original",
+      "root_id": "test_whether_a_population_mean_differs_f_83f2ec",
+      "params": [
+        {
+          "description": "the sample size n, the number of observations in the sample",
+          "format_examples": [
+            "36",
+            "12",
+            "150"
+          ],
+          "original_value": "36",
+          "validity_range": "Must be an integer of at least 2, so that degrees of freedom n-1 is at least 1; larger n gives a more precise standard error, and very small n makes the t critical values large."
+        },
+        {
+          "description": "the sample mean of the measured quantity with its unit",
+          "format_examples": [
+            "50.4 mm",
+            "2.31 kg",
+            "-3.5 \u00b0C"
+          ],
+          "original_value": "50.4 mm",
+          "validity_range": "Any real number in the same unit as the hypothesized mean and the standard deviation; no sign restriction for a general measured quantity, but the unit must match the hypothesized mean."
+        },
+        {
+          "description": "the sample standard deviation of the measured quantity with its unit",
+          "format_examples": [
+            "1.2 mm",
+            "0.05 kg",
+            "4.0 \u00b0C"
+          ],
+          "original_value": "1.2 mm",
+          "validity_range": "Must be strictly positive (greater than 0); a zero standard deviation would make the t statistic undefined, and it must be expressed in the same unit as the sample mean."
+        },
+        {
+          "description": "the hypothesized population mean under the null hypothesis, with its unit",
+          "format_examples": [
+            "50 mm",
+            "10.0 kg",
+            "0 \u00b0C"
+          ],
+          "original_value": "50 mm",
+          "validity_range": "Any real number in the same unit as the sample mean; it is the value tested in the null hypothesis H0 that the true mean equals it."
+        },
+        {
+          "description": "the significance level alpha for the two-tailed test",
+          "format_examples": [
+            "\u03b1 = 0.05",
+            "alpha = 0.01",
+            "significance level 0.10"
+          ],
+          "original_value": "\u03b1 = 0.05",
+          "validity_range": "Must lie strictly between 0 and 1; conventional values are 0.01, 0.05 and 0.10, and smaller alpha gives larger critical values and a stricter rejection rule."
+        }
+      ],
+      "problem_id": "one_sample_t_test"
+    }
+  ]
+}

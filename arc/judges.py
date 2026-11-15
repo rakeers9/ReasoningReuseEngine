@@ -13,10 +13,14 @@ class Verdict(BaseModel):
     critique: str
 
 
-def judge(prompt: str, role: str = "judge", tag: str | None = None) -> Verdict:
-    system = ("You are a meticulous verifier. Judge only what you are asked. Treat answers as "
-              "equivalent when they agree up to rounding and unit conversion. Keep the critique "
-              "short and specific.")
+DEFAULT_SYSTEM = ("You are a meticulous verifier. Judge only what you are asked. Treat answers as "
+                  "equivalent when they agree up to rounding and unit conversion. Keep the critique "
+                  "short and specific.")
+
+
+def judge(prompt: str, role: str = "judge", tag: str | None = None, system: str | None = None) -> Verdict:
+    """system=None keeps the paper path's judge instructions byte for byte."""
+    system = system or DEFAULT_SYSTEM
     return llm.call(role, prompt, model=config.JUDGE_MODEL, system=system, schema=Verdict,
                     effort=config.JUDGE_EFFORT, max_tokens=8000, tag=tag).parsed
 

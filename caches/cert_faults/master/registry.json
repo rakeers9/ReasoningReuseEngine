@@ -1,0 +1,205 @@
+{
+  "name": "master",
+  "functions": [
+    {
+      "id": "validate_the_amount_species_volume_and_t_3189c0",
+      "description": "Validate the amount, species, volume and temperature against the perfect gas validity ranges",
+      "inputs": [
+        "the amount of substance of the gas in mol",
+        "the chemical species of the gas with its physical state",
+        "the volume of the container holding the gas with unit",
+        "the temperature of the gas with unit"
+      ],
+      "outputs": [
+        "inputs are valid for the perfect gas model",
+        "validation message"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law_clean"
+    },
+    {
+      "id": "convert_a_temperature_given_in_degrees_c_62fa39",
+      "description": "Convert a temperature given in degrees Celsius or kelvin to thermodynamic temperature in kelvin",
+      "inputs": [
+        "the temperature of the gas with unit"
+      ],
+      "outputs": [
+        "temperature in K"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law_clean"
+    },
+    {
+      "id": "convert_a_volume_with_unit_to_si_volume_66f105",
+      "description": "Convert a volume with unit to SI volume in cubic metres",
+      "inputs": [
+        "the volume of the container holding the gas with unit"
+      ],
+      "outputs": [
+        "volume in m3",
+        "volume in L"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law_clean"
+    },
+    {
+      "id": "compute_the_perfect_gas_pressure_p_nrt_v_69ce04",
+      "description": "Compute the perfect gas pressure p = nRT/V in SI units from the amount, temperature and volume.",
+      "inputs": [
+        "the amount of substance of the gas in mol",
+        "temperature in K",
+        "volume in m3"
+      ],
+      "outputs": [
+        "pressure in Pa"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law_clean"
+    },
+    {
+      "id": "convert_a_pressure_in_pascals_to_atmosph_537e94",
+      "description": "Convert a pressure in pascals to atmospheres and megapascals for reporting",
+      "inputs": [
+        "pressure in Pa"
+      ],
+      "outputs": [
+        "pressure in atm",
+        "pressure in MPa"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law_clean"
+    },
+    {
+      "id": "cross_check_a_perfect_gas_pressure_by_re_f88d45",
+      "description": "Cross-check a perfect gas pressure by recomputing it with the gas constant in L atm K-1 mol-1.",
+      "inputs": [
+        "the amount of substance of the gas in mol",
+        "temperature in K",
+        "the volume of the container holding the gas with unit",
+        "pressure in Pa"
+      ],
+      "outputs": [
+        "cross-checked pressure in atm",
+        "agreement of the two pressure computations"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law_clean"
+    },
+    {
+      "id": "predict_the_pressure_exerted_by_a_perfec_a92f97",
+      "description": "Predict the pressure exerted by a perfect gas from its amount, species, volume and temperature.",
+      "inputs": [
+        "the amount of substance of the gas in mol",
+        "the chemical species of the gas with its physical state",
+        "the volume of the container holding the gas with unit",
+        "the temperature of the gas with unit"
+      ],
+      "outputs": [
+        "pressure of the gas in MPa",
+        "pressure of the gas in Pa",
+        "pressure of the gas in atm",
+        "cross-check agreement"
+      ],
+      "aliases": [],
+      "origin": "builder:gas_law_clean"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "Suppose that \u25cf1 \u25cf2 is confined to \u25cf3 at \u25cf4. Predict the pressure exerted by the ethane from the perfect gas.",
+      "kind": "template",
+      "root_id": "predict_the_pressure_exerted_by_a_perfec_a92f97",
+      "params": [
+        {
+          "description": "the amount of substance of the gas in mol",
+          "format_examples": [
+            "10.0 mol",
+            "2.5 mol",
+            "0.750 mol"
+          ],
+          "original_value": "10.0 mol",
+          "validity_range": "Must be a positive finite number (n > 0). Zero moles gives zero pressure; negative or non-physical amounts are invalid. No upper bound is imposed by the equation itself, but the perfect gas result is only physically realistic when the implied pressure stays low enough for ideal behaviour."
+        },
+        {
+          "description": "the chemical species of the gas with its physical state",
+          "format_examples": [
+            "C2H6(g)",
+            "CH4(g)",
+            "N2(g)"
+          ],
+          "original_value": "C2H6(g)",
+          "validity_range": "Must name a substance that is a gas at the given temperature and pressure. The perfect gas law applies only in the gas phase, so the species must not condense at the stated conditions. Ethane is gaseous at 300 K, but its critical temperature (about 305 K) lies close to this temperature, so high-pressure results are approximate."
+        },
+        {
+          "description": "the volume of the container holding the gas with unit",
+          "format_examples": [
+            "4.860 dm3",
+            "250 cm3",
+            "0.500 m3"
+          ],
+          "original_value": "4.860 dm3",
+          "validity_range": "Must be a positive finite volume (V > 0) with a unit convertible to m3. Zero or negative volume is physically impossible and would make the pressure undefined or negative."
+        },
+        {
+          "description": "the temperature of the gas with unit",
+          "format_examples": [
+            "27\u00b0C",
+            "298.15 K",
+            "-10 \u00b0C"
+          ],
+          "original_value": "27\u00b0C",
+          "validity_range": "Must be a thermodynamic temperature strictly above absolute zero, i.e. above 0 K or -273.15 \u00b0C. Temperatures at or below 0 K are invalid. The gas must also be above its condensation point for the gas-phase assumption to hold."
+        }
+      ],
+      "problem_id": "gas_law_clean"
+    },
+    {
+      "text": "Suppose that 10.0 mol C2H6(g) is confined to 4.860 dm3 at 27\u00b0C. Predict the pressure exerted by the ethane from the perfect gas.",
+      "kind": "original",
+      "root_id": "predict_the_pressure_exerted_by_a_perfec_a92f97",
+      "params": [
+        {
+          "description": "the amount of substance of the gas in mol",
+          "format_examples": [
+            "10.0 mol",
+            "2.5 mol",
+            "0.750 mol"
+          ],
+          "original_value": "10.0 mol",
+          "validity_range": "Must be a positive finite number (n > 0). Zero moles gives zero pressure; negative or non-physical amounts are invalid. No upper bound is imposed by the equation itself, but the perfect gas result is only physically realistic when the implied pressure stays low enough for ideal behaviour."
+        },
+        {
+          "description": "the chemical species of the gas with its physical state",
+          "format_examples": [
+            "C2H6(g)",
+            "CH4(g)",
+            "N2(g)"
+          ],
+          "original_value": "C2H6(g)",
+          "validity_range": "Must name a substance that is a gas at the given temperature and pressure. The perfect gas law applies only in the gas phase, so the species must not condense at the stated conditions. Ethane is gaseous at 300 K, but its critical temperature (about 305 K) lies close to this temperature, so high-pressure results are approximate."
+        },
+        {
+          "description": "the volume of the container holding the gas with unit",
+          "format_examples": [
+            "4.860 dm3",
+            "250 cm3",
+            "0.500 m3"
+          ],
+          "original_value": "4.860 dm3",
+          "validity_range": "Must be a positive finite volume (V > 0) with a unit convertible to m3. Zero or negative volume is physically impossible and would make the pressure undefined or negative."
+        },
+        {
+          "description": "the temperature of the gas with unit",
+          "format_examples": [
+            "27\u00b0C",
+            "298.15 K",
+            "-10 \u00b0C"
+          ],
+          "original_value": "27\u00b0C",
+          "validity_range": "Must be a thermodynamic temperature strictly above absolute zero, i.e. above 0 K or -273.15 \u00b0C. Temperatures at or below 0 K are invalid. The gas must also be above its condensation point for the gas-phase assumption to hold."
+        }
+      ],
+      "problem_id": "gas_law_clean"
+    }
+  ]
+}

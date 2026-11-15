@@ -1,0 +1,238 @@
+{
+  "name": "hardy_weinberg_carriers",
+  "functions": [
+    {
+      "id": "compute_the_recessive_phenotype_frequenc_204ff1",
+      "description": "Compute the recessive phenotype frequency q squared as the affected count divided by the total population size",
+      "inputs": [
+        "the total population size N (count of individuals in the population)",
+        "the number of individuals showing the recessive phenotype (homozygous recessive count) with the condition"
+      ],
+      "outputs": [
+        "recessive phenotype frequency q squared"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "compute_the_recessive_allele_frequency_q_1e7610",
+      "description": "Compute the recessive allele frequency q as the square root of the recessive phenotype frequency.",
+      "inputs": [
+        "recessive phenotype frequency q squared"
+      ],
+      "outputs": [
+        "recessive allele frequency q"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "compute_the_dominant_allele_frequency_p_6877e0",
+      "description": "Compute the dominant allele frequency p as one minus the recessive allele frequency",
+      "inputs": [
+        "recessive allele frequency q"
+      ],
+      "outputs": [
+        "dominant allele frequency p"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "compute_the_heterozygote_carrier_genotyp_79e1b2",
+      "description": "Compute the heterozygote carrier genotype frequency 2pq from allele frequencies p and q",
+      "inputs": [
+        "dominant allele frequency p",
+        "recessive allele frequency q"
+      ],
+      "outputs": [
+        "carrier genotype frequency 2pq"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "convert_a_genotype_frequency_into_an_exp_8adba0",
+      "description": "Convert a genotype frequency into an expected number of individuals by multiplying by the total population size.",
+      "inputs": [
+        "carrier genotype frequency 2pq",
+        "the total population size N (count of individuals in the population)"
+      ],
+      "outputs": [
+        "expected number of heterozygous carriers"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "verify_an_expected_carrier_count_by_rece_75dc22",
+      "description": "Verify an expected carrier count by recessive allele accounting: total recessive alleles 2Nq minus two per affected individual.",
+      "inputs": [
+        "the total population size N (count of individuals in the population)",
+        "recessive allele frequency q",
+        "the number of individuals showing the recessive phenotype (homozygous recessive count) with the condition",
+        "expected number of heterozygous carriers"
+      ],
+      "outputs": [
+        "allele accounting check result"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "express_a_count_as_a_percentage_of_the_t_7a1b99",
+      "description": "Express a count as a percentage of the total population size.",
+      "inputs": [
+        "expected number of heterozygous carriers",
+        "the total population size N (count of individuals in the population)"
+      ],
+      "outputs": [
+        "carrier percentage of population"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "validate_that_the_recessive_hardy_weinbe_e73216",
+      "description": "Validate that the recessive Hardy-Weinberg carrier estimate applies to the given population size, affected count, and inheritance mode.",
+      "inputs": [
+        "the total population size N (count of individuals in the population)",
+        "the number of individuals showing the recessive phenotype (homozygous recessive count) with the condition",
+        "the inheritance mode of the condition (must be recessive for carrier counting)"
+      ],
+      "outputs": [
+        "inputs are valid for carrier estimation"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "estimate_the_expected_number_of_heterozy_283ccb",
+      "description": "Estimate the expected number of heterozygous carriers and the carrier frequency from the affected count and population size under Hardy-Weinberg equilibrium.",
+      "inputs": [
+        "the total population size N (count of individuals in the population)",
+        "the number of individuals showing the recessive phenotype (homozygous recessive count) with the condition"
+      ],
+      "outputs": [
+        "expected number of heterozygous carriers",
+        "carrier genotype frequency 2pq"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "estimate_the_expected_number_of_heterozy_e9383a",
+      "description": "Estimate the expected number of heterozygous carriers of a recessive condition in a Hardy-Weinberg population and express them as a percentage of the population.",
+      "inputs": [
+        "the total population size N (count of individuals in the population)",
+        "the number of individuals showing the recessive phenotype (homozygous recessive count) with the condition",
+        "the name of the genetic condition or trait",
+        "the inheritance mode of the condition (must be recessive for carrier counting)"
+      ],
+      "outputs": [
+        "expected number of heterozygous carriers",
+        "carrier percentage of population"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "In a population of \u25cf1 people, \u25cf2 have \u25cf3, a \u25cf4 condition. Assuming Hardy-Weinberg equilibrium, how many people are expected to be carriers?",
+      "kind": "template",
+      "root_id": "estimate_the_expected_number_of_heterozy_e9383a",
+      "params": [
+        {
+          "description": "the total population size N (count of individuals in the population)",
+          "format_examples": [
+            "2,500",
+            "10000 people",
+            "a population of 750"
+          ],
+          "original_value": "2,500",
+          "validity_range": "Must be a positive integer (N \u2265 1) and at least as large as the affected count in \u25cf2. Very small N gives coarse frequency estimates but is still valid."
+        },
+        {
+          "description": "the number of individuals showing the recessive phenotype (homozygous recessive count) with the condition",
+          "format_examples": [
+            "196",
+            "12 affected",
+            "4,000 individuals"
+          ],
+          "original_value": "196",
+          "validity_range": "Must be a non-negative integer no greater than the total population size in \u25cf1. Zero affected gives q = 0 and no carriers; a count equal to N is impossible for a recessive trait in equilibrium with carriers."
+        },
+        {
+          "description": "the name of the genetic condition or trait",
+          "format_examples": [
+            "cystic fibrosis",
+            "phenylketonuria",
+            "albinism"
+          ],
+          "original_value": "cystic fibrosis",
+          "validity_range": "Any non-empty name of a trait; it is a label only and does not change the calculation."
+        },
+        {
+          "description": "the inheritance mode of the condition (must be recessive for carrier counting)",
+          "format_examples": [
+            "recessive",
+            "autosomal recessive",
+            "recessive X-linked"
+          ],
+          "original_value": "recessive",
+          "validity_range": "Only a recessive mode is valid for this method. Dominant inheritance has no heterozygous carriers defined this way, so the calculation does not apply to it. Autosomal recessive is the standard case assumed by the 2pq formula."
+        }
+      ],
+      "problem_id": "hardy_weinberg_carriers"
+    },
+    {
+      "text": "In a population of 2,500 people, 196 have cystic fibrosis, a recessive condition. Assuming Hardy-Weinberg equilibrium, how many people are expected to be carriers?",
+      "kind": "original",
+      "root_id": "estimate_the_expected_number_of_heterozy_e9383a",
+      "params": [
+        {
+          "description": "the total population size N (count of individuals in the population)",
+          "format_examples": [
+            "2,500",
+            "10000 people",
+            "a population of 750"
+          ],
+          "original_value": "2,500",
+          "validity_range": "Must be a positive integer (N \u2265 1) and at least as large as the affected count in \u25cf2. Very small N gives coarse frequency estimates but is still valid."
+        },
+        {
+          "description": "the number of individuals showing the recessive phenotype (homozygous recessive count) with the condition",
+          "format_examples": [
+            "196",
+            "12 affected",
+            "4,000 individuals"
+          ],
+          "original_value": "196",
+          "validity_range": "Must be a non-negative integer no greater than the total population size in \u25cf1. Zero affected gives q = 0 and no carriers; a count equal to N is impossible for a recessive trait in equilibrium with carriers."
+        },
+        {
+          "description": "the name of the genetic condition or trait",
+          "format_examples": [
+            "cystic fibrosis",
+            "phenylketonuria",
+            "albinism"
+          ],
+          "original_value": "cystic fibrosis",
+          "validity_range": "Any non-empty name of a trait; it is a label only and does not change the calculation."
+        },
+        {
+          "description": "the inheritance mode of the condition (must be recessive for carrier counting)",
+          "format_examples": [
+            "recessive",
+            "autosomal recessive",
+            "recessive X-linked"
+          ],
+          "original_value": "recessive",
+          "validity_range": "Only a recessive mode is valid for this method. Dominant inheritance has no heterozygous carriers defined this way, so the calculation does not apply to it. Autosomal recessive is the standard case assumed by the 2pq formula."
+        }
+      ],
+      "problem_id": "hardy_weinberg_carriers"
+    }
+  ]
+}

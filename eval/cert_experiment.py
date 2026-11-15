@@ -59,7 +59,7 @@ def run_one(problem: dict, profile: str, namespace: str, transcript_override: di
     from arc.builder import Builder, BuildError
 
     pid = problem["id"]
-    t0 = time.time()
+    t0, spent_before = time.time(), llm.LEDGER.cost()   # workers are reused across jobs
     row: dict = {"problem": pid}
     folder = config.problem_dir(pid)
     try:
@@ -101,7 +101,7 @@ def run_one(problem: dict, profile: str, namespace: str, transcript_override: di
                                          f"{pid}:diag:fresh")
     except Exception as e:  # one broken problem must not stop the batch
         row.update(accepted=False, reason=f"error: {type(e).__name__}: {e}"[:300])
-    row["cost"] = llm.LEDGER.cost()
+    row["cost"] = llm.LEDGER.cost() - spent_before
     row["seconds"] = round(time.time() - t0)
     return row
 
@@ -147,12 +147,21 @@ def main() -> None:
     if args.only:
         jobs = [j for j in jobs if j[0]["id"] in args.only.split(",")]
 
-    rows = []
+    _setup(args.profile, namespace)
+    from arc import config as _cfg
+    done_path = _cfg.WORK_DIR / f"cert_experiment_{args.set}.rows.jsonl"
+    done_path.parent.mkdir(parents=True, exist_ok=True)
+    rows = [json.loads(l) for l in done_path.read_text().splitlines()] if done_path.exists() else []
+    done = {r["problem"] for r in rows}
+    jobs = [j for j in jobs if j[0]["id"] not in done]
+    print(f"{len(done)} already done, {len(jobs)} to run", flush=True)
     with ProcessPoolExecutor(max_workers=args.workers) as pool:
         futs = {pool.submit(run_one, p, args.profile, namespace, t): p["id"] for p, t in jobs}
         for f in as_completed(futs):
             r = f.result()
             rows.append(r)
+            with open(done_path, "a") as fh:
+                fh.write(json.dumps(r, default=str) + "\n")
             print(f"{r['problem']:34s} built={r.get('built')!s:5s} accepted={r.get('accepted')!s:5s} "
                   f"transcript_ok={r.get('transcript_correct')!s:5s} cache_ok={r.get('cache_correct')!s:5s} "
                   f"${r['cost']:.4f} {r['seconds']}s  {r.get('reason', '')[:70]}", flush=True)

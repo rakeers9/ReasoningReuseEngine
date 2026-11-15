@@ -1,0 +1,200 @@
+{
+  "name": "upc_intestate_spouse_share",
+  "functions": [
+    {
+      "id": "classify_the_intestate_heir_configuratio_fae004",
+      "description": "Classify the intestate heir configuration by counting the surviving descendants and checking whether each descendant is also a child of the surviving spouse.",
+      "inputs": [
+        "The surviving spouse of the decedent, with relationship to the decedent",
+        "The surviving descendants of the decedent, with count and whether each is also a child of the surviving spouse"
+      ],
+      "outputs": [
+        "Heir configuration case label stating whether all surviving descendants are also the spouse's children or some are not",
+        "Number of surviving descendants of the decedent"
+      ],
+      "aliases": [],
+      "origin": "builder:upc_intestate_spouse_share"
+    },
+    {
+      "id": "look_up_the_spouse_s_base_dollar_amount_29b3b8",
+      "description": "Look up the spouse's base dollar amount and balance fraction for an intestate heir configuration under a named UPC edition.",
+      "inputs": [
+        "The intestacy statute edition and its base dollar amounts, i.e. the Uniform Probate Code version in force",
+        "Heir configuration case label stating whether all surviving descendants are also the spouse's children or some are not"
+      ],
+      "outputs": [
+        "Base dollar amount the spouse takes first, in dollars",
+        "Fraction of the balance of the estate after the base amount that passes to the spouse"
+      ],
+      "aliases": [],
+      "origin": "builder:upc_intestate_spouse_share"
+    },
+    {
+      "id": "compute_the_surviving_spouse_s_intestate_611565",
+      "description": "Compute the surviving spouse's intestate share as the base dollar amount plus a fraction of the estate balance remaining after the base amount, capped at the whole estate.",
+      "inputs": [
+        "The value of the decedent's net intestate estate in dollars, with currency unit",
+        "Base dollar amount the spouse takes first, in dollars",
+        "Fraction of the balance of the estate after the base amount that passes to the spouse"
+      ],
+      "outputs": [
+        "Balance of the estate after the base amount in dollars",
+        "Spouse's share of the balance in dollars",
+        "Total intestate inheritance of the spouse in dollars"
+      ],
+      "aliases": [],
+      "origin": "builder:upc_intestate_spouse_share"
+    },
+    {
+      "id": "split_the_estate_remaining_after_the_spo_89ccda",
+      "description": "Split the estate remaining after the spouse share equally among the surviving descendants and verify that the spouse share and the descendants shares sum to the full estate.",
+      "inputs": [
+        "The value of the decedent's net intestate estate in dollars, with currency unit",
+        "Total intestate inheritance of the spouse in dollars",
+        "Number of surviving descendants of the decedent"
+      ],
+      "outputs": [
+        "Amount passing to each surviving descendant in dollars",
+        "Total passing to the surviving descendants in dollars",
+        "Check that the spouse's share and descendants' shares equal the full estate"
+      ],
+      "aliases": [],
+      "origin": "builder:upc_intestate_spouse_share"
+    },
+    {
+      "id": "compute_the_surviving_spouse_s_intestate_28b271",
+      "description": "Compute the surviving spouse's intestate inheritance under a named probate code intestacy edition with base dollar amounts, narrating each step.",
+      "inputs": [
+        "The intestacy statute edition and its base dollar amounts, i.e. the Uniform Probate Code version in force",
+        "The value of the decedent's net intestate estate in dollars, with currency unit",
+        "The surviving spouse of the decedent, with relationship to the decedent",
+        "The surviving descendants of the decedent, with count and whether each is also a child of the surviving spouse",
+        "The heir whose inheritance is being asked for, identified as the surviving spouse"
+      ],
+      "outputs": [
+        "Amount inherited by the surviving spouse in dollars",
+        "Explanation of how the spouse inheritance was found, including the edition used"
+      ],
+      "aliases": [],
+      "origin": "builder:upc_intestate_spouse_share"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "Under \u25cf1, a man dies without a will, leaving an estate of \u25cf2. He is survived by \u25cf3 and \u25cf4. How much does \u25cf5 inherit?",
+      "kind": "template",
+      "root_id": "compute_the_surviving_spouse_s_intestate_28b271",
+      "params": [
+        {
+          "description": "The intestacy statute edition and its base dollar amounts, i.e. the Uniform Probate Code version in force",
+          "format_examples": [
+            "the Uniform Probate Code (using its base dollar amounts)",
+            "the Uniform Probate Code (1990 text with base amounts)",
+            "the Uniform Probate Code (current revision without base amounts)"
+          ],
+          "original_value": "the Uniform Probate Code (using its base dollar amounts)",
+          "validity_range": "Must be a UPC edition whose spouse rule uses a base dollar amount, since the base amount drives the formula. Editions without a base amount give a different rule and would move the problem to another class. Only applies when the decedent died intestate."
+        },
+        {
+          "description": "The value of the decedent's net intestate estate in dollars, with currency unit",
+          "format_examples": [
+            "$900,000",
+            "$150,000",
+            "$2,500,000"
+          ],
+          "original_value": "$900,000",
+          "validity_range": "Must be a nonnegative dollar amount. If it is below the base amount the spouse takes the whole estate. If it is zero the spouse receives nothing from the estate."
+        },
+        {
+          "description": "The surviving spouse of the decedent, with relationship to the decedent",
+          "format_examples": [
+            "his wife",
+            "her husband",
+            "his wife of many years"
+          ],
+          "original_value": "his wife",
+          "validity_range": "Exactly one surviving spouse must be present for this rule. If no spouse survives, the spouse share does not apply and the estate passes to descendants or other kindred instead."
+        },
+        {
+          "description": "The surviving descendants of the decedent, with count and whether each is also a child of the surviving spouse",
+          "format_examples": [
+            "two children from a prior marriage who are not her children",
+            "three children who are all her children",
+            "one son from a prior marriage and one daughter shared with his wife"
+          ],
+          "original_value": "two children from a prior marriage who are not her children",
+          "validity_range": "Count must be a nonnegative integer. Zero descendants moves the rule to parents or other kindred. The case depends on whether all descendants are also the spouse's children: if all are, the spouse takes the whole or a larger share; if some are not, the base-amount rule applies."
+        },
+        {
+          "description": "The heir whose inheritance is being asked for, identified as the surviving spouse",
+          "format_examples": [
+            "the wife",
+            "the husband",
+            "the surviving spouse"
+          ],
+          "original_value": "the wife",
+          "validity_range": "Must refer to the surviving spouse named in the problem. Asking for a descendant's share instead requires computing the remainder after the spouse share, which is a different output of the same class."
+        }
+      ],
+      "problem_id": "upc_intestate_spouse_share"
+    },
+    {
+      "text": "Under the Uniform Probate Code (using its base dollar amounts), a man dies without a will, leaving an estate of $900,000. He is survived by his wife and two children from a prior marriage who are not her children. How much does the wife inherit?",
+      "kind": "original",
+      "root_id": "compute_the_surviving_spouse_s_intestate_28b271",
+      "params": [
+        {
+          "description": "The intestacy statute edition and its base dollar amounts, i.e. the Uniform Probate Code version in force",
+          "format_examples": [
+            "the Uniform Probate Code (using its base dollar amounts)",
+            "the Uniform Probate Code (1990 text with base amounts)",
+            "the Uniform Probate Code (current revision without base amounts)"
+          ],
+          "original_value": "the Uniform Probate Code (using its base dollar amounts)",
+          "validity_range": "Must be a UPC edition whose spouse rule uses a base dollar amount, since the base amount drives the formula. Editions without a base amount give a different rule and would move the problem to another class. Only applies when the decedent died intestate."
+        },
+        {
+          "description": "The value of the decedent's net intestate estate in dollars, with currency unit",
+          "format_examples": [
+            "$900,000",
+            "$150,000",
+            "$2,500,000"
+          ],
+          "original_value": "$900,000",
+          "validity_range": "Must be a nonnegative dollar amount. If it is below the base amount the spouse takes the whole estate. If it is zero the spouse receives nothing from the estate."
+        },
+        {
+          "description": "The surviving spouse of the decedent, with relationship to the decedent",
+          "format_examples": [
+            "his wife",
+            "her husband",
+            "his wife of many years"
+          ],
+          "original_value": "his wife",
+          "validity_range": "Exactly one surviving spouse must be present for this rule. If no spouse survives, the spouse share does not apply and the estate passes to descendants or other kindred instead."
+        },
+        {
+          "description": "The surviving descendants of the decedent, with count and whether each is also a child of the surviving spouse",
+          "format_examples": [
+            "two children from a prior marriage who are not her children",
+            "three children who are all her children",
+            "one son from a prior marriage and one daughter shared with his wife"
+          ],
+          "original_value": "two children from a prior marriage who are not her children",
+          "validity_range": "Count must be a nonnegative integer. Zero descendants moves the rule to parents or other kindred. The case depends on whether all descendants are also the spouse's children: if all are, the spouse takes the whole or a larger share; if some are not, the base-amount rule applies."
+        },
+        {
+          "description": "The heir whose inheritance is being asked for, identified as the surviving spouse",
+          "format_examples": [
+            "the wife",
+            "the husband",
+            "the surviving spouse"
+          ],
+          "original_value": "the wife",
+          "validity_range": "Must refer to the surviving spouse named in the problem. Asking for a descendant's share instead requires computing the remainder after the spouse share, which is a different output of the same class."
+        }
+      ],
+      "problem_id": "upc_intestate_spouse_share"
+    }
+  ]
+}

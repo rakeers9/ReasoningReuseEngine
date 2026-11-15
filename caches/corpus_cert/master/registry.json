@@ -1,0 +1,1898 @@
+{
+  "name": "master",
+  "functions": [
+    {
+      "id": "convert_the_prevalence_sensitivity_and_s_f7c8cf",
+      "description": "Convert the prevalence, sensitivity, and specificity percentages into probabilities between 0 and 1",
+      "inputs": [
+        "the prevalence of the disease in the population as a percentage with unit (the fraction of the population that has the disease)",
+        "the sensitivity of the test as a percentage with unit (the probability that a person with the disease tests positive)",
+        "the specificity of the test as a percentage with unit (the probability that a person without the disease tests negative)"
+      ],
+      "outputs": [
+        "prevalence probability P(D)",
+        "sensitivity P(+|D)",
+        "specificity P(-|D')"
+      ],
+      "aliases": [],
+      "origin": "builder:bayes_ppv"
+    },
+    {
+      "id": "derive_the_probability_of_not_having_the_18fc8c",
+      "description": "Derive the probability of not having the disease and the false-positive rate from prevalence and specificity.",
+      "inputs": [
+        "prevalence probability P(D)",
+        "specificity P(-|D')"
+      ],
+      "outputs": [
+        "probability of not having the disease P(D')",
+        "false-positive rate P(+|D')"
+      ],
+      "aliases": [],
+      "origin": "builder:bayes_ppv"
+    },
+    {
+      "id": "compute_the_total_probability_of_a_posit_18c872",
+      "description": "Compute the total probability of a positive test by the law of total probability over disease and non-disease groups",
+      "inputs": [
+        "sensitivity P(+|D)",
+        "prevalence probability P(D)",
+        "probability of not having the disease P(D')",
+        "false-positive rate P(+|D')"
+      ],
+      "outputs": [
+        "total probability of a positive test P(+)"
+      ],
+      "aliases": [],
+      "origin": "builder:bayes_ppv"
+    },
+    {
+      "id": "apply_bayes_theorem_to_obtain_the_probab_f4c0c4",
+      "description": "Apply Bayes' theorem to obtain the probability of disease given a positive test from sensitivity, prevalence, and total positive probability",
+      "inputs": [
+        "sensitivity P(+|D)",
+        "prevalence probability P(D)",
+        "total probability of a positive test P(+)"
+      ],
+      "outputs": [
+        "posterior probability of disease given a positive test P(D|+)"
+      ],
+      "aliases": [],
+      "origin": "builder:bayes_ppv"
+    },
+    {
+      "id": "verify_a_posterior_probability_by_counti_250b96",
+      "description": "Verify a posterior probability by counting expected true and false positives in a hypothetical population of fixed size.",
+      "inputs": [
+        "prevalence probability P(D)",
+        "sensitivity P(+|D)",
+        "false-positive rate P(+|D')",
+        "posterior probability of disease given a positive test P(D|+)"
+      ],
+      "outputs": [
+        "fraction of positive results that are true positives"
+      ],
+      "aliases": [],
+      "origin": "builder:bayes_ppv"
+    },
+    {
+      "id": "compute_the_posterior_probability_of_dis_607706",
+      "description": "Compute the posterior probability of disease given a positive test from prevalence, sensitivity, and specificity percentages.",
+      "inputs": [
+        "the prevalence of the disease in the population as a percentage with unit (the fraction of the population that has the disease)",
+        "the sensitivity of the test as a percentage with unit (the probability that a person with the disease tests positive)",
+        "the specificity of the test as a percentage with unit (the probability that a person without the disease tests negative)"
+      ],
+      "outputs": [
+        "posterior probability of disease given a positive test with base-rate interpretation"
+      ],
+      "aliases": [],
+      "origin": "builder:bayes_ppv"
+    },
+    {
+      "id": "compute_the_pka_of_a_weak_acid_from_its_06ba09",
+      "description": "Compute the pKa of a weak acid from its acid dissociation constant Ka.",
+      "inputs": [
+        "the acid dissociation constant Ka of the weak acid HA (dimensionless, in scientific notation)"
+      ],
+      "outputs": [
+        "the pKa of the weak acid"
+      ],
+      "aliases": [],
+      "origin": "builder:buffer_ph_after_strong_acid"
+    },
+    {
+      "id": "neutralize_an_added_strong_acid_against_34a454",
+      "description": "Neutralize an added strong acid against the conjugate base and update the moles of weak acid and conjugate base.",
+      "inputs": [
+        "the moles of the weak acid HA in the buffer",
+        "the moles of the conjugate base A- in the buffer",
+        "the moles of the strong acid HCl added"
+      ],
+      "outputs": [
+        "the moles of HA after neutralization",
+        "the moles of A- after neutralization"
+      ],
+      "aliases": [],
+      "origin": "builder:buffer_ph_after_strong_acid"
+    },
+    {
+      "id": "compute_buffer_ph_from_pka_and_the_moles_4ed27b",
+      "description": "Compute buffer pH from pKa and the moles of conjugate base and weak acid using the Henderson-Hasselbalch equation",
+      "inputs": [
+        "the pKa of the weak acid",
+        "the moles of the conjugate base A- after neutralization",
+        "the moles of HA after neutralization"
+      ],
+      "outputs": [
+        "the pH of the buffer after strong acid addition"
+      ],
+      "aliases": [],
+      "origin": "builder:buffer_ph_after_strong_acid"
+    },
+    {
+      "id": "sanity_check_the_buffer_ph_against_pka_a_ef8801",
+      "description": "Sanity-check the buffer pH against pKa and the direction of the acid-to-base ratio shift.",
+      "inputs": [
+        "the pH of the buffer after strong acid addition",
+        "the pKa of the weak acid",
+        "the moles of HA after neutralization",
+        "the moles of A- after neutralization"
+      ],
+      "outputs": [
+        "the sanity check result"
+      ],
+      "aliases": [],
+      "origin": "builder:buffer_ph_after_strong_acid"
+    },
+    {
+      "id": "determine_the_ph_of_a_weak_acid_and_conj_e80474",
+      "description": "Determine the pH of a weak acid and conjugate base buffer after a strong acid is added",
+      "inputs": [
+        "the name of the weak acid HA that forms the buffer",
+        "the amount in moles of the weak acid HA with unit",
+        "the name of the salt that supplies the conjugate base A- of the weak acid",
+        "the amount in moles of the conjugate base A- supplied by the salt with unit",
+        "the total volume of the buffer solution with unit",
+        "the acid dissociation constant Ka of the weak acid HA (dimensionless, in scientific notation)",
+        "the amount in moles and identity of the strong acid added to the buffer (HCl)"
+      ],
+      "outputs": [
+        "the pH of the buffer after the strong acid is added"
+      ],
+      "aliases": [],
+      "origin": "builder:buffer_ph_after_strong_acid"
+    },
+    {
+      "id": "map_a_payment_or_compounding_schedule_wo_3002c1",
+      "description": "Map a payment or compounding schedule word to its number of periods per year",
+      "inputs": [
+        "the schedule word describing the frequency, such as annual, semiannual, quarterly, or monthly"
+      ],
+      "outputs": [
+        "the number of periods per year as a positive integer"
+      ],
+      "aliases": [],
+      "origin": "builder:bond_price_semiannual"
+    },
+    {
+      "id": "convert_annual_bond_figures_into_per_per_8f4a65",
+      "description": "Convert annual bond figures into per-period figures: total number of periods, coupon per period, and periodic yield.",
+      "inputs": [
+        "the time to maturity of the bond in years, with unit",
+        "the face value (par value) of the bond with currency unit",
+        "the annual coupon rate of the bond as a percentage of face value",
+        "the frequency of coupon installments per year, as a payment schedule word",
+        "the annual market yield (required return) on the bond as a percentage",
+        "the compounding frequency of the market yield as a schedule word"
+      ],
+      "outputs": [
+        "the total number of coupon periods n",
+        "the coupon payment per period C in currency",
+        "the periodic yield i as a decimal"
+      ],
+      "aliases": [],
+      "origin": "builder:bond_price_semiannual"
+    },
+    {
+      "id": "compute_the_compound_growth_factor_1_i_r_10fa9d",
+      "description": "Compute the compound growth factor (1+i) raised to n and the present value discount factor v^n for a periodic yield over n periods, with a logarithm cross-check.",
+      "inputs": [
+        "the periodic yield i as a decimal",
+        "the total number of coupon periods n"
+      ],
+      "outputs": [
+        "the compound growth factor (1+i) raised to n",
+        "the present value discount factor v^n"
+      ],
+      "aliases": [],
+      "origin": "builder:bond_price_semiannual"
+    },
+    {
+      "id": "compute_the_present_value_of_a_level_per_9d3358",
+      "description": "Compute the present value of a level periodic coupon annuity plus the lump-sum face value repayment at maturity.",
+      "inputs": [
+        "the coupon payment per period C in currency",
+        "the periodic yield i as a decimal",
+        "the total number of coupon periods n",
+        "the face value (par value) of the bond with currency unit"
+      ],
+      "outputs": [
+        "the present value of the coupon payments",
+        "the present value of the face value",
+        "the total bond price as the sum of both present values"
+      ],
+      "aliases": [],
+      "origin": "builder:bond_price_semiannual"
+    },
+    {
+      "id": "classify_a_bond_as_trading_at_a_premium_d940c9",
+      "description": "Classify a bond as trading at a premium, at par, or at a discount by comparing its market yield with its coupon rate.",
+      "inputs": [
+        "the annual coupon rate of the bond as a percentage of face value",
+        "the annual market yield (required return) on the bond as a percentage"
+      ],
+      "outputs": [
+        "the price classification of the bond as premium, par, or discount"
+      ],
+      "aliases": [],
+      "origin": "builder:bond_price_semiannual"
+    },
+    {
+      "id": "compute_the_market_price_of_a_fixed_coup_1aa486",
+      "description": "Compute the market price of a fixed-coupon bond from its maturity, face value, coupon rate, coupon frequency, market yield and yield compounding frequency, and classify it as premium, par or discount.",
+      "inputs": [
+        "the time to maturity of the bond in years, with unit",
+        "the face value (par value) of the bond with currency unit",
+        "the annual coupon rate of the bond as a percentage of face value",
+        "the frequency of coupon installments per year, as a payment schedule word",
+        "the annual market yield (required return) on the bond as a percentage",
+        "the compounding frequency of the market yield as a schedule word"
+      ],
+      "outputs": [
+        "the market price of the bond in currency",
+        "the price classification of the bond as premium, par, or discount"
+      ],
+      "aliases": [],
+      "origin": "builder:bond_price_semiannual"
+    },
+    {
+      "id": "count_the_distinct_circular_arrangements_5b5bc8",
+      "description": "Count the distinct circular arrangements of k distinct units around a round table up to rotation.",
+      "inputs": [
+        "the number of distinct units to be arranged around the round table"
+      ],
+      "outputs": [
+        "the number of circular arrangements of the units up to rotation"
+      ],
+      "aliases": [],
+      "origin": "builder:circular_seating_not_adjacent"
+    },
+    {
+      "id": "count_the_total_number_of_distinct_circu_d64109",
+      "description": "Count the total number of distinct circular seating arrangements of n people around a round table.",
+      "inputs": [
+        "the total number of distinct people to be seated around the round table, as a positive integer count"
+      ],
+      "outputs": [
+        "the total number of circular seatings of the people around the table"
+      ],
+      "aliases": [],
+      "origin": "builder:circular_seating_not_adjacent"
+    },
+    {
+      "id": "count_the_circular_seatings_in_which_two_936d1f",
+      "description": "Count the circular seatings in which two specified people sit next to each other by merging them into one block and multiplying by their internal orderings.",
+      "inputs": [
+        "the total number of distinct people to be seated around the round table, as a positive integer count",
+        "the name or label of the first of the two particular people who must not sit next to each other",
+        "the name or label of the second of the two particular people who must not sit next to each other"
+      ],
+      "outputs": [
+        "the number of circular seatings in which the two specified people sit next to each other"
+      ],
+      "aliases": [],
+      "origin": "builder:circular_seating_not_adjacent"
+    },
+    {
+      "id": "count_the_seatings_of_n_people_around_a_6cf2aa",
+      "description": "Count the seatings of n people around a round table in which two specified people do not sit next to each other.",
+      "inputs": [
+        "the total number of distinct people to be seated around the round table, as a positive integer count",
+        "the name or label of the first of the two particular people who must not sit next to each other",
+        "the name or label of the second of the two particular people who must not sit next to each other"
+      ],
+      "outputs": [
+        "the number of circular seatings in which the two specified people are not next to each other"
+      ],
+      "aliases": [],
+      "origin": "builder:circular_seating_not_adjacent"
+    },
+    {
+      "id": "compute_the_double_declining_balance_dep_f7e502",
+      "description": "Compute the double-declining-balance depreciation rate per year from the useful life of an asset.",
+      "inputs": [
+        "the useful life of the asset in years"
+      ],
+      "outputs": [
+        "DDB depreciation rate per year"
+      ],
+      "aliases": [],
+      "origin": "builder:ddb_book_value"
+    },
+    {
+      "id": "compute_one_year_of_double_declining_bal_bbcef6",
+      "description": "Compute one year of double-declining-balance depreciation from the beginning book value and rate, limited so the ending book value never falls below salvage value.",
+      "inputs": [
+        "beginning-of-year book value",
+        "DDB depreciation rate per year",
+        "the salvage value of the asset (estimated residual value) with currency unit"
+      ],
+      "outputs": [
+        "depreciation charge for the year",
+        "ending book value for the year"
+      ],
+      "aliases": [],
+      "origin": "builder:ddb_book_value"
+    },
+    {
+      "id": "iterate_year_by_year_double_declining_ba_3627fe",
+      "description": "Iterate year-by-year double-declining-balance depreciation on the beginning book value up to the requested year, respecting the salvage floor.",
+      "inputs": [
+        "the original cost of the asset (basis) with currency unit",
+        "DDB depreciation rate per year",
+        "the salvage value of the asset (estimated residual value) with currency unit",
+        "the year at which the book value is requested (the target year, as a year number)"
+      ],
+      "outputs": [
+        "iterative book value at the end of the requested year"
+      ],
+      "aliases": [],
+      "origin": "builder:ddb_book_value"
+    },
+    {
+      "id": "verify_the_book_value_of_a_double_declin_98b577",
+      "description": "Verify the book value of a double-declining-balance depreciating asset at a requested year using the closed-form expression cost times one minus the rate raised to the year count, floored at salvage value.",
+      "inputs": [
+        "the original cost of the asset (basis) with currency unit",
+        "DDB depreciation rate per year",
+        "the salvage value of the asset (estimated residual value) with currency unit",
+        "the year at which the book value is requested (the target year, as a year number)"
+      ],
+      "outputs": [
+        "closed-form book value at the requested year"
+      ],
+      "aliases": [],
+      "origin": "builder:ddb_book_value"
+    },
+    {
+      "id": "determine_the_book_value_of_an_asset_at_386c1d",
+      "description": "Determine the book value of an asset at the end of a requested year under double-declining-balance depreciation with salvage value.",
+      "inputs": [
+        "the original cost of the asset (basis) with currency unit",
+        "the salvage value of the asset (estimated residual value) with currency unit",
+        "the useful life of the asset in years",
+        "the depreciation method to apply, which must be double-declining-balance depreciation",
+        "the year at which the book value is requested (the target year, as a year number)"
+      ],
+      "outputs": [
+        "book value at the end of the requested year"
+      ],
+      "aliases": [],
+      "origin": "builder:ddb_book_value"
+    },
+    {
+      "id": "compute_the_recessive_phenotype_frequenc_204ff1",
+      "description": "Compute the recessive phenotype frequency q squared as the affected count divided by the total population size",
+      "inputs": [
+        "the total population size N (count of individuals in the population)",
+        "the number of individuals showing the recessive phenotype (homozygous recessive count) with the condition"
+      ],
+      "outputs": [
+        "recessive phenotype frequency q squared"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "compute_the_recessive_allele_frequency_q_1e7610",
+      "description": "Compute the recessive allele frequency q as the square root of the recessive phenotype frequency.",
+      "inputs": [
+        "recessive phenotype frequency q squared"
+      ],
+      "outputs": [
+        "recessive allele frequency q"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "compute_the_dominant_allele_frequency_p_6877e0",
+      "description": "Compute the dominant allele frequency p as one minus the recessive allele frequency",
+      "inputs": [
+        "recessive allele frequency q"
+      ],
+      "outputs": [
+        "dominant allele frequency p"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "compute_the_heterozygote_carrier_genotyp_79e1b2",
+      "description": "Compute the heterozygote carrier genotype frequency 2pq from allele frequencies p and q",
+      "inputs": [
+        "dominant allele frequency p",
+        "recessive allele frequency q"
+      ],
+      "outputs": [
+        "carrier genotype frequency 2pq"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "convert_a_genotype_frequency_into_an_exp_8adba0",
+      "description": "Convert a genotype frequency into an expected number of individuals by multiplying by the total population size.",
+      "inputs": [
+        "carrier genotype frequency 2pq",
+        "the total population size N (count of individuals in the population)"
+      ],
+      "outputs": [
+        "expected number of heterozygous carriers"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "verify_an_expected_carrier_count_by_rece_75dc22",
+      "description": "Verify an expected carrier count by recessive allele accounting: total recessive alleles 2Nq minus two per affected individual.",
+      "inputs": [
+        "the total population size N (count of individuals in the population)",
+        "recessive allele frequency q",
+        "the number of individuals showing the recessive phenotype (homozygous recessive count) with the condition",
+        "expected number of heterozygous carriers"
+      ],
+      "outputs": [
+        "allele accounting check result"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "express_a_count_as_a_percentage_of_the_t_7a1b99",
+      "description": "Express a count as a percentage of the total population size.",
+      "inputs": [
+        "expected number of heterozygous carriers",
+        "the total population size N (count of individuals in the population)"
+      ],
+      "outputs": [
+        "carrier percentage of population"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "validate_that_the_recessive_hardy_weinbe_e73216",
+      "description": "Validate that the recessive Hardy-Weinberg carrier estimate applies to the given population size, affected count, and inheritance mode.",
+      "inputs": [
+        "the total population size N (count of individuals in the population)",
+        "the number of individuals showing the recessive phenotype (homozygous recessive count) with the condition",
+        "the inheritance mode of the condition (must be recessive for carrier counting)"
+      ],
+      "outputs": [
+        "inputs are valid for carrier estimation"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "estimate_the_expected_number_of_heterozy_283ccb",
+      "description": "Estimate the expected number of heterozygous carriers and the carrier frequency from the affected count and population size under Hardy-Weinberg equilibrium.",
+      "inputs": [
+        "the total population size N (count of individuals in the population)",
+        "the number of individuals showing the recessive phenotype (homozygous recessive count) with the condition"
+      ],
+      "outputs": [
+        "expected number of heterozygous carriers",
+        "carrier genotype frequency 2pq"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "estimate_the_expected_number_of_heterozy_e9383a",
+      "description": "Estimate the expected number of heterozygous carriers of a recessive condition in a Hardy-Weinberg population and express them as a percentage of the population.",
+      "inputs": [
+        "the total population size N (count of individuals in the population)",
+        "the number of individuals showing the recessive phenotype (homozygous recessive count) with the condition",
+        "the name of the genetic condition or trait",
+        "the inheritance mode of the condition (must be recessive for carrier counting)"
+      ],
+      "outputs": [
+        "expected number of heterozygous carriers",
+        "carrier percentage of population"
+      ],
+      "aliases": [],
+      "origin": "builder:hardy_weinberg_carriers"
+    },
+    {
+      "id": "solve_two_linear_quantity_price_equation_b211a0",
+      "description": "Solve two linear quantity-price equations Q = a + bP for their intersection price and quantity.",
+      "inputs": [
+        "first linear quantity equation in price",
+        "second linear quantity equation in price"
+      ],
+      "outputs": [
+        "intersection price",
+        "intersection quantity"
+      ],
+      "aliases": [],
+      "origin": "builder:linear_market_tax_dwl"
+    },
+    {
+      "id": "compute_the_pre_tax_equilibrium_price_an_4ab5fe",
+      "description": "Compute the pre-tax equilibrium price and quantity from the demand and supply curves.",
+      "inputs": [
+        "The linear demand curve expressing quantity demanded Q as a function of price P (intercept and slope)",
+        "The linear supply curve expressing quantity supplied Q as a function of price P (intercept and slope)"
+      ],
+      "outputs": [
+        "pre-tax equilibrium price",
+        "pre-tax equilibrium quantity"
+      ],
+      "aliases": [],
+      "origin": "builder:linear_market_tax_dwl"
+    },
+    {
+      "id": "shift_a_linear_supply_curve_up_by_a_per_c087a7",
+      "description": "Shift a linear supply curve up by a per-unit tax on sellers to express it as a function of the buyer price.",
+      "inputs": [
+        "The linear supply curve expressing quantity supplied Q as a function of price P (intercept and slope)",
+        "The per-unit tax amount charged on each unit sold, in dollars, levied on sellers"
+      ],
+      "outputs": [
+        "post-tax supply curve as a linear equation in buyer price"
+      ],
+      "aliases": [],
+      "origin": "builder:linear_market_tax_dwl"
+    },
+    {
+      "id": "find_the_new_buyer_price_and_quantity_by_6f2fa7",
+      "description": "Find the new buyer price and quantity by equating the demand curve with the post-tax supply curve expressed in buyer price.",
+      "inputs": [
+        "The linear demand curve expressing quantity demanded Q as a function of price P (intercept and slope)",
+        "post-tax supply curve as a linear equation in buyer price"
+      ],
+      "outputs": [
+        "new price buyers pay",
+        "new quantity traded"
+      ],
+      "aliases": [],
+      "origin": "builder:linear_market_tax_dwl"
+    },
+    {
+      "id": "compute_the_seller_net_price_as_the_buye_874106",
+      "description": "Compute the seller net price as the buyer price minus the per-unit tax",
+      "inputs": [
+        "new price buyers pay",
+        "The per-unit tax amount charged on each unit sold, in dollars, levied on sellers"
+      ],
+      "outputs": [
+        "seller net price"
+      ],
+      "aliases": [],
+      "origin": "builder:linear_market_tax_dwl"
+    },
+    {
+      "id": "verify_that_a_post_tax_equilibrium_is_co_8af109",
+      "description": "Verify that a post-tax equilibrium is consistent: the buyer-seller price wedge equals the per-unit tax and the traded quantity is nonnegative.",
+      "inputs": [
+        "new price buyers pay",
+        "new quantity traded",
+        "seller net price",
+        "The per-unit tax amount charged on each unit sold, in dollars, levied on sellers"
+      ],
+      "outputs": [
+        "equilibrium consistency check result"
+      ],
+      "aliases": [],
+      "origin": "builder:linear_market_tax_dwl"
+    },
+    {
+      "id": "compute_the_deadweight_loss_triangle_are_5fac24",
+      "description": "Compute the deadweight loss triangle area from the quantity lost after a per-unit tax and the per-unit tax wedge.",
+      "inputs": [
+        "pre-tax equilibrium quantity",
+        "new quantity traded",
+        "The per-unit tax amount charged on each unit sold, in dollars, levied on sellers"
+      ],
+      "outputs": [
+        "deadweight loss"
+      ],
+      "aliases": [],
+      "origin": "builder:linear_market_tax_dwl"
+    },
+    {
+      "id": "compute_the_buyer_price_and_deadweight_l_ed88e2",
+      "description": "Compute the buyer price and deadweight loss after a per-unit tax on sellers in a linear supply and demand market.",
+      "inputs": [
+        "The linear demand curve expressing quantity demanded Q as a function of price P (intercept and slope)",
+        "The linear supply curve expressing quantity supplied Q as a function of price P (intercept and slope)",
+        "The per-unit tax amount charged on each unit sold, in dollars, levied on sellers"
+      ],
+      "outputs": [
+        "new price buyers pay",
+        "deadweight loss"
+      ],
+      "aliases": [],
+      "origin": "builder:linear_market_tax_dwl"
+    },
+    {
+      "id": "compute_the_one_sample_t_statistic_degre_743380",
+      "description": "Compute the one-sample t statistic, degrees of freedom and standard error of the mean from the sample size, sample mean, sample standard deviation and hypothesized mean.",
+      "inputs": [
+        "the sample size n, the number of observations in the sample",
+        "the sample mean of the measured quantity with its unit",
+        "the sample standard deviation of the measured quantity with its unit",
+        "the hypothesized population mean under the null hypothesis, with its unit"
+      ],
+      "outputs": [
+        "the test statistic t",
+        "the degrees of freedom n-1",
+        "the standard error of the mean"
+      ],
+      "aliases": [],
+      "origin": "builder:one_sample_t_test"
+    },
+    {
+      "id": "look_up_the_two_tailed_critical_t_value_aa10ba",
+      "description": "Look up the two-tailed critical t value for a significance level and degrees of freedom.",
+      "inputs": [
+        "the significance level alpha for the two-tailed test",
+        "the degrees of freedom n-1"
+      ],
+      "outputs": [
+        "the two-tailed critical t value"
+      ],
+      "aliases": [],
+      "origin": "builder:one_sample_t_test"
+    },
+    {
+      "id": "compute_the_two_sided_p_value_of_a_t_sta_d107c9",
+      "description": "Compute the two-sided p-value of a t statistic with given degrees of freedom.",
+      "inputs": [
+        "the test statistic t",
+        "the degrees of freedom n-1"
+      ],
+      "outputs": [
+        "the two-sided p-value"
+      ],
+      "aliases": [],
+      "origin": "builder:one_sample_t_test"
+    },
+    {
+      "id": "decide_whether_to_reject_the_null_hypoth_6e8af7",
+      "description": "Decide whether to reject the null hypothesis by comparing the absolute test statistic with the two-tailed critical value.",
+      "inputs": [
+        "the test statistic t",
+        "the two-tailed critical t value"
+      ],
+      "outputs": [
+        "the reject or fail to reject decision"
+      ],
+      "aliases": [],
+      "origin": "builder:one_sample_t_test"
+    },
+    {
+      "id": "construct_a_confidence_interval_for_the_376f1b",
+      "description": "Construct a confidence interval for the population mean from the sample statistics and the two-tailed critical t value, and check whether the hypothesized mean lies inside it.",
+      "inputs": [
+        "the sample size n, the number of observations in the sample",
+        "the sample mean of the measured quantity with its unit",
+        "the sample standard deviation of the measured quantity with its unit",
+        "the hypothesized population mean under the null hypothesis, with its unit",
+        "the two-tailed critical t value"
+      ],
+      "outputs": [
+        "the confidence interval lower and upper bounds",
+        "the agreement between the interval and the test decision"
+      ],
+      "aliases": [],
+      "origin": "builder:one_sample_t_test"
+    },
+    {
+      "id": "test_whether_a_population_mean_differs_f_83f2ec",
+      "description": "Test whether a population mean differs from a hypothesized value at a given significance level and report the test statistic and conclusion.",
+      "inputs": [
+        "the sample size n, the number of observations in the sample",
+        "the sample mean of the measured quantity with its unit",
+        "the sample standard deviation of the measured quantity with its unit",
+        "the hypothesized population mean under the null hypothesis, with its unit",
+        "the significance level alpha for the two-tailed test"
+      ],
+      "outputs": [
+        "the test statistic t with degrees of freedom",
+        "the two-tailed critical values",
+        "the two-sided p-value",
+        "the reject or fail to reject decision",
+        "the confidence interval agreement check",
+        "the final reported conclusion about the mean"
+      ],
+      "aliases": [],
+      "origin": "builder:one_sample_t_test"
+    },
+    {
+      "id": "solve_a_quadratic_equation_a_t_2_b_t_c_0_612bd1",
+      "description": "Solve a quadratic equation a t^2 + b t + c = 0 and return its positive real root.",
+      "inputs": [
+        "coefficients a, b and c of a quadratic equation a t^2 + b t + c = 0"
+      ],
+      "outputs": [
+        "the positive real root of the quadratic"
+      ],
+      "aliases": [],
+      "origin": "builder:projectile_range_from_height"
+    },
+    {
+      "id": "resolve_a_launch_velocity_into_horizonta_6c8c3a",
+      "description": "Resolve a launch velocity into horizontal and vertical components using the launch angle above horizontal",
+      "inputs": [
+        "the launch speed of the ball",
+        "the launch angle of the ball measured above the horizontal"
+      ],
+      "outputs": [
+        "initial horizontal velocity component",
+        "initial vertical velocity component"
+      ],
+      "aliases": [],
+      "origin": "builder:projectile_range_from_height"
+    },
+    {
+      "id": "compute_the_time_until_a_projectile_laun_9ed848",
+      "description": "Compute the time until a projectile launched from a given height returns to ground level under constant gravity.",
+      "inputs": [
+        "the height of the cliff above its base",
+        "the initial vertical velocity component",
+        "the gravitational acceleration magnitude"
+      ],
+      "outputs": [
+        "time of flight until the ball reaches ground level"
+      ],
+      "aliases": [],
+      "origin": "builder:projectile_range_from_height"
+    },
+    {
+      "id": "compute_the_horizontal_distance_from_the_1274aa",
+      "description": "Compute the horizontal distance from the cliff base to where a ball launched from the top of a cliff lands.",
+      "inputs": [
+        "the height of the cliff above its base, with unit",
+        "the launch speed of the ball, with unit",
+        "the launch angle of the ball measured above the horizontal, with unit",
+        "the gravitational acceleration magnitude, with unit"
+      ],
+      "outputs": [
+        "horizontal distance from the base of the cliff to the landing point"
+      ],
+      "aliases": [],
+      "origin": "builder:projectile_range_from_height"
+    },
+    {
+      "id": "convert_the_beam_span_uniform_load_inten_d93150",
+      "description": "Convert the beam span, uniform load intensity, modulus of elasticity and second moment of area to SI base units",
+      "inputs": [
+        "the span length L of the simply supported beam with unit",
+        "the uniform load intensity w acting over the full span of the beam with unit",
+        "the modulus of elasticity E of the beam material with unit",
+        "the second moment of area I of the beam cross-section with unit"
+      ],
+      "outputs": [
+        "the span length in metres",
+        "the uniform load intensity in newtons per metre",
+        "the modulus of elasticity in pascals",
+        "the second moment of area in metres to the fourth"
+      ],
+      "aliases": [],
+      "origin": "builder:ss_beam_udl_max_deflection"
+    },
+    {
+      "id": "compute_the_flexural_rigidity_ei_from_th_e84469",
+      "description": "Compute the flexural rigidity EI from the modulus of elasticity in pascals and the second moment of area in metres to the fourth.",
+      "inputs": [
+        "the modulus of elasticity in pascals",
+        "the second moment of area in metres to the fourth"
+      ],
+      "outputs": [
+        "the flexural rigidity EI in newton square metres"
+      ],
+      "aliases": [],
+      "origin": "builder:ss_beam_udl_max_deflection"
+    },
+    {
+      "id": "compute_the_maximum_midspan_deflection_o_2f6af4",
+      "description": "Compute the maximum midspan deflection of a simply supported beam under a uniform load over its full span as 5wL^4 divided by 384EI.",
+      "inputs": [
+        "the span length in metres",
+        "the uniform load intensity in newtons per metre",
+        "the modulus of elasticity in pascals",
+        "the second moment of area in metres to the fourth"
+      ],
+      "outputs": [
+        "the maximum midspan deflection in metres"
+      ],
+      "aliases": [],
+      "origin": "builder:ss_beam_udl_max_deflection"
+    },
+    {
+      "id": "check_the_plausibility_of_a_beam_deflect_720b15",
+      "description": "Check the plausibility of a beam deflection by computing the span-to-deflection ratio and comparing it with the typical L/360 serviceability limit.",
+      "inputs": [
+        "the span length in metres",
+        "the maximum midspan deflection in metres"
+      ],
+      "outputs": [
+        "the span-to-deflection ratio",
+        "the plausibility judgement of the deflection"
+      ],
+      "aliases": [],
+      "origin": "builder:ss_beam_udl_max_deflection"
+    },
+    {
+      "id": "compute_the_maximum_deflection_in_millim_63457c",
+      "description": "Compute the maximum deflection in millimetres of a simply supported beam under a full-span uniform load from its span, load intensity, modulus of elasticity and second moment of area, reporting the location at midspan.",
+      "inputs": [
+        "the span length L of the simply supported beam with unit",
+        "the uniform load intensity w acting over the full span of the beam with unit",
+        "the modulus of elasticity E of the beam material with unit",
+        "the second moment of area I of the beam cross-section with unit"
+      ],
+      "outputs": [
+        "the maximum deflection of the beam in millimetres with location at midspan"
+      ],
+      "aliases": [],
+      "origin": "builder:ss_beam_udl_max_deflection"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "A disease affects \u25cf1 of a population. A test for it has \u25cf2 sensitivity and \u25cf3 specificity. If a randomly chosen person tests positive, what is the probability they actually have the disease?",
+      "kind": "template",
+      "root_id": "compute_the_posterior_probability_of_dis_607706",
+      "params": [
+        {
+          "description": "the prevalence of the disease in the population as a percentage with unit (the fraction of the population that has the disease)",
+          "format_examples": [
+            "1.5%",
+            "0.8%",
+            "12 percent"
+          ],
+          "original_value": "1.5%",
+          "validity_range": "Strictly between 0% and 100%. At 0% or 100% the disease is absent or universal, so P(disease | positive) is undefined or trivial. Values must be non-negative."
+        },
+        {
+          "description": "the sensitivity of the test as a percentage with unit (the probability that a person with the disease tests positive)",
+          "format_examples": [
+            "92%",
+            "0.95 as a fraction",
+            "85 percent"
+          ],
+          "original_value": "92%",
+          "validity_range": "Between 0% and 100% inclusive. Sensitivity of 0% makes P(+) depend only on false positives; the posterior is still defined provided P(+) > 0."
+        },
+        {
+          "description": "the specificity of the test as a percentage with unit (the probability that a person without the disease tests negative)",
+          "format_examples": [
+            "96%",
+            "99.5%",
+            "90 percent"
+          ],
+          "original_value": "96%",
+          "validity_range": "Between 0% and 100% inclusive. Specificity of 100% gives zero false positives; the posterior is undefined only if P(+) = 0, which requires sensitivity 0% together with specificity 100%."
+        }
+      ],
+      "problem_id": "bayes_ppv"
+    },
+    {
+      "text": "A disease affects 1.5% of a population. A test for it has 92% sensitivity and 96% specificity. If a randomly chosen person tests positive, what is the probability they actually have the disease?",
+      "kind": "original",
+      "root_id": "compute_the_posterior_probability_of_dis_607706",
+      "params": [
+        {
+          "description": "the prevalence of the disease in the population as a percentage with unit (the fraction of the population that has the disease)",
+          "format_examples": [
+            "1.5%",
+            "0.8%",
+            "12 percent"
+          ],
+          "original_value": "1.5%",
+          "validity_range": "Strictly between 0% and 100%. At 0% or 100% the disease is absent or universal, so P(disease | positive) is undefined or trivial. Values must be non-negative."
+        },
+        {
+          "description": "the sensitivity of the test as a percentage with unit (the probability that a person with the disease tests positive)",
+          "format_examples": [
+            "92%",
+            "0.95 as a fraction",
+            "85 percent"
+          ],
+          "original_value": "92%",
+          "validity_range": "Between 0% and 100% inclusive. Sensitivity of 0% makes P(+) depend only on false positives; the posterior is still defined provided P(+) > 0."
+        },
+        {
+          "description": "the specificity of the test as a percentage with unit (the probability that a person without the disease tests negative)",
+          "format_examples": [
+            "96%",
+            "99.5%",
+            "90 percent"
+          ],
+          "original_value": "96%",
+          "validity_range": "Between 0% and 100% inclusive. Specificity of 100% gives zero false positives; the posterior is undefined only if P(+) = 0, which requires sensitivity 0% together with specificity 100%."
+        }
+      ],
+      "problem_id": "bayes_ppv"
+    },
+    {
+      "text": "A buffer is made by dissolving \u25cf2 \u25cf1 and \u25cf4 \u25cf3 in water to make \u25cf5 of solution. Ka for \u25cf1 is \u25cf6. What is the pH after \u25cf7 is added?",
+      "kind": "template",
+      "root_id": "determine_the_ph_of_a_weak_acid_and_conj_e80474",
+      "params": [
+        {
+          "description": "the name of the weak acid HA that forms the buffer",
+          "format_examples": [
+            "acetic acid",
+            "formic acid",
+            "hypochlorous acid"
+          ],
+          "original_value": "acetic acid",
+          "validity_range": "Must be a named weak monoprotic acid with a defined Ka between 0 and 1 (exclusive), so that it partially dissociates and forms a buffer with its conjugate base. Strong acids (e.g. HCl) or non-acids are invalid for this class."
+        },
+        {
+          "description": "the amount in moles of the weak acid HA with unit",
+          "format_examples": [
+            "0.150 mol",
+            "2.5 mol",
+            "0.01 mol"
+          ],
+          "original_value": "0.150 mol",
+          "validity_range": "Must be a positive finite number of moles (greater than 0). Zero would mean no buffer exists."
+        },
+        {
+          "description": "the name of the salt that supplies the conjugate base A- of the weak acid",
+          "format_examples": [
+            "sodium acetate",
+            "potassium formate",
+            "sodium hypochlorite"
+          ],
+          "original_value": "sodium acetate",
+          "validity_range": "Must be a salt whose anion is the conjugate base of the weak acid in \u25cf1 and whose cation is spectator (fully soluble, no acid-base contribution). Must not be a different acid's conjugate base."
+        },
+        {
+          "description": "the amount in moles of the conjugate base A- supplied by the salt with unit",
+          "format_examples": [
+            "0.100 mol",
+            "1.2 mol",
+            "0.05 mol"
+          ],
+          "original_value": "0.100 mol",
+          "validity_range": "Must be a positive finite number of moles (greater than 0). Both acid and base must be present in nonzero amounts for the Henderson-Hasselbalch treatment to apply."
+        },
+        {
+          "description": "the total volume of the buffer solution with unit",
+          "format_examples": [
+            "500 mL",
+            "0.5 L",
+            "1.00 L"
+          ],
+          "original_value": "500 mL",
+          "validity_range": "Must be a positive finite volume. Since HA and A- share this volume, it cancels in the mole ratio, but it must be positive so the solution exists."
+        },
+        {
+          "description": "the acid dissociation constant Ka of the weak acid HA (dimensionless, in scientific notation)",
+          "format_examples": [
+            "1.8 \u00d7 10\u207b\u2075",
+            "6.8 \u00d7 10\u207b\u2074",
+            "3.0e-8"
+          ],
+          "original_value": "1.8 \u00d7 10\u207b\u2075",
+          "validity_range": "Must be a positive number strictly less than 1 (weak acid regime). Values far outside typical weak acid range (roughly 1e-12 to 1e-1) would make the acid not behave as a weak buffer component."
+        },
+        {
+          "description": "the amount in moles and identity of the strong acid added to the buffer (HCl)",
+          "format_examples": [
+            "0.020 mol HCl",
+            "0.005 mol HNO3",
+            "0.1 mol HBr"
+          ],
+          "original_value": "0.020 mol HCl",
+          "validity_range": "Must be a non-negative amount of a strong acid that fully dissociates (e.g. HCl, HBr, HNO3). The Henderson-Hasselbalch result is valid only while added moles are less than the moles of conjugate base (\u25cf4); beyond that the conjugate base is exhausted and the buffer no longer applies."
+        }
+      ],
+      "problem_id": "buffer_ph_after_strong_acid"
+    },
+    {
+      "text": "A buffer is made by dissolving 0.150 mol acetic acid and 0.100 mol sodium acetate in water to make 500 mL of solution. Ka for acetic acid is 1.8 \u00d7 10\u207b\u2075. What is the pH after 0.020 mol HCl is added?",
+      "kind": "original",
+      "root_id": "determine_the_ph_of_a_weak_acid_and_conj_e80474",
+      "params": [
+        {
+          "description": "the name of the weak acid HA that forms the buffer",
+          "format_examples": [
+            "acetic acid",
+            "formic acid",
+            "hypochlorous acid"
+          ],
+          "original_value": "acetic acid",
+          "validity_range": "Must be a named weak monoprotic acid with a defined Ka between 0 and 1 (exclusive), so that it partially dissociates and forms a buffer with its conjugate base. Strong acids (e.g. HCl) or non-acids are invalid for this class."
+        },
+        {
+          "description": "the amount in moles of the weak acid HA with unit",
+          "format_examples": [
+            "0.150 mol",
+            "2.5 mol",
+            "0.01 mol"
+          ],
+          "original_value": "0.150 mol",
+          "validity_range": "Must be a positive finite number of moles (greater than 0). Zero would mean no buffer exists."
+        },
+        {
+          "description": "the name of the salt that supplies the conjugate base A- of the weak acid",
+          "format_examples": [
+            "sodium acetate",
+            "potassium formate",
+            "sodium hypochlorite"
+          ],
+          "original_value": "sodium acetate",
+          "validity_range": "Must be a salt whose anion is the conjugate base of the weak acid in \u25cf1 and whose cation is spectator (fully soluble, no acid-base contribution). Must not be a different acid's conjugate base."
+        },
+        {
+          "description": "the amount in moles of the conjugate base A- supplied by the salt with unit",
+          "format_examples": [
+            "0.100 mol",
+            "1.2 mol",
+            "0.05 mol"
+          ],
+          "original_value": "0.100 mol",
+          "validity_range": "Must be a positive finite number of moles (greater than 0). Both acid and base must be present in nonzero amounts for the Henderson-Hasselbalch treatment to apply."
+        },
+        {
+          "description": "the total volume of the buffer solution with unit",
+          "format_examples": [
+            "500 mL",
+            "0.5 L",
+            "1.00 L"
+          ],
+          "original_value": "500 mL",
+          "validity_range": "Must be a positive finite volume. Since HA and A- share this volume, it cancels in the mole ratio, but it must be positive so the solution exists."
+        },
+        {
+          "description": "the acid dissociation constant Ka of the weak acid HA (dimensionless, in scientific notation)",
+          "format_examples": [
+            "1.8 \u00d7 10\u207b\u2075",
+            "6.8 \u00d7 10\u207b\u2074",
+            "3.0e-8"
+          ],
+          "original_value": "1.8 \u00d7 10\u207b\u2075",
+          "validity_range": "Must be a positive number strictly less than 1 (weak acid regime). Values far outside typical weak acid range (roughly 1e-12 to 1e-1) would make the acid not behave as a weak buffer component."
+        },
+        {
+          "description": "the amount in moles and identity of the strong acid added to the buffer (HCl)",
+          "format_examples": [
+            "0.020 mol HCl",
+            "0.005 mol HNO3",
+            "0.1 mol HBr"
+          ],
+          "original_value": "0.020 mol HCl",
+          "validity_range": "Must be a non-negative amount of a strong acid that fully dissociates (e.g. HCl, HBr, HNO3). The Henderson-Hasselbalch result is valid only while added moles are less than the moles of conjugate base (\u25cf4); beyond that the conjugate base is exhausted and the buffer no longer applies."
+        }
+      ],
+      "problem_id": "buffer_ph_after_strong_acid"
+    },
+    {
+      "text": "A \u25cf1 bond with a \u25cf2 face value pays a \u25cf3 annual coupon in \u25cf4 installments. If the market yield is \u25cf5 (annual, compounded \u25cf6), what is the bond's price?",
+      "kind": "template",
+      "root_id": "compute_the_market_price_of_a_fixed_coup_1aa486",
+      "params": [
+        {
+          "description": "the time to maturity of the bond in years, with unit",
+          "format_examples": [
+            "10-year",
+            "5-year",
+            "30-year"
+          ],
+          "original_value": "10-year",
+          "validity_range": "Must be a positive duration in years. Non-integer values are allowed but the number of periods n = years times payments per year must come out as a positive number; very large values only make the discount factor small and do not break the formula."
+        },
+        {
+          "description": "the face value (par value) of the bond with currency unit",
+          "format_examples": [
+            "$1,000",
+            "$500",
+            "$10,000"
+          ],
+          "original_value": "$1,000",
+          "validity_range": "Must be a strictly positive monetary amount. A face value of zero would make the bond worthless as a claim and is outside the meaningful range."
+        },
+        {
+          "description": "the annual coupon rate of the bond as a percentage of face value",
+          "format_examples": [
+            "5%",
+            "3.25%",
+            "0%"
+          ],
+          "original_value": "5%",
+          "validity_range": "Must be a non-negative percentage. A value of 0% is valid and corresponds to a zero-coupon bond, where the coupon term vanishes. Values above roughly 100% are economically implausible but the formula still computes."
+        },
+        {
+          "description": "the frequency of coupon installments per year, as a payment schedule word",
+          "format_examples": [
+            "semiannual",
+            "quarterly",
+            "annual"
+          ],
+          "original_value": "semiannual",
+          "validity_range": "Must map to a positive integer number of payments per year: annual = 1, semiannual = 2, quarterly = 4, monthly = 12. Other integer frequencies are logically valid but uncommon."
+        },
+        {
+          "description": "the annual market yield (required return) on the bond as a percentage",
+          "format_examples": [
+            "6.2%",
+            "4%",
+            "8.75%"
+          ],
+          "original_value": "6.2%",
+          "validity_range": "Must be greater than -100% so that the periodic growth factor 1 + i is positive, which is required for the discounting formula to be defined. Practically it is a positive percentage; a yield equal to the coupon rate gives a par bond, a yield above the coupon rate gives a discount bond, and below gives a premium bond."
+        },
+        {
+          "description": "the compounding frequency of the market yield as a schedule word",
+          "format_examples": [
+            "semiannually",
+            "annually",
+            "quarterly"
+          ],
+          "original_value": "semiannually",
+          "validity_range": "Must map to a positive integer number of compounding periods per year: annually = 1, semiannually = 2, quarterly = 4, monthly = 12. It determines the periodic yield i = annual yield divided by this integer, and should normally match the coupon frequency so the periods align."
+        }
+      ],
+      "problem_id": "bond_price_semiannual"
+    },
+    {
+      "text": "A 10-year bond with a $1,000 face value pays a 5% annual coupon in semiannual installments. If the market yield is 6.2% (annual, compounded semiannually), what is the bond's price?",
+      "kind": "original",
+      "root_id": "compute_the_market_price_of_a_fixed_coup_1aa486",
+      "params": [
+        {
+          "description": "the time to maturity of the bond in years, with unit",
+          "format_examples": [
+            "10-year",
+            "5-year",
+            "30-year"
+          ],
+          "original_value": "10-year",
+          "validity_range": "Must be a positive duration in years. Non-integer values are allowed but the number of periods n = years times payments per year must come out as a positive number; very large values only make the discount factor small and do not break the formula."
+        },
+        {
+          "description": "the face value (par value) of the bond with currency unit",
+          "format_examples": [
+            "$1,000",
+            "$500",
+            "$10,000"
+          ],
+          "original_value": "$1,000",
+          "validity_range": "Must be a strictly positive monetary amount. A face value of zero would make the bond worthless as a claim and is outside the meaningful range."
+        },
+        {
+          "description": "the annual coupon rate of the bond as a percentage of face value",
+          "format_examples": [
+            "5%",
+            "3.25%",
+            "0%"
+          ],
+          "original_value": "5%",
+          "validity_range": "Must be a non-negative percentage. A value of 0% is valid and corresponds to a zero-coupon bond, where the coupon term vanishes. Values above roughly 100% are economically implausible but the formula still computes."
+        },
+        {
+          "description": "the frequency of coupon installments per year, as a payment schedule word",
+          "format_examples": [
+            "semiannual",
+            "quarterly",
+            "annual"
+          ],
+          "original_value": "semiannual",
+          "validity_range": "Must map to a positive integer number of payments per year: annual = 1, semiannual = 2, quarterly = 4, monthly = 12. Other integer frequencies are logically valid but uncommon."
+        },
+        {
+          "description": "the annual market yield (required return) on the bond as a percentage",
+          "format_examples": [
+            "6.2%",
+            "4%",
+            "8.75%"
+          ],
+          "original_value": "6.2%",
+          "validity_range": "Must be greater than -100% so that the periodic growth factor 1 + i is positive, which is required for the discounting formula to be defined. Practically it is a positive percentage; a yield equal to the coupon rate gives a par bond, a yield above the coupon rate gives a discount bond, and below gives a premium bond."
+        },
+        {
+          "description": "the compounding frequency of the market yield as a schedule word",
+          "format_examples": [
+            "semiannually",
+            "annually",
+            "quarterly"
+          ],
+          "original_value": "semiannually",
+          "validity_range": "Must map to a positive integer number of compounding periods per year: annually = 1, semiannually = 2, quarterly = 4, monthly = 12. It determines the periodic yield i = annual yield divided by this integer, and should normally match the coupon frequency so the periods align."
+        }
+      ],
+      "problem_id": "bond_price_semiannual"
+    },
+    {
+      "text": "In how many ways can \u25cf1 people be seated around a round table if two particular people, \u25cf2 and \u25cf3, refuse to sit next to each other?",
+      "kind": "template",
+      "root_id": "count_the_seatings_of_n_people_around_a_6cf2aa",
+      "params": [
+        {
+          "description": "the total number of distinct people to be seated around the round table, as a positive integer count",
+          "format_examples": [
+            "8",
+            "12",
+            "5"
+          ],
+          "original_value": "8",
+          "validity_range": "Integer n with n of at least 2 for the circular formula (n-1)! to be defined; the restricted-pair count is nonzero only for n of at least 4, since in a table of 3 or fewer every pair is adjacent (answer 0). Must be a finite positive integer."
+        },
+        {
+          "description": "the name or label of the first of the two particular people who must not sit next to each other",
+          "format_examples": [
+            "A",
+            "Alice",
+            "Person 1"
+          ],
+          "original_value": "A",
+          "validity_range": "Any distinct identifier naming one of the n seated people; must differ from the second restricted person \u25cf3 so that the pair is well defined."
+        },
+        {
+          "description": "the name or label of the second of the two particular people who must not sit next to each other",
+          "format_examples": [
+            "B",
+            "Bob",
+            "Person 2"
+          ],
+          "original_value": "B",
+          "validity_range": "Any distinct identifier naming one of the n seated people; must differ from the first restricted person \u25cf2, and both \u25cf2 and \u25cf3 must belong to the set of \u25cf1 people."
+        }
+      ],
+      "problem_id": "circular_seating_not_adjacent"
+    },
+    {
+      "text": "In how many ways can 8 people be seated around a round table if two particular people, A and B, refuse to sit next to each other?",
+      "kind": "original",
+      "root_id": "count_the_seatings_of_n_people_around_a_6cf2aa",
+      "params": [
+        {
+          "description": "the total number of distinct people to be seated around the round table, as a positive integer count",
+          "format_examples": [
+            "8",
+            "12",
+            "5"
+          ],
+          "original_value": "8",
+          "validity_range": "Integer n with n of at least 2 for the circular formula (n-1)! to be defined; the restricted-pair count is nonzero only for n of at least 4, since in a table of 3 or fewer every pair is adjacent (answer 0). Must be a finite positive integer."
+        },
+        {
+          "description": "the name or label of the first of the two particular people who must not sit next to each other",
+          "format_examples": [
+            "A",
+            "Alice",
+            "Person 1"
+          ],
+          "original_value": "A",
+          "validity_range": "Any distinct identifier naming one of the n seated people; must differ from the second restricted person \u25cf3 so that the pair is well defined."
+        },
+        {
+          "description": "the name or label of the second of the two particular people who must not sit next to each other",
+          "format_examples": [
+            "B",
+            "Bob",
+            "Person 2"
+          ],
+          "original_value": "B",
+          "validity_range": "Any distinct identifier naming one of the n seated people; must differ from the first restricted person \u25cf2, and both \u25cf2 and \u25cf3 must belong to the set of \u25cf1 people."
+        }
+      ],
+      "problem_id": "circular_seating_not_adjacent"
+    },
+    {
+      "text": "Equipment costs \u25cf1, has a salvage value of \u25cf2, and a useful life of \u25cf3. Using \u25cf4, what is its book value at the end of \u25cf5?",
+      "kind": "template",
+      "root_id": "determine_the_book_value_of_an_asset_at_386c1d",
+      "params": [
+        {
+          "description": "the original cost of the asset (basis) with currency unit",
+          "format_examples": [
+            "$80,000",
+            "$125,500.00",
+            "15000 dollars"
+          ],
+          "original_value": "$80,000",
+          "validity_range": "Positive real currency amount; must be strictly greater than the salvage value (\u25cf2), otherwise there is no depreciable base and the book value is trivially the cost."
+        },
+        {
+          "description": "the salvage value of the asset (estimated residual value) with currency unit",
+          "format_examples": [
+            "$8,000",
+            "$0",
+            "2500 dollars"
+          ],
+          "original_value": "$8,000",
+          "validity_range": "Non-negative currency amount, and strictly less than the original cost (\u25cf1); a salvage value of zero is allowed and simply removes the floor."
+        },
+        {
+          "description": "the useful life of the asset in years",
+          "format_examples": [
+            "6 years",
+            "10 years",
+            "5"
+          ],
+          "original_value": "6 years",
+          "validity_range": "Positive integer number of years, at least 2 so that the DDB rate 2/n does not exceed 1 (n=1 would imply a rate of 200%, which is meaningless beyond the salvage floor)."
+        },
+        {
+          "description": "the depreciation method to apply, which must be double-declining-balance depreciation",
+          "format_examples": [
+            "double-declining-balance depreciation",
+            "DDB",
+            "double declining balance method"
+          ],
+          "original_value": "double-declining-balance depreciation",
+          "validity_range": "Must denote the double-declining-balance method (rate equal to twice the straight-line rate 1/n applied to beginning book value); other methods such as straight-line or sum-of-years-digits require different calculations and are outside this template."
+        },
+        {
+          "description": "the year at which the book value is requested (the target year, as a year number)",
+          "format_examples": [
+            "year 3",
+            "the end of year 4",
+            "year 5"
+          ],
+          "original_value": "year 3",
+          "validity_range": "Non-negative integer year index, from 0 (cost itself, unchanged book value) up to the useful life (\u25cf3); beyond the useful life the asset is fully depreciated and the book value equals the salvage value."
+        }
+      ],
+      "problem_id": "ddb_book_value"
+    },
+    {
+      "text": "Equipment costs $80,000, has a salvage value of $8,000, and a useful life of 6 years. Using double-declining-balance depreciation, what is its book value at the end of year 3?",
+      "kind": "original",
+      "root_id": "determine_the_book_value_of_an_asset_at_386c1d",
+      "params": [
+        {
+          "description": "the original cost of the asset (basis) with currency unit",
+          "format_examples": [
+            "$80,000",
+            "$125,500.00",
+            "15000 dollars"
+          ],
+          "original_value": "$80,000",
+          "validity_range": "Positive real currency amount; must be strictly greater than the salvage value (\u25cf2), otherwise there is no depreciable base and the book value is trivially the cost."
+        },
+        {
+          "description": "the salvage value of the asset (estimated residual value) with currency unit",
+          "format_examples": [
+            "$8,000",
+            "$0",
+            "2500 dollars"
+          ],
+          "original_value": "$8,000",
+          "validity_range": "Non-negative currency amount, and strictly less than the original cost (\u25cf1); a salvage value of zero is allowed and simply removes the floor."
+        },
+        {
+          "description": "the useful life of the asset in years",
+          "format_examples": [
+            "6 years",
+            "10 years",
+            "5"
+          ],
+          "original_value": "6 years",
+          "validity_range": "Positive integer number of years, at least 2 so that the DDB rate 2/n does not exceed 1 (n=1 would imply a rate of 200%, which is meaningless beyond the salvage floor)."
+        },
+        {
+          "description": "the depreciation method to apply, which must be double-declining-balance depreciation",
+          "format_examples": [
+            "double-declining-balance depreciation",
+            "DDB",
+            "double declining balance method"
+          ],
+          "original_value": "double-declining-balance depreciation",
+          "validity_range": "Must denote the double-declining-balance method (rate equal to twice the straight-line rate 1/n applied to beginning book value); other methods such as straight-line or sum-of-years-digits require different calculations and are outside this template."
+        },
+        {
+          "description": "the year at which the book value is requested (the target year, as a year number)",
+          "format_examples": [
+            "year 3",
+            "the end of year 4",
+            "year 5"
+          ],
+          "original_value": "year 3",
+          "validity_range": "Non-negative integer year index, from 0 (cost itself, unchanged book value) up to the useful life (\u25cf3); beyond the useful life the asset is fully depreciated and the book value equals the salvage value."
+        }
+      ],
+      "problem_id": "ddb_book_value"
+    },
+    {
+      "text": "In a population of \u25cf1 people, \u25cf2 have \u25cf3, a \u25cf4 condition. Assuming Hardy-Weinberg equilibrium, how many people are expected to be carriers?",
+      "kind": "template",
+      "root_id": "estimate_the_expected_number_of_heterozy_e9383a",
+      "params": [
+        {
+          "description": "the total population size N (count of individuals in the population)",
+          "format_examples": [
+            "2,500",
+            "10000 people",
+            "a population of 750"
+          ],
+          "original_value": "2,500",
+          "validity_range": "Must be a positive integer (N \u2265 1) and at least as large as the affected count in \u25cf2. Very small N gives coarse frequency estimates but is still valid."
+        },
+        {
+          "description": "the number of individuals showing the recessive phenotype (homozygous recessive count) with the condition",
+          "format_examples": [
+            "196",
+            "12 affected",
+            "4,000 individuals"
+          ],
+          "original_value": "196",
+          "validity_range": "Must be a non-negative integer no greater than the total population size in \u25cf1. Zero affected gives q = 0 and no carriers; a count equal to N is impossible for a recessive trait in equilibrium with carriers."
+        },
+        {
+          "description": "the name of the genetic condition or trait",
+          "format_examples": [
+            "cystic fibrosis",
+            "phenylketonuria",
+            "albinism"
+          ],
+          "original_value": "cystic fibrosis",
+          "validity_range": "Any non-empty name of a trait; it is a label only and does not change the calculation."
+        },
+        {
+          "description": "the inheritance mode of the condition (must be recessive for carrier counting)",
+          "format_examples": [
+            "recessive",
+            "autosomal recessive",
+            "recessive X-linked"
+          ],
+          "original_value": "recessive",
+          "validity_range": "Only a recessive mode is valid for this method. Dominant inheritance has no heterozygous carriers defined this way, so the calculation does not apply to it. Autosomal recessive is the standard case assumed by the 2pq formula."
+        }
+      ],
+      "problem_id": "hardy_weinberg_carriers"
+    },
+    {
+      "text": "In a population of 2,500 people, 196 have cystic fibrosis, a recessive condition. Assuming Hardy-Weinberg equilibrium, how many people are expected to be carriers?",
+      "kind": "original",
+      "root_id": "estimate_the_expected_number_of_heterozy_e9383a",
+      "params": [
+        {
+          "description": "the total population size N (count of individuals in the population)",
+          "format_examples": [
+            "2,500",
+            "10000 people",
+            "a population of 750"
+          ],
+          "original_value": "2,500",
+          "validity_range": "Must be a positive integer (N \u2265 1) and at least as large as the affected count in \u25cf2. Very small N gives coarse frequency estimates but is still valid."
+        },
+        {
+          "description": "the number of individuals showing the recessive phenotype (homozygous recessive count) with the condition",
+          "format_examples": [
+            "196",
+            "12 affected",
+            "4,000 individuals"
+          ],
+          "original_value": "196",
+          "validity_range": "Must be a non-negative integer no greater than the total population size in \u25cf1. Zero affected gives q = 0 and no carriers; a count equal to N is impossible for a recessive trait in equilibrium with carriers."
+        },
+        {
+          "description": "the name of the genetic condition or trait",
+          "format_examples": [
+            "cystic fibrosis",
+            "phenylketonuria",
+            "albinism"
+          ],
+          "original_value": "cystic fibrosis",
+          "validity_range": "Any non-empty name of a trait; it is a label only and does not change the calculation."
+        },
+        {
+          "description": "the inheritance mode of the condition (must be recessive for carrier counting)",
+          "format_examples": [
+            "recessive",
+            "autosomal recessive",
+            "recessive X-linked"
+          ],
+          "original_value": "recessive",
+          "validity_range": "Only a recessive mode is valid for this method. Dominant inheritance has no heterozygous carriers defined this way, so the calculation does not apply to it. Autosomal recessive is the standard case assumed by the 2pq formula."
+        }
+      ],
+      "problem_id": "hardy_weinberg_carriers"
+    },
+    {
+      "text": "Demand is \u25cf 1 and supply is \u25cf 2. A \u25cf 3 per-unit tax is imposed on sellers. What is the new price buyers pay, and what is the deadweight loss?",
+      "kind": "template",
+      "root_id": "compute_the_buyer_price_and_deadweight_l_ed88e2",
+      "params": [
+        {
+          "description": "The linear demand curve expressing quantity demanded Q as a function of price P (intercept and slope)",
+          "format_examples": [
+            "Q = 120 \u2212 2P",
+            "Q = 100 \u2212 5P",
+            "Q = 50 \u2212 0.5P"
+          ],
+          "original_value": "Q = 120 \u2212 2P",
+          "validity_range": "Must be a linear demand equation in Q and P with a negative price slope (quantity demanded falls as price rises) and a positive quantity intercept, so that a positive equilibrium price and quantity exist; slope must be nonzero."
+        },
+        {
+          "description": "The linear supply curve expressing quantity supplied Q as a function of price P (intercept and slope)",
+          "format_examples": [
+            "Q = 3P \u2212 30",
+            "Q = 2P + 10",
+            "Q = 0.5P"
+          ],
+          "original_value": "Q = 3P \u2212 30",
+          "validity_range": "Must be a linear supply equation in Q and P with a positive price slope (quantity supplied rises with price) so that supply and demand intersect at a positive price and quantity; the intercept must make the pre-tax equilibrium quantity positive."
+        },
+        {
+          "description": "The per-unit tax amount charged on each unit sold, in dollars, levied on sellers",
+          "format_examples": [
+            "$5 per unit",
+            "$2 per-unit tax",
+            "$10 per unit"
+          ],
+          "original_value": "$5 per-unit",
+          "validity_range": "Must be a nonnegative dollar amount per unit; a tax of zero yields no change, and a tax large enough that the post-tax equilibrium quantity would be zero or negative (the market shuts down) is outside the regime where the standard triangle deadweight loss formula applies."
+        }
+      ],
+      "problem_id": "linear_market_tax_dwl"
+    },
+    {
+      "text": "Demand is Q = 120 \u2212 2P and supply is Q = 3P \u2212 30. A $5 per-unit tax is imposed on sellers. What is the new price buyers pay, and what is the deadweight loss?",
+      "kind": "original",
+      "root_id": "compute_the_buyer_price_and_deadweight_l_ed88e2",
+      "params": [
+        {
+          "description": "The linear demand curve expressing quantity demanded Q as a function of price P (intercept and slope)",
+          "format_examples": [
+            "Q = 120 \u2212 2P",
+            "Q = 100 \u2212 5P",
+            "Q = 50 \u2212 0.5P"
+          ],
+          "original_value": "Q = 120 \u2212 2P",
+          "validity_range": "Must be a linear demand equation in Q and P with a negative price slope (quantity demanded falls as price rises) and a positive quantity intercept, so that a positive equilibrium price and quantity exist; slope must be nonzero."
+        },
+        {
+          "description": "The linear supply curve expressing quantity supplied Q as a function of price P (intercept and slope)",
+          "format_examples": [
+            "Q = 3P \u2212 30",
+            "Q = 2P + 10",
+            "Q = 0.5P"
+          ],
+          "original_value": "Q = 3P \u2212 30",
+          "validity_range": "Must be a linear supply equation in Q and P with a positive price slope (quantity supplied rises with price) so that supply and demand intersect at a positive price and quantity; the intercept must make the pre-tax equilibrium quantity positive."
+        },
+        {
+          "description": "The per-unit tax amount charged on each unit sold, in dollars, levied on sellers",
+          "format_examples": [
+            "$5 per unit",
+            "$2 per-unit tax",
+            "$10 per unit"
+          ],
+          "original_value": "$5 per-unit",
+          "validity_range": "Must be a nonnegative dollar amount per unit; a tax of zero yields no change, and a tax large enough that the post-tax equilibrium quantity would be zero or negative (the market shuts down) is outside the regime where the standard triangle deadweight loss formula applies."
+        }
+      ],
+      "problem_id": "linear_market_tax_dwl"
+    },
+    {
+      "text": "A sample of \u25cf1 bolts has a mean length of \u25cf2 and a sample standard deviation of \u25cf3. At \u25cf5, test whether the true mean length differs from \u25cf4. Give the test statistic and your conclusion.",
+      "kind": "template",
+      "root_id": "test_whether_a_population_mean_differs_f_83f2ec",
+      "params": [
+        {
+          "description": "the sample size n, the number of observations in the sample",
+          "format_examples": [
+            "36",
+            "12",
+            "150"
+          ],
+          "original_value": "36",
+          "validity_range": "Must be an integer of at least 2, so that degrees of freedom n-1 is at least 1; larger n gives a more precise standard error, and very small n makes the t critical values large."
+        },
+        {
+          "description": "the sample mean of the measured quantity with its unit",
+          "format_examples": [
+            "50.4 mm",
+            "2.31 kg",
+            "-3.5 \u00b0C"
+          ],
+          "original_value": "50.4 mm",
+          "validity_range": "Any real number in the same unit as the hypothesized mean and the standard deviation; no sign restriction for a general measured quantity, but the unit must match the hypothesized mean."
+        },
+        {
+          "description": "the sample standard deviation of the measured quantity with its unit",
+          "format_examples": [
+            "1.2 mm",
+            "0.05 kg",
+            "4.0 \u00b0C"
+          ],
+          "original_value": "1.2 mm",
+          "validity_range": "Must be strictly positive (greater than 0); a zero standard deviation would make the t statistic undefined, and it must be expressed in the same unit as the sample mean."
+        },
+        {
+          "description": "the hypothesized population mean under the null hypothesis, with its unit",
+          "format_examples": [
+            "50 mm",
+            "10.0 kg",
+            "0 \u00b0C"
+          ],
+          "original_value": "50 mm",
+          "validity_range": "Any real number in the same unit as the sample mean; it is the value tested in the null hypothesis H0 that the true mean equals it."
+        },
+        {
+          "description": "the significance level alpha for the two-tailed test",
+          "format_examples": [
+            "\u03b1 = 0.05",
+            "alpha = 0.01",
+            "significance level 0.10"
+          ],
+          "original_value": "\u03b1 = 0.05",
+          "validity_range": "Must lie strictly between 0 and 1; conventional values are 0.01, 0.05 and 0.10, and smaller alpha gives larger critical values and a stricter rejection rule."
+        }
+      ],
+      "problem_id": "one_sample_t_test"
+    },
+    {
+      "text": "A sample of 36 bolts has a mean length of 50.4 mm and a sample standard deviation of 1.2 mm. At \u03b1 = 0.05, test whether the true mean length differs from 50 mm. Give the test statistic and your conclusion.",
+      "kind": "original",
+      "root_id": "test_whether_a_population_mean_differs_f_83f2ec",
+      "params": [
+        {
+          "description": "the sample size n, the number of observations in the sample",
+          "format_examples": [
+            "36",
+            "12",
+            "150"
+          ],
+          "original_value": "36",
+          "validity_range": "Must be an integer of at least 2, so that degrees of freedom n-1 is at least 1; larger n gives a more precise standard error, and very small n makes the t critical values large."
+        },
+        {
+          "description": "the sample mean of the measured quantity with its unit",
+          "format_examples": [
+            "50.4 mm",
+            "2.31 kg",
+            "-3.5 \u00b0C"
+          ],
+          "original_value": "50.4 mm",
+          "validity_range": "Any real number in the same unit as the hypothesized mean and the standard deviation; no sign restriction for a general measured quantity, but the unit must match the hypothesized mean."
+        },
+        {
+          "description": "the sample standard deviation of the measured quantity with its unit",
+          "format_examples": [
+            "1.2 mm",
+            "0.05 kg",
+            "4.0 \u00b0C"
+          ],
+          "original_value": "1.2 mm",
+          "validity_range": "Must be strictly positive (greater than 0); a zero standard deviation would make the t statistic undefined, and it must be expressed in the same unit as the sample mean."
+        },
+        {
+          "description": "the hypothesized population mean under the null hypothesis, with its unit",
+          "format_examples": [
+            "50 mm",
+            "10.0 kg",
+            "0 \u00b0C"
+          ],
+          "original_value": "50 mm",
+          "validity_range": "Any real number in the same unit as the sample mean; it is the value tested in the null hypothesis H0 that the true mean equals it."
+        },
+        {
+          "description": "the significance level alpha for the two-tailed test",
+          "format_examples": [
+            "\u03b1 = 0.05",
+            "alpha = 0.01",
+            "significance level 0.10"
+          ],
+          "original_value": "\u03b1 = 0.05",
+          "validity_range": "Must lie strictly between 0 and 1; conventional values are 0.01, 0.05 and 0.10, and smaller alpha gives larger critical values and a stricter rejection rule."
+        }
+      ],
+      "problem_id": "one_sample_t_test"
+    },
+    {
+      "text": "A ball is launched from the top of a \u25cf1 cliff at \u25cf2, \u25cf3 above the horizontal. Taking g = \u25cf4, how far from the base of the cliff does it land?",
+      "kind": "template",
+      "root_id": "compute_the_horizontal_distance_from_the_1274aa",
+      "params": [
+        {
+          "description": "the height of the cliff above its base, with unit",
+          "format_examples": [
+            "20.0 m",
+            "45 m",
+            "12.5 metres"
+          ],
+          "original_value": "20.0 m",
+          "validity_range": "Strictly positive finite length (height > 0). A height of zero reduces to ground-level launch, which is a degenerate case; negative heights (launch point below the base) are not in the class as described."
+        },
+        {
+          "description": "the launch speed of the ball, with unit",
+          "format_examples": [
+            "25.0 m/s",
+            "12 m/s",
+            "40.5 metres per second"
+          ],
+          "original_value": "25.0 m/s",
+          "validity_range": "Strictly positive finite speed (v0 > 0). Speed zero means no motion and no landing distance, so it is excluded."
+        },
+        {
+          "description": "the launch angle of the ball measured above the horizontal, with unit",
+          "format_examples": [
+            "35\u00b0",
+            "20 degrees",
+            "-10\u00b0"
+          ],
+          "original_value": "35\u00b0",
+          "validity_range": "Angle in the open interval (-90\u00b0, 90\u00b0) for a nonzero forward range. 0\u00b0 is a horizontal launch and is valid; negative angles mean launch below horizontal and are valid. \u00b190\u00b0 (straight up or straight down) gives zero horizontal displacement and is a degenerate case."
+        },
+        {
+          "description": "the gravitational acceleration magnitude, with unit",
+          "format_examples": [
+            "9.81 m/s\u00b2",
+            "9.8 m/s\u00b2",
+            "1.62 m/s\u00b2"
+          ],
+          "original_value": "9.81 m/s\u00b2",
+          "validity_range": "Strictly positive finite acceleration magnitude (g > 0), taken as downward. Values near 9.8 m/s\u00b2 correspond to Earth; any positive value gives a valid instance of the same class."
+        }
+      ],
+      "problem_id": "projectile_range_from_height"
+    },
+    {
+      "text": "A ball is launched from the top of a 20.0 m cliff at 25.0 m/s, 35\u00b0 above the horizontal. Taking g = 9.81 m/s\u00b2, how far from the base of the cliff does it land?",
+      "kind": "original",
+      "root_id": "compute_the_horizontal_distance_from_the_1274aa",
+      "params": [
+        {
+          "description": "the height of the cliff above its base, with unit",
+          "format_examples": [
+            "20.0 m",
+            "45 m",
+            "12.5 metres"
+          ],
+          "original_value": "20.0 m",
+          "validity_range": "Strictly positive finite length (height > 0). A height of zero reduces to ground-level launch, which is a degenerate case; negative heights (launch point below the base) are not in the class as described."
+        },
+        {
+          "description": "the launch speed of the ball, with unit",
+          "format_examples": [
+            "25.0 m/s",
+            "12 m/s",
+            "40.5 metres per second"
+          ],
+          "original_value": "25.0 m/s",
+          "validity_range": "Strictly positive finite speed (v0 > 0). Speed zero means no motion and no landing distance, so it is excluded."
+        },
+        {
+          "description": "the launch angle of the ball measured above the horizontal, with unit",
+          "format_examples": [
+            "35\u00b0",
+            "20 degrees",
+            "-10\u00b0"
+          ],
+          "original_value": "35\u00b0",
+          "validity_range": "Angle in the open interval (-90\u00b0, 90\u00b0) for a nonzero forward range. 0\u00b0 is a horizontal launch and is valid; negative angles mean launch below horizontal and are valid. \u00b190\u00b0 (straight up or straight down) gives zero horizontal displacement and is a degenerate case."
+        },
+        {
+          "description": "the gravitational acceleration magnitude, with unit",
+          "format_examples": [
+            "9.81 m/s\u00b2",
+            "9.8 m/s\u00b2",
+            "1.62 m/s\u00b2"
+          ],
+          "original_value": "9.81 m/s\u00b2",
+          "validity_range": "Strictly positive finite acceleration magnitude (g > 0), taken as downward. Values near 9.8 m/s\u00b2 correspond to Earth; any positive value gives a valid instance of the same class."
+        }
+      ],
+      "problem_id": "projectile_range_from_height"
+    },
+    {
+      "text": "A simply supported steel beam spans \u25cf1 and carries a uniform load of \u25cf2. With modulus of elasticity \u25cf3 and second moment of area \u25cf4, what is the maximum deflection?",
+      "kind": "template",
+      "root_id": "compute_the_maximum_deflection_in_millim_63457c",
+      "params": [
+        {
+          "description": "the span length L of the simply supported beam with unit",
+          "format_examples": [
+            "6.0 m",
+            "4.5 m",
+            "8 m"
+          ],
+          "original_value": "6.0 m",
+          "validity_range": "Strictly positive finite length with a length unit; physically meaningful spans are roughly 0.1 m to a few hundred metres. A zero or negative span is invalid."
+        },
+        {
+          "description": "the uniform load intensity w acting over the full span of the beam with unit",
+          "format_examples": [
+            "12 kN/m",
+            "8.5 kN/m",
+            "500 N/m"
+          ],
+          "original_value": "12 kN/m",
+          "validity_range": "Non-negative force per unit length with a force-per-length unit. Zero gives zero deflection; the linear-elastic formula holds only while the beam stays elastic and the load is within the design range."
+        },
+        {
+          "description": "the modulus of elasticity E of the beam material with unit",
+          "format_examples": [
+            "200 GPa",
+            "70 GPa",
+            "210 GPa"
+          ],
+          "original_value": "200 GPa",
+          "validity_range": "Strictly positive stress unit value. Typical structural values are roughly 1 GPa to 500 GPa (steel about 200 GPa). Zero or negative is physically invalid."
+        },
+        {
+          "description": "the second moment of area I of the beam cross-section with unit",
+          "format_examples": [
+            "8.0 \u00d7 10\u207b\u2075 m\u2074",
+            "2.5 \u00d7 10\u207b\u2074 m\u2074",
+            "1.2 \u00d7 10\u207b\u2076 m\u2074"
+          ],
+          "original_value": "8.0 \u00d7 10\u207b\u2075 m\u2074",
+          "validity_range": "Strictly positive length-to-the-fourth unit value. Realistic beam sections give roughly 10\u207b\u2078 m\u2074 to 10\u207b\u00b2 m\u2074. Zero or negative is invalid because the section must have area."
+        }
+      ],
+      "problem_id": "ss_beam_udl_max_deflection"
+    },
+    {
+      "text": "A simply supported steel beam spans 6.0 m and carries a uniform load of 12 kN/m. With E = 200 GPa and I = 8.0 \u00d7 10\u207b\u2075 m\u2074, what is the maximum deflection?",
+      "kind": "original",
+      "root_id": "compute_the_maximum_deflection_in_millim_63457c",
+      "params": [
+        {
+          "description": "the span length L of the simply supported beam with unit",
+          "format_examples": [
+            "6.0 m",
+            "4.5 m",
+            "8 m"
+          ],
+          "original_value": "6.0 m",
+          "validity_range": "Strictly positive finite length with a length unit; physically meaningful spans are roughly 0.1 m to a few hundred metres. A zero or negative span is invalid."
+        },
+        {
+          "description": "the uniform load intensity w acting over the full span of the beam with unit",
+          "format_examples": [
+            "12 kN/m",
+            "8.5 kN/m",
+            "500 N/m"
+          ],
+          "original_value": "12 kN/m",
+          "validity_range": "Non-negative force per unit length with a force-per-length unit. Zero gives zero deflection; the linear-elastic formula holds only while the beam stays elastic and the load is within the design range."
+        },
+        {
+          "description": "the modulus of elasticity E of the beam material with unit",
+          "format_examples": [
+            "200 GPa",
+            "70 GPa",
+            "210 GPa"
+          ],
+          "original_value": "200 GPa",
+          "validity_range": "Strictly positive stress unit value. Typical structural values are roughly 1 GPa to 500 GPa (steel about 200 GPa). Zero or negative is physically invalid."
+        },
+        {
+          "description": "the second moment of area I of the beam cross-section with unit",
+          "format_examples": [
+            "8.0 \u00d7 10\u207b\u2075 m\u2074",
+            "2.5 \u00d7 10\u207b\u2074 m\u2074",
+            "1.2 \u00d7 10\u207b\u2076 m\u2074"
+          ],
+          "original_value": "8.0 \u00d7 10\u207b\u2075 m\u2074",
+          "validity_range": "Strictly positive length-to-the-fourth unit value. Realistic beam sections give roughly 10\u207b\u2078 m\u2074 to 10\u207b\u00b2 m\u2074. Zero or negative is invalid because the section must have area."
+        }
+      ],
+      "problem_id": "ss_beam_udl_max_deflection"
+    }
+  ]
+}

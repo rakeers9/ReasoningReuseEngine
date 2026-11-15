@@ -89,14 +89,18 @@ class Certificate:
 
 
 def _generate_instances(question: str, template: str, ep: EntryPoint, n: int, tag: str) -> list[str]:
-    params = "\n".join(f"- {p.description}: original {p.original_value!r}; valid range: "
+    params = "\n".join(f"- {p.description}: original {p.original_value!r}; other accepted forms: "
+                       f"{', '.join(map(repr, p.format_examples)) or 'none'}; valid range: "
                        f"{p.validity_range or 'not stated'}" for p in ep.params)
     prompt = (
         f"## Original question\n{question}\n\n## Template (●n marks each value)\n{template}\n\n"
         f"## Values\n{params}\n\n"
         f"Write {n} new versions of the original question for testing. Use exactly the original "
-        "wording with only the values changed. Change at least two values in each version, use "
-        "realistic values inside the valid ranges, and make the versions differ from each other. "
+        "wording with only the values changed. Change at least two values in each version, and across "
+        "the versions change every value at least once, so each input is tested with a new value. "
+        "Where a value has a unit, also write it in a different accepted unit in at least one version "
+        "(see the other accepted forms), so each unit conversion is exercised. "
+        "Use realistic values inside the valid ranges, and make the versions differ from each other. "
         "Write only the questions; do not solve them."
     )
     out = llm.call("generator", prompt, model=config.GENERATOR_MODEL, schema=NewInstances,
@@ -113,14 +117,28 @@ def _fresh_solve(question: str, tag: str) -> str:
     return out.final_answer
 
 
+# Owner rule (2026-11-15): an exact amount must match exactly. The judge is told the same
+# rule the number check applies (arc/checks.py): equal to the precision written.
+EXACT_JUDGE_SYSTEM = (
+    "You are a meticulous verifier. Judge only what you are asked. Two answers agree only if "
+    "they give the same value to the precision written: any difference beyond the last digit "
+    "stated in the less precise of the two is a mismatch. Money given to the cent must match to "
+    "the cent. A unit conversion of the same value is fine (5.13 MPa = 5130 kPa). Keep the "
+    "critique short and specific.")
+
+
 def _compare(name: str, question: str, reference: str, candidate: str, tag: str) -> Comparison:
+    """Agree only if the judge says the final answers are the same value to the precision
+    written AND the number check finds no mismatch (no percentage tolerance)."""
     nc = number_check(candidate, reference)
     v = judges.judge(
         f"## Question\n{question}\n\n## Answer A\n{reference}\n\n## Answer B\n{candidate}\n\n"
-        "Do A and B give the same final answer to the question (equal up to rounding and unit "
-        "conversion)? Compare only the final answers, not the working. If B gives several values, "
-        "the one that answers the question must match A.",
-        role="cert_judge", tag=tag)
+        "Do A and B give the same final answer to the question? They must be the same value to the "
+        "precision written: any difference beyond the last digit stated in the less precise of the "
+        "two is a mismatch, and money given to the cent must match to the cent. A unit conversion "
+        "of the same value is fine. Compare only the final answers, not the working. If the question "
+        "asks for several values, every one of them must match.",
+        role="cert_judge", tag=tag, system=EXACT_JUDGE_SYSTEM)
     agree = v.passed and nc["status"] != "mismatch"
     return Comparison(name, question, reference, candidate, agree, v.passed, nc["status"], v.critique)
 

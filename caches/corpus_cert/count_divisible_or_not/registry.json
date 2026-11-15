@@ -1,0 +1,150 @@
+{
+  "name": "count_divisible_or_not",
+  "functions": [
+    {
+      "id": "compute_the_least_common_multiple_of_two_f4bc81",
+      "description": "Compute the least common multiple of two positive integers",
+      "inputs": [
+        "the first positive integer",
+        "the second positive integer"
+      ],
+      "outputs": [
+        "the least common multiple of the two integers"
+      ],
+      "aliases": [],
+      "origin": "builder:count_divisible_or_not"
+    },
+    {
+      "id": "count_the_positive_multiples_of_a_diviso_b65d45",
+      "description": "Count the positive multiples of a divisor that do not exceed a limit.",
+      "inputs": [
+        "the divisor whose multiples are counted",
+        "the largest value allowed for the counted multiples"
+      ],
+      "outputs": [
+        "the number of positive multiples of the divisor not exceeding the limit"
+      ],
+      "aliases": [],
+      "origin": "builder:count_divisible_or_not"
+    },
+    {
+      "id": "count_positive_integers_up_to_a_limit_th_f24427",
+      "description": "Count positive integers up to a limit that are divisible by at least one divisor in a given list, using inclusion-exclusion over lcms.",
+      "inputs": [
+        "the largest value allowed for the counted integers",
+        "the list of divisors of which at least one must divide a counted integer"
+      ],
+      "outputs": [
+        "the count of positive integers up to the limit divisible by at least one of the divisors"
+      ],
+      "aliases": [],
+      "origin": "builder:count_divisible_or_not"
+    },
+    {
+      "id": "count_positive_integers_below_a_bound_th_57d4df",
+      "description": "Count positive integers below a bound that are divisible by the exclusion divisor and by at least one inclusion divisor, via inclusion-exclusion over lcms.",
+      "inputs": [
+        "the exclusive upper bound N for the positive integers being counted, as a positive integer",
+        "the set of inclusion divisors d1 or d2 (positive integers) such that a counted integer must be divisible by at least one of them",
+        "the exclusion divisor d (a positive integer) such that counted integers must not be divisible by it"
+      ],
+      "outputs": [
+        "the count of positive integers less than N divisible by the exclusion divisor and by at least one inclusion divisor"
+      ],
+      "aliases": [],
+      "origin": "builder:count_divisible_or_not"
+    },
+    {
+      "id": "count_positive_integers_below_a_bound_th_78aed9",
+      "description": "Count positive integers below a bound that are divisible by some inclusion divisor but not by the exclusion divisor.",
+      "inputs": [
+        "the exclusive upper bound N for the positive integers being counted, as a positive integer",
+        "the set of inclusion divisors d1 or d2 (positive integers) such that a counted integer must be divisible by at least one of them",
+        "the exclusion divisor d (a positive integer) such that counted integers must not be divisible by it"
+      ],
+      "outputs": [
+        "the count of positive integers less than N divisible by an inclusion divisor but not by the exclusion divisor"
+      ],
+      "aliases": [],
+      "origin": "builder:count_divisible_or_not"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "How many positive integers less than \u25cf1 are divisible by \u25cf2 but not by \u25cf3?",
+      "kind": "template",
+      "root_id": "count_positive_integers_below_a_bound_th_78aed9",
+      "params": [
+        {
+          "description": "the exclusive upper bound N for the positive integers being counted, as a positive integer",
+          "format_examples": [
+            "1000",
+            "500",
+            "2024"
+          ],
+          "original_value": "1000",
+          "validity_range": "N must be a positive integer. Any N >= 2 is valid and gives a well-defined count over {1, ..., N-1}. N = 1 is degenerate and yields 0. Non-integer or non-positive bounds are not meaningful for this counting problem. Very large N is valid but only affects computation cost, not logic."
+        },
+        {
+          "description": "the set of inclusion divisors d1 or d2 (positive integers) such that a counted integer must be divisible by at least one of them",
+          "format_examples": [
+            "3 or 5",
+            "2 or 7",
+            "4 or 6 or 9"
+          ],
+          "original_value": "3 or 5",
+          "validity_range": "Each divisor must be a positive integer, at least 2 to be non-trivial. A divisor of 1 would make every integer qualify, which is logically valid but trivial. Divisors may be any positive integers, including ones sharing factors (e.g. 4 and 6); inclusion-exclusion over lcms handles overlap. The list should be non-empty for a meaningful count."
+        },
+        {
+          "description": "the exclusion divisor d (a positive integer) such that counted integers must not be divisible by it",
+          "format_examples": [
+            "7",
+            "11",
+            "4"
+          ],
+          "original_value": "7",
+          "validity_range": "The exclusion divisor must be a positive integer. A value of 1 would exclude every integer and make the count 0, which is logically valid but degenerate. Any integer >= 2 is valid. The exclusion divisor may share factors with the inclusion divisors; the subtraction step handles the overlap correctly."
+        }
+      ],
+      "problem_id": "count_divisible_or_not"
+    },
+    {
+      "text": "How many positive integers less than 1000 are divisible by 3 or 5 but not by 7?",
+      "kind": "original",
+      "root_id": "count_positive_integers_below_a_bound_th_78aed9",
+      "params": [
+        {
+          "description": "the exclusive upper bound N for the positive integers being counted, as a positive integer",
+          "format_examples": [
+            "1000",
+            "500",
+            "2024"
+          ],
+          "original_value": "1000",
+          "validity_range": "N must be a positive integer. Any N >= 2 is valid and gives a well-defined count over {1, ..., N-1}. N = 1 is degenerate and yields 0. Non-integer or non-positive bounds are not meaningful for this counting problem. Very large N is valid but only affects computation cost, not logic."
+        },
+        {
+          "description": "the set of inclusion divisors d1 or d2 (positive integers) such that a counted integer must be divisible by at least one of them",
+          "format_examples": [
+            "3 or 5",
+            "2 or 7",
+            "4 or 6 or 9"
+          ],
+          "original_value": "3 or 5",
+          "validity_range": "Each divisor must be a positive integer, at least 2 to be non-trivial. A divisor of 1 would make every integer qualify, which is logically valid but trivial. Divisors may be any positive integers, including ones sharing factors (e.g. 4 and 6); inclusion-exclusion over lcms handles overlap. The list should be non-empty for a meaningful count."
+        },
+        {
+          "description": "the exclusion divisor d (a positive integer) such that counted integers must not be divisible by it",
+          "format_examples": [
+            "7",
+            "11",
+            "4"
+          ],
+          "original_value": "7",
+          "validity_range": "The exclusion divisor must be a positive integer. A value of 1 would exclude every integer and make the count 0, which is logically valid but degenerate. Any integer >= 2 is valid. The exclusion divisor may share factors with the inclusion divisors; the subtraction step handles the overlap correctly."
+        }
+      ],
+      "problem_id": "count_divisible_or_not"
+    }
+  ]
+}

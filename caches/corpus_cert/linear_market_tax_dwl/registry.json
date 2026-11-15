@@ -1,0 +1,195 @@
+{
+  "name": "linear_market_tax_dwl",
+  "functions": [
+    {
+      "id": "solve_two_linear_quantity_price_equation_b211a0",
+      "description": "Solve two linear quantity-price equations Q = a + bP for their intersection price and quantity.",
+      "inputs": [
+        "first linear quantity equation in price",
+        "second linear quantity equation in price"
+      ],
+      "outputs": [
+        "intersection price",
+        "intersection quantity"
+      ],
+      "aliases": [],
+      "origin": "builder:linear_market_tax_dwl"
+    },
+    {
+      "id": "compute_the_pre_tax_equilibrium_price_an_4ab5fe",
+      "description": "Compute the pre-tax equilibrium price and quantity from the demand and supply curves.",
+      "inputs": [
+        "The linear demand curve expressing quantity demanded Q as a function of price P (intercept and slope)",
+        "The linear supply curve expressing quantity supplied Q as a function of price P (intercept and slope)"
+      ],
+      "outputs": [
+        "pre-tax equilibrium price",
+        "pre-tax equilibrium quantity"
+      ],
+      "aliases": [],
+      "origin": "builder:linear_market_tax_dwl"
+    },
+    {
+      "id": "shift_a_linear_supply_curve_up_by_a_per_c087a7",
+      "description": "Shift a linear supply curve up by a per-unit tax on sellers to express it as a function of the buyer price.",
+      "inputs": [
+        "The linear supply curve expressing quantity supplied Q as a function of price P (intercept and slope)",
+        "The per-unit tax amount charged on each unit sold, in dollars, levied on sellers"
+      ],
+      "outputs": [
+        "post-tax supply curve as a linear equation in buyer price"
+      ],
+      "aliases": [],
+      "origin": "builder:linear_market_tax_dwl"
+    },
+    {
+      "id": "find_the_new_buyer_price_and_quantity_by_6f2fa7",
+      "description": "Find the new buyer price and quantity by equating the demand curve with the post-tax supply curve expressed in buyer price.",
+      "inputs": [
+        "The linear demand curve expressing quantity demanded Q as a function of price P (intercept and slope)",
+        "post-tax supply curve as a linear equation in buyer price"
+      ],
+      "outputs": [
+        "new price buyers pay",
+        "new quantity traded"
+      ],
+      "aliases": [],
+      "origin": "builder:linear_market_tax_dwl"
+    },
+    {
+      "id": "compute_the_seller_net_price_as_the_buye_874106",
+      "description": "Compute the seller net price as the buyer price minus the per-unit tax",
+      "inputs": [
+        "new price buyers pay",
+        "The per-unit tax amount charged on each unit sold, in dollars, levied on sellers"
+      ],
+      "outputs": [
+        "seller net price"
+      ],
+      "aliases": [],
+      "origin": "builder:linear_market_tax_dwl"
+    },
+    {
+      "id": "verify_that_a_post_tax_equilibrium_is_co_8af109",
+      "description": "Verify that a post-tax equilibrium is consistent: the buyer-seller price wedge equals the per-unit tax and the traded quantity is nonnegative.",
+      "inputs": [
+        "new price buyers pay",
+        "new quantity traded",
+        "seller net price",
+        "The per-unit tax amount charged on each unit sold, in dollars, levied on sellers"
+      ],
+      "outputs": [
+        "equilibrium consistency check result"
+      ],
+      "aliases": [],
+      "origin": "builder:linear_market_tax_dwl"
+    },
+    {
+      "id": "compute_the_deadweight_loss_triangle_are_5fac24",
+      "description": "Compute the deadweight loss triangle area from the quantity lost after a per-unit tax and the per-unit tax wedge.",
+      "inputs": [
+        "pre-tax equilibrium quantity",
+        "new quantity traded",
+        "The per-unit tax amount charged on each unit sold, in dollars, levied on sellers"
+      ],
+      "outputs": [
+        "deadweight loss"
+      ],
+      "aliases": [],
+      "origin": "builder:linear_market_tax_dwl"
+    },
+    {
+      "id": "compute_the_buyer_price_and_deadweight_l_ed88e2",
+      "description": "Compute the buyer price and deadweight loss after a per-unit tax on sellers in a linear supply and demand market.",
+      "inputs": [
+        "The linear demand curve expressing quantity demanded Q as a function of price P (intercept and slope)",
+        "The linear supply curve expressing quantity supplied Q as a function of price P (intercept and slope)",
+        "The per-unit tax amount charged on each unit sold, in dollars, levied on sellers"
+      ],
+      "outputs": [
+        "new price buyers pay",
+        "deadweight loss"
+      ],
+      "aliases": [],
+      "origin": "builder:linear_market_tax_dwl"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "Demand is \u25cf 1 and supply is \u25cf 2. A \u25cf 3 per-unit tax is imposed on sellers. What is the new price buyers pay, and what is the deadweight loss?",
+      "kind": "template",
+      "root_id": "compute_the_buyer_price_and_deadweight_l_ed88e2",
+      "params": [
+        {
+          "description": "The linear demand curve expressing quantity demanded Q as a function of price P (intercept and slope)",
+          "format_examples": [
+            "Q = 120 \u2212 2P",
+            "Q = 100 \u2212 5P",
+            "Q = 50 \u2212 0.5P"
+          ],
+          "original_value": "Q = 120 \u2212 2P",
+          "validity_range": "Must be a linear demand equation in Q and P with a negative price slope (quantity demanded falls as price rises) and a positive quantity intercept, so that a positive equilibrium price and quantity exist; slope must be nonzero."
+        },
+        {
+          "description": "The linear supply curve expressing quantity supplied Q as a function of price P (intercept and slope)",
+          "format_examples": [
+            "Q = 3P \u2212 30",
+            "Q = 2P + 10",
+            "Q = 0.5P"
+          ],
+          "original_value": "Q = 3P \u2212 30",
+          "validity_range": "Must be a linear supply equation in Q and P with a positive price slope (quantity supplied rises with price) so that supply and demand intersect at a positive price and quantity; the intercept must make the pre-tax equilibrium quantity positive."
+        },
+        {
+          "description": "The per-unit tax amount charged on each unit sold, in dollars, levied on sellers",
+          "format_examples": [
+            "$5 per unit",
+            "$2 per-unit tax",
+            "$10 per unit"
+          ],
+          "original_value": "$5 per-unit",
+          "validity_range": "Must be a nonnegative dollar amount per unit; a tax of zero yields no change, and a tax large enough that the post-tax equilibrium quantity would be zero or negative (the market shuts down) is outside the regime where the standard triangle deadweight loss formula applies."
+        }
+      ],
+      "problem_id": "linear_market_tax_dwl"
+    },
+    {
+      "text": "Demand is Q = 120 \u2212 2P and supply is Q = 3P \u2212 30. A $5 per-unit tax is imposed on sellers. What is the new price buyers pay, and what is the deadweight loss?",
+      "kind": "original",
+      "root_id": "compute_the_buyer_price_and_deadweight_l_ed88e2",
+      "params": [
+        {
+          "description": "The linear demand curve expressing quantity demanded Q as a function of price P (intercept and slope)",
+          "format_examples": [
+            "Q = 120 \u2212 2P",
+            "Q = 100 \u2212 5P",
+            "Q = 50 \u2212 0.5P"
+          ],
+          "original_value": "Q = 120 \u2212 2P",
+          "validity_range": "Must be a linear demand equation in Q and P with a negative price slope (quantity demanded falls as price rises) and a positive quantity intercept, so that a positive equilibrium price and quantity exist; slope must be nonzero."
+        },
+        {
+          "description": "The linear supply curve expressing quantity supplied Q as a function of price P (intercept and slope)",
+          "format_examples": [
+            "Q = 3P \u2212 30",
+            "Q = 2P + 10",
+            "Q = 0.5P"
+          ],
+          "original_value": "Q = 3P \u2212 30",
+          "validity_range": "Must be a linear supply equation in Q and P with a positive price slope (quantity supplied rises with price) so that supply and demand intersect at a positive price and quantity; the intercept must make the pre-tax equilibrium quantity positive."
+        },
+        {
+          "description": "The per-unit tax amount charged on each unit sold, in dollars, levied on sellers",
+          "format_examples": [
+            "$5 per unit",
+            "$2 per-unit tax",
+            "$10 per unit"
+          ],
+          "original_value": "$5 per-unit",
+          "validity_range": "Must be a nonnegative dollar amount per unit; a tax of zero yields no change, and a tax large enough that the post-tax equilibrium quantity would be zero or negative (the market shuts down) is outside the regime where the standard triangle deadweight loss formula applies."
+        }
+      ],
+      "problem_id": "linear_market_tax_dwl"
+    }
+  ]
+}

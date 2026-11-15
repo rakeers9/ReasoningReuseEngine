@@ -1,0 +1,135 @@
+{
+  "name": "circular_seating_not_adjacent",
+  "functions": [
+    {
+      "id": "count_the_distinct_circular_arrangements_5b5bc8",
+      "description": "Count the distinct circular arrangements of k distinct units around a round table up to rotation.",
+      "inputs": [
+        "the number of distinct units to be arranged around the round table"
+      ],
+      "outputs": [
+        "the number of circular arrangements of the units up to rotation"
+      ],
+      "aliases": [],
+      "origin": "builder:circular_seating_not_adjacent"
+    },
+    {
+      "id": "count_the_total_number_of_distinct_circu_d64109",
+      "description": "Count the total number of distinct circular seating arrangements of n people around a round table.",
+      "inputs": [
+        "the total number of distinct people to be seated around the round table, as a positive integer count"
+      ],
+      "outputs": [
+        "the total number of circular seatings of the people around the table"
+      ],
+      "aliases": [],
+      "origin": "builder:circular_seating_not_adjacent"
+    },
+    {
+      "id": "count_the_circular_seatings_in_which_two_936d1f",
+      "description": "Count the circular seatings in which two specified people sit next to each other by merging them into one block and multiplying by their internal orderings.",
+      "inputs": [
+        "the total number of distinct people to be seated around the round table, as a positive integer count",
+        "the name or label of the first of the two particular people who must not sit next to each other",
+        "the name or label of the second of the two particular people who must not sit next to each other"
+      ],
+      "outputs": [
+        "the number of circular seatings in which the two specified people sit next to each other"
+      ],
+      "aliases": [],
+      "origin": "builder:circular_seating_not_adjacent"
+    },
+    {
+      "id": "count_the_seatings_of_n_people_around_a_6cf2aa",
+      "description": "Count the seatings of n people around a round table in which two specified people do not sit next to each other.",
+      "inputs": [
+        "the total number of distinct people to be seated around the round table, as a positive integer count",
+        "the name or label of the first of the two particular people who must not sit next to each other",
+        "the name or label of the second of the two particular people who must not sit next to each other"
+      ],
+      "outputs": [
+        "the number of circular seatings in which the two specified people are not next to each other"
+      ],
+      "aliases": [],
+      "origin": "builder:circular_seating_not_adjacent"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "In how many ways can \u25cf1 people be seated around a round table if two particular people, \u25cf2 and \u25cf3, refuse to sit next to each other?",
+      "kind": "template",
+      "root_id": "count_the_seatings_of_n_people_around_a_6cf2aa",
+      "params": [
+        {
+          "description": "the total number of distinct people to be seated around the round table, as a positive integer count",
+          "format_examples": [
+            "8",
+            "12",
+            "5"
+          ],
+          "original_value": "8",
+          "validity_range": "Integer n with n of at least 2 for the circular formula (n-1)! to be defined; the restricted-pair count is nonzero only for n of at least 4, since in a table of 3 or fewer every pair is adjacent (answer 0). Must be a finite positive integer."
+        },
+        {
+          "description": "the name or label of the first of the two particular people who must not sit next to each other",
+          "format_examples": [
+            "A",
+            "Alice",
+            "Person 1"
+          ],
+          "original_value": "A",
+          "validity_range": "Any distinct identifier naming one of the n seated people; must differ from the second restricted person \u25cf3 so that the pair is well defined."
+        },
+        {
+          "description": "the name or label of the second of the two particular people who must not sit next to each other",
+          "format_examples": [
+            "B",
+            "Bob",
+            "Person 2"
+          ],
+          "original_value": "B",
+          "validity_range": "Any distinct identifier naming one of the n seated people; must differ from the first restricted person \u25cf2, and both \u25cf2 and \u25cf3 must belong to the set of \u25cf1 people."
+        }
+      ],
+      "problem_id": "circular_seating_not_adjacent"
+    },
+    {
+      "text": "In how many ways can 8 people be seated around a round table if two particular people, A and B, refuse to sit next to each other?",
+      "kind": "original",
+      "root_id": "count_the_seatings_of_n_people_around_a_6cf2aa",
+      "params": [
+        {
+          "description": "the total number of distinct people to be seated around the round table, as a positive integer count",
+          "format_examples": [
+            "8",
+            "12",
+            "5"
+          ],
+          "original_value": "8",
+          "validity_range": "Integer n with n of at least 2 for the circular formula (n-1)! to be defined; the restricted-pair count is nonzero only for n of at least 4, since in a table of 3 or fewer every pair is adjacent (answer 0). Must be a finite positive integer."
+        },
+        {
+          "description": "the name or label of the first of the two particular people who must not sit next to each other",
+          "format_examples": [
+            "A",
+            "Alice",
+            "Person 1"
+          ],
+          "original_value": "A",
+          "validity_range": "Any distinct identifier naming one of the n seated people; must differ from the second restricted person \u25cf3 so that the pair is well defined."
+        },
+        {
+          "description": "the name or label of the second of the two particular people who must not sit next to each other",
+          "format_examples": [
+            "B",
+            "Bob",
+            "Person 2"
+          ],
+          "original_value": "B",
+          "validity_range": "Any distinct identifier naming one of the n seated people; must differ from the first restricted person \u25cf2, and both \u25cf2 and \u25cf3 must belong to the set of \u25cf1 people."
+        }
+      ],
+      "problem_id": "circular_seating_not_adjacent"
+    }
+  ]
+}

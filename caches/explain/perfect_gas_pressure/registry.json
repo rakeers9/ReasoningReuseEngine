@@ -1,0 +1,220 @@
+{
+  "name": "perfect_gas_pressure",
+  "functions": [
+    {
+      "id": "convert_a_container_volume_given_with_it_41e1d1",
+      "description": "Convert a container volume given with its unit to cubic metres",
+      "inputs": [
+        "the volume of the container holding the gas with unit"
+      ],
+      "outputs": [
+        "volume in cubic metres"
+      ],
+      "aliases": [],
+      "origin": "builder:perfect_gas_pressure"
+    },
+    {
+      "id": "convert_a_temperature_given_with_its_uni_2dea9c",
+      "description": "Convert a temperature given with its unit to kelvin.",
+      "inputs": [
+        "the temperature of the gas with unit"
+      ],
+      "outputs": [
+        "absolute temperature in kelvin"
+      ],
+      "aliases": [],
+      "origin": "builder:perfect_gas_pressure"
+    },
+    {
+      "id": "compute_the_pressure_of_a_perfect_gas_fr_5db8c5",
+      "description": "Compute the pressure of a perfect gas from its amount, absolute temperature and volume using p = nRT/V",
+      "inputs": [
+        "amount of substance in mol",
+        "absolute temperature in kelvin",
+        "volume in cubic metres"
+      ],
+      "outputs": [
+        "pressure in pascals"
+      ],
+      "aliases": [],
+      "origin": "builder:perfect_gas_pressure"
+    },
+    {
+      "id": "check_that_a_predicted_perfect_gas_press_341349",
+      "description": "Check that a predicted perfect gas pressure is insensitive to rounding the temperature to 300 K.",
+      "inputs": [
+        "amount of substance in mol",
+        "volume in cubic metres",
+        "absolute temperature in kelvin",
+        "pressure in pascals"
+      ],
+      "outputs": [
+        "pressure agrees at the rounded temperature to the stated significant figures"
+      ],
+      "aliases": [],
+      "origin": "builder:perfect_gas_pressure"
+    },
+    {
+      "id": "express_a_pressure_given_in_pascals_in_m_960104",
+      "description": "Express a pressure given in pascals in megapascals, bar and atmospheres for reference.",
+      "inputs": [
+        "pressure in pascals"
+      ],
+      "outputs": [
+        "pressure in megapascals",
+        "pressure in bar",
+        "pressure in atmospheres"
+      ],
+      "aliases": [],
+      "origin": "builder:perfect_gas_pressure"
+    },
+    {
+      "id": "round_a_computed_value_to_a_stated_numbe_e97d37",
+      "description": "Round a computed value to a stated number of significant figures and attach its unit.",
+      "inputs": [
+        "computed value",
+        "unit of the computed value",
+        "number of significant figures to report"
+      ],
+      "outputs": [
+        "rounded value with unit"
+      ],
+      "aliases": [],
+      "origin": "builder:perfect_gas_pressure"
+    },
+    {
+      "id": "predict_the_pressure_exerted_by_a_confin_710c5f",
+      "description": "Predict the pressure exerted by a confined perfect gas from its amount, temperature and container volume using the perfect gas equation.",
+      "inputs": [
+        "the amount of substance of the gas with unit (number of moles n)",
+        "the chemical formula of the gas with its physical state label",
+        "the volume of the container holding the gas with unit",
+        "the temperature of the gas with unit",
+        "the common name of the gas species"
+      ],
+      "outputs": [
+        "predicted pressure of the gas with unit"
+      ],
+      "aliases": [],
+      "origin": "builder:perfect_gas_pressure"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "Suppose that \u25cf1 \u25cf2 is confined to \u25cf3 at \u25cf4. Predict the pressure exerted by the \u25cf5 from the perfect gas equation.",
+      "kind": "template",
+      "root_id": "predict_the_pressure_exerted_by_a_confin_710c5f",
+      "params": [
+        {
+          "description": "the amount of substance of the gas with unit (number of moles n)",
+          "format_examples": [
+            "10.0 mol",
+            "0.250 mol",
+            "3 mol"
+          ],
+          "original_value": "10.0 mol",
+          "validity_range": "Must be a finite positive number of moles; zero or negative amounts are physically meaningless for a confined gas, and very large amounts are valid only as far as the perfect gas model holds."
+        },
+        {
+          "description": "the chemical formula of the gas with its physical state label",
+          "format_examples": [
+            "C2H6(g)",
+            "N2(g)",
+            "CO2(g)"
+          ],
+          "original_value": "C2H6(g)",
+          "validity_range": "Must be a gas-phase species at the stated conditions so that the perfect gas equation applies; condensed or liquid species are not covered by this model."
+        },
+        {
+          "description": "the volume of the container holding the gas with unit",
+          "format_examples": [
+            "4.860 dm3",
+            "2.00 L",
+            "0.500 m3"
+          ],
+          "original_value": "4.860 dm3",
+          "validity_range": "Must be a finite positive volume; the result is inversely proportional to volume and diverges as the volume approaches zero, so the perfect gas model is valid only for volumes not so small that molecular volume matters."
+        },
+        {
+          "description": "the temperature of the gas with unit",
+          "format_examples": [
+            "27\u00b0C",
+            "300 K",
+            "298.15 K"
+          ],
+          "original_value": "27\u00b0C",
+          "validity_range": "Must be above absolute zero, i.e. greater than -273.15\u00b0C or greater than 0 K, and the gas must remain in the gas phase at that temperature; the perfect gas model is least accurate at low temperatures and high pressures."
+        },
+        {
+          "description": "the common name of the gas species",
+          "format_examples": [
+            "ethane",
+            "nitrogen",
+            "carbon dioxide"
+          ],
+          "original_value": "ethane",
+          "validity_range": "Must name the same substance as the chemical formula given for the amount; it is used only for narration and identification and does not change the calculation."
+        }
+      ],
+      "problem_id": "perfect_gas_pressure"
+    },
+    {
+      "text": "Suppose that 10.0 mol C2H6(g) is confined to 4.860 dm3 at 27\u00b0C. Predict the pressure exerted by the ethane from the perfect gas equation.",
+      "kind": "original",
+      "root_id": "predict_the_pressure_exerted_by_a_confin_710c5f",
+      "params": [
+        {
+          "description": "the amount of substance of the gas with unit (number of moles n)",
+          "format_examples": [
+            "10.0 mol",
+            "0.250 mol",
+            "3 mol"
+          ],
+          "original_value": "10.0 mol",
+          "validity_range": "Must be a finite positive number of moles; zero or negative amounts are physically meaningless for a confined gas, and very large amounts are valid only as far as the perfect gas model holds."
+        },
+        {
+          "description": "the chemical formula of the gas with its physical state label",
+          "format_examples": [
+            "C2H6(g)",
+            "N2(g)",
+            "CO2(g)"
+          ],
+          "original_value": "C2H6(g)",
+          "validity_range": "Must be a gas-phase species at the stated conditions so that the perfect gas equation applies; condensed or liquid species are not covered by this model."
+        },
+        {
+          "description": "the volume of the container holding the gas with unit",
+          "format_examples": [
+            "4.860 dm3",
+            "2.00 L",
+            "0.500 m3"
+          ],
+          "original_value": "4.860 dm3",
+          "validity_range": "Must be a finite positive volume; the result is inversely proportional to volume and diverges as the volume approaches zero, so the perfect gas model is valid only for volumes not so small that molecular volume matters."
+        },
+        {
+          "description": "the temperature of the gas with unit",
+          "format_examples": [
+            "27\u00b0C",
+            "300 K",
+            "298.15 K"
+          ],
+          "original_value": "27\u00b0C",
+          "validity_range": "Must be above absolute zero, i.e. greater than -273.15\u00b0C or greater than 0 K, and the gas must remain in the gas phase at that temperature; the perfect gas model is least accurate at low temperatures and high pressures."
+        },
+        {
+          "description": "the common name of the gas species",
+          "format_examples": [
+            "ethane",
+            "nitrogen",
+            "carbon dioxide"
+          ],
+          "original_value": "ethane",
+          "validity_range": "Must name the same substance as the chemical formula given for the amount; it is used only for narration and identification and does not change the calculation."
+        }
+      ],
+      "problem_id": "perfect_gas_pressure"
+    }
+  ]
+}

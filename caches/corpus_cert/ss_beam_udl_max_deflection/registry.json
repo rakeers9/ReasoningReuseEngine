@@ -1,0 +1,178 @@
+{
+  "name": "ss_beam_udl_max_deflection",
+  "functions": [
+    {
+      "id": "convert_the_beam_span_uniform_load_inten_d93150",
+      "description": "Convert the beam span, uniform load intensity, modulus of elasticity and second moment of area to SI base units",
+      "inputs": [
+        "the span length L of the simply supported beam with unit",
+        "the uniform load intensity w acting over the full span of the beam with unit",
+        "the modulus of elasticity E of the beam material with unit",
+        "the second moment of area I of the beam cross-section with unit"
+      ],
+      "outputs": [
+        "the span length in metres",
+        "the uniform load intensity in newtons per metre",
+        "the modulus of elasticity in pascals",
+        "the second moment of area in metres to the fourth"
+      ],
+      "aliases": [],
+      "origin": "builder:ss_beam_udl_max_deflection"
+    },
+    {
+      "id": "compute_the_flexural_rigidity_ei_from_th_e84469",
+      "description": "Compute the flexural rigidity EI from the modulus of elasticity in pascals and the second moment of area in metres to the fourth.",
+      "inputs": [
+        "the modulus of elasticity in pascals",
+        "the second moment of area in metres to the fourth"
+      ],
+      "outputs": [
+        "the flexural rigidity EI in newton square metres"
+      ],
+      "aliases": [],
+      "origin": "builder:ss_beam_udl_max_deflection"
+    },
+    {
+      "id": "compute_the_maximum_midspan_deflection_o_2f6af4",
+      "description": "Compute the maximum midspan deflection of a simply supported beam under a uniform load over its full span as 5wL^4 divided by 384EI.",
+      "inputs": [
+        "the span length in metres",
+        "the uniform load intensity in newtons per metre",
+        "the modulus of elasticity in pascals",
+        "the second moment of area in metres to the fourth"
+      ],
+      "outputs": [
+        "the maximum midspan deflection in metres"
+      ],
+      "aliases": [],
+      "origin": "builder:ss_beam_udl_max_deflection"
+    },
+    {
+      "id": "check_the_plausibility_of_a_beam_deflect_720b15",
+      "description": "Check the plausibility of a beam deflection by computing the span-to-deflection ratio and comparing it with the typical L/360 serviceability limit.",
+      "inputs": [
+        "the span length in metres",
+        "the maximum midspan deflection in metres"
+      ],
+      "outputs": [
+        "the span-to-deflection ratio",
+        "the plausibility judgement of the deflection"
+      ],
+      "aliases": [],
+      "origin": "builder:ss_beam_udl_max_deflection"
+    },
+    {
+      "id": "compute_the_maximum_deflection_in_millim_63457c",
+      "description": "Compute the maximum deflection in millimetres of a simply supported beam under a full-span uniform load from its span, load intensity, modulus of elasticity and second moment of area, reporting the location at midspan.",
+      "inputs": [
+        "the span length L of the simply supported beam with unit",
+        "the uniform load intensity w acting over the full span of the beam with unit",
+        "the modulus of elasticity E of the beam material with unit",
+        "the second moment of area I of the beam cross-section with unit"
+      ],
+      "outputs": [
+        "the maximum deflection of the beam in millimetres with location at midspan"
+      ],
+      "aliases": [],
+      "origin": "builder:ss_beam_udl_max_deflection"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "A simply supported steel beam spans \u25cf1 and carries a uniform load of \u25cf2. With modulus of elasticity \u25cf3 and second moment of area \u25cf4, what is the maximum deflection?",
+      "kind": "template",
+      "root_id": "compute_the_maximum_deflection_in_millim_63457c",
+      "params": [
+        {
+          "description": "the span length L of the simply supported beam with unit",
+          "format_examples": [
+            "6.0 m",
+            "4.5 m",
+            "8 m"
+          ],
+          "original_value": "6.0 m",
+          "validity_range": "Strictly positive finite length with a length unit; physically meaningful spans are roughly 0.1 m to a few hundred metres. A zero or negative span is invalid."
+        },
+        {
+          "description": "the uniform load intensity w acting over the full span of the beam with unit",
+          "format_examples": [
+            "12 kN/m",
+            "8.5 kN/m",
+            "500 N/m"
+          ],
+          "original_value": "12 kN/m",
+          "validity_range": "Non-negative force per unit length with a force-per-length unit. Zero gives zero deflection; the linear-elastic formula holds only while the beam stays elastic and the load is within the design range."
+        },
+        {
+          "description": "the modulus of elasticity E of the beam material with unit",
+          "format_examples": [
+            "200 GPa",
+            "70 GPa",
+            "210 GPa"
+          ],
+          "original_value": "200 GPa",
+          "validity_range": "Strictly positive stress unit value. Typical structural values are roughly 1 GPa to 500 GPa (steel about 200 GPa). Zero or negative is physically invalid."
+        },
+        {
+          "description": "the second moment of area I of the beam cross-section with unit",
+          "format_examples": [
+            "8.0 \u00d7 10\u207b\u2075 m\u2074",
+            "2.5 \u00d7 10\u207b\u2074 m\u2074",
+            "1.2 \u00d7 10\u207b\u2076 m\u2074"
+          ],
+          "original_value": "8.0 \u00d7 10\u207b\u2075 m\u2074",
+          "validity_range": "Strictly positive length-to-the-fourth unit value. Realistic beam sections give roughly 10\u207b\u2078 m\u2074 to 10\u207b\u00b2 m\u2074. Zero or negative is invalid because the section must have area."
+        }
+      ],
+      "problem_id": "ss_beam_udl_max_deflection"
+    },
+    {
+      "text": "A simply supported steel beam spans 6.0 m and carries a uniform load of 12 kN/m. With E = 200 GPa and I = 8.0 \u00d7 10\u207b\u2075 m\u2074, what is the maximum deflection?",
+      "kind": "original",
+      "root_id": "compute_the_maximum_deflection_in_millim_63457c",
+      "params": [
+        {
+          "description": "the span length L of the simply supported beam with unit",
+          "format_examples": [
+            "6.0 m",
+            "4.5 m",
+            "8 m"
+          ],
+          "original_value": "6.0 m",
+          "validity_range": "Strictly positive finite length with a length unit; physically meaningful spans are roughly 0.1 m to a few hundred metres. A zero or negative span is invalid."
+        },
+        {
+          "description": "the uniform load intensity w acting over the full span of the beam with unit",
+          "format_examples": [
+            "12 kN/m",
+            "8.5 kN/m",
+            "500 N/m"
+          ],
+          "original_value": "12 kN/m",
+          "validity_range": "Non-negative force per unit length with a force-per-length unit. Zero gives zero deflection; the linear-elastic formula holds only while the beam stays elastic and the load is within the design range."
+        },
+        {
+          "description": "the modulus of elasticity E of the beam material with unit",
+          "format_examples": [
+            "200 GPa",
+            "70 GPa",
+            "210 GPa"
+          ],
+          "original_value": "200 GPa",
+          "validity_range": "Strictly positive stress unit value. Typical structural values are roughly 1 GPa to 500 GPa (steel about 200 GPa). Zero or negative is physically invalid."
+        },
+        {
+          "description": "the second moment of area I of the beam cross-section with unit",
+          "format_examples": [
+            "8.0 \u00d7 10\u207b\u2075 m\u2074",
+            "2.5 \u00d7 10\u207b\u2074 m\u2074",
+            "1.2 \u00d7 10\u207b\u2076 m\u2074"
+          ],
+          "original_value": "8.0 \u00d7 10\u207b\u2075 m\u2074",
+          "validity_range": "Strictly positive length-to-the-fourth unit value. Realistic beam sections give roughly 10\u207b\u2078 m\u2074 to 10\u207b\u00b2 m\u2074. Zero or negative is invalid because the section must have area."
+        }
+      ],
+      "problem_id": "ss_beam_udl_max_deflection"
+    }
+  ]
+}

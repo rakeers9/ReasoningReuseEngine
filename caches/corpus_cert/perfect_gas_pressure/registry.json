@@ -1,0 +1,229 @@
+{
+  "name": "perfect_gas_pressure",
+  "functions": [
+    {
+      "id": "extract_the_amount_of_gas_in_moles_the_v_80c7ef",
+      "description": "Extract the amount of gas in moles, the volume with its unit, the temperature with its unit, and the gas name from the problem parameters.",
+      "inputs": [
+        "the amount of gas n with unit and chemical formula of the gas species and its physical state",
+        "the volume V occupied by the gas with its unit",
+        "the temperature T of the gas with its unit",
+        "the name of the gas species whose pressure is to be predicted"
+      ],
+      "outputs": [
+        "amount of gas n in moles",
+        "volume with its unit",
+        "temperature with its unit",
+        "name of gas species"
+      ],
+      "aliases": [],
+      "origin": "builder:perfect_gas_pressure"
+    },
+    {
+      "id": "convert_a_temperature_in_degrees_celsius_141e47",
+      "description": "Convert a temperature in degrees Celsius to kelvin by adding 273.15",
+      "inputs": [
+        "temperature in degrees Celsius"
+      ],
+      "outputs": [
+        "absolute temperature in kelvin"
+      ],
+      "aliases": [],
+      "origin": "builder:perfect_gas_pressure"
+    },
+    {
+      "id": "convert_a_volume_given_with_its_unit_suc_916f8a",
+      "description": "Convert a volume given with its unit, such as dm3, L or cm3, into cubic metres.",
+      "inputs": [
+        "volume with its unit"
+      ],
+      "outputs": [
+        "volume in cubic metres"
+      ],
+      "aliases": [],
+      "origin": "builder:perfect_gas_pressure"
+    },
+    {
+      "id": "convert_a_temperature_to_kelvin_and_a_vo_8b6318",
+      "description": "Convert a temperature to kelvin and a volume to cubic metres so that both are in SI units.",
+      "inputs": [
+        "temperature with its unit",
+        "volume with its unit"
+      ],
+      "outputs": [
+        "absolute temperature in kelvin",
+        "volume in cubic metres"
+      ],
+      "aliases": [],
+      "origin": "builder:perfect_gas_pressure"
+    },
+    {
+      "id": "compute_the_pressure_of_a_perfect_gas_fr_432bdb",
+      "description": "Compute the pressure of a perfect gas from p = nRT/V using SI units, giving the result in pascals.",
+      "inputs": [
+        "amount of gas n in moles",
+        "absolute temperature in kelvin",
+        "volume in cubic metres"
+      ],
+      "outputs": [
+        "perfect gas pressure in pascals"
+      ],
+      "aliases": [],
+      "origin": "builder:perfect_gas_pressure"
+    },
+    {
+      "id": "convert_a_pressure_in_pascals_to_atmosph_9cb874",
+      "description": "Convert a pressure in pascals to atmospheres, bar and megapascals.",
+      "inputs": [
+        "perfect gas pressure in pascals"
+      ],
+      "outputs": [
+        "pressure in atmospheres",
+        "pressure in bar",
+        "pressure in megapascals"
+      ],
+      "aliases": [],
+      "origin": "builder:perfect_gas_pressure"
+    },
+    {
+      "id": "cross_check_a_perfect_gas_pressure_by_re_641cc1",
+      "description": "Cross-check a perfect gas pressure by recomputing p = nRT/V in atm with R = 0.082057 dm3 atm K-1 mol-1 and the volume in cubic decimetres.",
+      "inputs": [
+        "amount of gas n in moles",
+        "absolute temperature in kelvin",
+        "volume with its unit"
+      ],
+      "outputs": [
+        "cross-checked pressure in atmospheres"
+      ],
+      "aliases": [],
+      "origin": "builder:perfect_gas_pressure"
+    },
+    {
+      "id": "compare_two_pressure_values_expressed_in_290fc2",
+      "description": "Compare two pressure values expressed in atmospheres to confirm that they agree within rounding",
+      "inputs": [
+        "pressure in atmospheres from the SI calculation",
+        "cross-checked pressure in atmospheres"
+      ],
+      "outputs": [
+        "pressures agree flag"
+      ],
+      "aliases": [],
+      "origin": "builder:perfect_gas_pressure"
+    },
+    {
+      "id": "predict_the_pressure_exerted_by_a_perfec_a1ce68",
+      "description": "Predict the pressure exerted by a perfect gas confined to a given volume at a given temperature from the perfect gas equation.",
+      "inputs": [
+        "the amount of gas n with unit and chemical formula of the gas species and its physical state",
+        "the volume V occupied by the gas with its unit",
+        "the temperature T of the gas with its unit",
+        "the name of the gas species whose pressure is to be predicted"
+      ],
+      "outputs": [
+        "predicted pressure of the gas with its unit in pascals, atmospheres and megapascals"
+      ],
+      "aliases": [],
+      "origin": "builder:perfect_gas_pressure"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "Suppose that \u25cf1 is confined to \u25cf2 at \u25cf3. Predict the pressure exerted by the \u25cf4 from the perfect gas equation.",
+      "kind": "template",
+      "root_id": "predict_the_pressure_exerted_by_a_perfec_a1ce68",
+      "params": [
+        {
+          "description": "the amount of gas n with unit and chemical formula of the gas species and its physical state",
+          "format_examples": [
+            "10.0 mol C2H6(g)",
+            "2.50 mol N2(g)",
+            "0.300 mol CO2(g)"
+          ],
+          "original_value": "10.0 mol C2H6(g)",
+          "validity_range": "The amount must be a positive finite number of moles (n > 0). The species must be a gaseous substance under the stated conditions so that the perfect gas equation applies; the stated state (g) must be consistent with the temperature and pressure of the system."
+        },
+        {
+          "description": "the volume V occupied by the gas with its unit",
+          "format_examples": [
+            "4.860 dm3",
+            "22.4 L",
+            "500 cm3"
+          ],
+          "original_value": "4.860 dm3",
+          "validity_range": "The volume must be a positive finite quantity (V > 0) with a unit of volume that can be converted to cubic metres. Very small volumes at which the gas would condense or molecular volume becomes significant violate the perfect gas assumption."
+        },
+        {
+          "description": "the temperature T of the gas with its unit",
+          "format_examples": [
+            "27\u00b0C",
+            "300 K",
+            "-10\u00b0C"
+          ],
+          "original_value": "27\u00b0C",
+          "validity_range": "The temperature must be above absolute zero, i.e. above -273.15\u00b0C or greater than 0 K (T > 0 K), and it must be a temperature at which the substance is a gas. Very low temperatures near condensation invalidate the perfect gas model."
+        },
+        {
+          "description": "the name of the gas species whose pressure is to be predicted",
+          "format_examples": [
+            "ethane",
+            "nitrogen",
+            "carbon dioxide"
+          ],
+          "original_value": "ethane",
+          "validity_range": "Must name a single gaseous substance that can be treated as a perfect gas under the stated conditions and whose amount is given by \u25cf1. Names of substances that are liquid or solid at the stated temperature are outside the class, since the perfect gas equation would not apply."
+        }
+      ],
+      "problem_id": "perfect_gas_pressure"
+    },
+    {
+      "text": "Suppose that 10.0 mol C2H6(g) is confined to 4.860 dm3 at 27\u00b0C. Predict the pressure exerted by the ethane from the perfect gas equation.",
+      "kind": "original",
+      "root_id": "predict_the_pressure_exerted_by_a_perfec_a1ce68",
+      "params": [
+        {
+          "description": "the amount of gas n with unit and chemical formula of the gas species and its physical state",
+          "format_examples": [
+            "10.0 mol C2H6(g)",
+            "2.50 mol N2(g)",
+            "0.300 mol CO2(g)"
+          ],
+          "original_value": "10.0 mol C2H6(g)",
+          "validity_range": "The amount must be a positive finite number of moles (n > 0). The species must be a gaseous substance under the stated conditions so that the perfect gas equation applies; the stated state (g) must be consistent with the temperature and pressure of the system."
+        },
+        {
+          "description": "the volume V occupied by the gas with its unit",
+          "format_examples": [
+            "4.860 dm3",
+            "22.4 L",
+            "500 cm3"
+          ],
+          "original_value": "4.860 dm3",
+          "validity_range": "The volume must be a positive finite quantity (V > 0) with a unit of volume that can be converted to cubic metres. Very small volumes at which the gas would condense or molecular volume becomes significant violate the perfect gas assumption."
+        },
+        {
+          "description": "the temperature T of the gas with its unit",
+          "format_examples": [
+            "27\u00b0C",
+            "300 K",
+            "-10\u00b0C"
+          ],
+          "original_value": "27\u00b0C",
+          "validity_range": "The temperature must be above absolute zero, i.e. above -273.15\u00b0C or greater than 0 K (T > 0 K), and it must be a temperature at which the substance is a gas. Very low temperatures near condensation invalidate the perfect gas model."
+        },
+        {
+          "description": "the name of the gas species whose pressure is to be predicted",
+          "format_examples": [
+            "ethane",
+            "nitrogen",
+            "carbon dioxide"
+          ],
+          "original_value": "ethane",
+          "validity_range": "Must name a single gaseous substance that can be treated as a perfect gas under the stated conditions and whose amount is given by \u25cf1. Names of substances that are liquid or solid at the stated temperature are outside the class, since the perfect gas equation would not apply."
+        }
+      ],
+      "problem_id": "perfect_gas_pressure"
+    }
+  ]
+}

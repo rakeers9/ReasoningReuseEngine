@@ -74,6 +74,11 @@ class Cache:
         self.entry_points: list[EntryPoint] = []
         # Gate cards (DEVIATION, see arc/gatecard.py): problem_id -> card dict.
         self.cards: dict[str, dict] = {}
+        # Spec structures (DEVIATION, see arc/spec.py): problem_id -> spec dict.
+        self.specs: dict[str, dict] = {}
+        # Conventions (label-free builds, arc/labelfree.py): problem_id -> one-line rules for
+        # every rounding or convention choice the entry's code makes that changes the answer.
+        self.conventions: dict[str, list[str]] = {}
 
     # -- functions -----------------------------------------------------------
 
@@ -140,6 +145,10 @@ class Cache:
         (folder / "registry.json").write_text(json.dumps(data, indent=2))
         if self.cards:
             (folder / "cards.json").write_text(json.dumps(self.cards, indent=2, ensure_ascii=False))
+        if self.specs:
+            (folder / "specs.json").write_text(json.dumps(self.specs, indent=2, ensure_ascii=False))
+        if self.conventions:
+            (folder / "conventions.json").write_text(json.dumps(self.conventions, indent=2, ensure_ascii=False))
 
     @classmethod
     def load(cls, folder: Path) -> "Cache":
@@ -158,6 +167,10 @@ class Cache:
                                                  e.get("problem_id", "")))
         if (folder / "cards.json").exists():
             cache.cards = json.loads((folder / "cards.json").read_text())
+        if (folder / "specs.json").exists():
+            cache.specs = json.loads((folder / "specs.json").read_text())
+        if (folder / "conventions.json").exists():
+            cache.conventions = json.loads((folder / "conventions.json").read_text())
         return cache
 
     def merge(self, other: "Cache") -> None:
@@ -167,6 +180,8 @@ class Cache:
         for ep in other.entry_points:
             self.add_entry_point(ep)
         self.cards.update(other.cards)
+        self.specs.update(other.specs)
+        self.conventions.update(other.conventions)
 
     def summary(self) -> dict[str, Any]:
         return {"functions": len(self.functions), "entry_points": len(self.entry_points)}

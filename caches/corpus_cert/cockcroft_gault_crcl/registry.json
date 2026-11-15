@@ -1,0 +1,163 @@
+{
+  "name": "cockcroft_gault_crcl",
+  "functions": [
+    {
+      "id": "check_that_the_patient_age_sex_body_weig_c0c19c",
+      "description": "Check that the patient age, sex, body weight, and serum creatinine are within the valid ranges for the Cockcroft-Gault equation and normalise the sex to female or male.",
+      "inputs": [
+        "the age of the patient in years",
+        "the biological sex of the patient",
+        "the body weight of the patient in kilograms with unit",
+        "the serum creatinine concentration of the patient in mg/dL with unit"
+      ],
+      "outputs": [
+        "validated age in years",
+        "normalised sex as female or male",
+        "validated body weight in kg",
+        "validated serum creatinine in mg/dL"
+      ],
+      "aliases": [],
+      "origin": "builder:cockcroft_gault_crcl"
+    },
+    {
+      "id": "compute_the_base_cockcroft_gault_creatin_0ed39a",
+      "description": "Compute the base Cockcroft-Gault creatinine clearance before sex correction from age, body weight, and serum creatinine.",
+      "inputs": [
+        "validated age in years",
+        "validated body weight in kg",
+        "validated serum creatinine in mg/dL"
+      ],
+      "outputs": [
+        "base creatinine clearance before sex correction in mL/min"
+      ],
+      "aliases": [],
+      "origin": "builder:cockcroft_gault_crcl"
+    },
+    {
+      "id": "apply_the_female_sex_correction_factor_o_30f744",
+      "description": "Apply the female sex correction factor of 0.85 to a base creatinine clearance for female patients, leaving the value unchanged for male patients.",
+      "inputs": [
+        "normalised sex as female or male",
+        "base creatinine clearance before sex correction in mL/min"
+      ],
+      "outputs": [
+        "sex-corrected creatinine clearance in mL/min"
+      ],
+      "aliases": [],
+      "origin": "builder:cockcroft_gault_crcl"
+    },
+    {
+      "id": "estimate_the_creatinine_clearance_of_a_p_2ed46f",
+      "description": "Estimate the creatinine clearance of a patient using the Cockcroft-Gault equation from age, sex, body weight, and serum creatinine.",
+      "inputs": [
+        "the age of the patient in years",
+        "the biological sex of the patient",
+        "the body weight of the patient in kilograms with unit",
+        "the serum creatinine concentration of the patient in mg/dL with unit"
+      ],
+      "outputs": [
+        "estimated creatinine clearance in mL/min"
+      ],
+      "aliases": [],
+      "origin": "builder:cockcroft_gault_crcl"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "Using the Cockcroft-Gault equation, estimate the creatinine clearance of a \u25cf1-year-old \u25cf2 who weighs \u25cf3 and has a serum creatinine of \u25cf4.",
+      "kind": "template",
+      "root_id": "estimate_the_creatinine_clearance_of_a_p_2ed46f",
+      "params": [
+        {
+          "description": "the age of the patient in years",
+          "format_examples": [
+            "68",
+            "45",
+            "81"
+          ],
+          "original_value": "68",
+          "validity_range": "A positive whole number of years. The Cockcroft-Gault equation is validated for adults, so values below about 18 are outside its intended use. The term 140 minus age must stay positive, which requires age below 140, so the valid range is roughly 18 to 110."
+        },
+        {
+          "description": "the biological sex of the patient",
+          "format_examples": [
+            "woman",
+            "man",
+            "female"
+          ],
+          "original_value": "woman",
+          "validity_range": "Must be either male or female. The equation applies a multiplicative correction of 0.85 for female patients and none for male patients, so the value must map unambiguously to one of these two categories."
+        },
+        {
+          "description": "the body weight of the patient in kilograms with unit",
+          "format_examples": [
+            "62 kg",
+            "75 kg",
+            "48.5 kg"
+          ],
+          "original_value": "62 kg",
+          "validity_range": "A positive real number in kilograms. Physically plausible adult weights are roughly 30 to 250 kg. Weight enters the numerator linearly, so it must be greater than zero."
+        },
+        {
+          "description": "the serum creatinine concentration of the patient in mg/dL with unit",
+          "format_examples": [
+            "1.4 mg/dL",
+            "0.9 mg/dL",
+            "2.1 mg/dL"
+          ],
+          "original_value": "1.4 mg/dL",
+          "validity_range": "A strictly positive real number in mg/dL, because serum creatinine is the divisor in the equation and zero or negative values are undefined. Clinically plausible values are roughly 0.2 to 15 mg/dL."
+        }
+      ],
+      "problem_id": "cockcroft_gault_crcl"
+    },
+    {
+      "text": "Using the Cockcroft-Gault equation, estimate the creatinine clearance of a 68-year-old woman who weighs 62 kg and has a serum creatinine of 1.4 mg/dL.",
+      "kind": "original",
+      "root_id": "estimate_the_creatinine_clearance_of_a_p_2ed46f",
+      "params": [
+        {
+          "description": "the age of the patient in years",
+          "format_examples": [
+            "68",
+            "45",
+            "81"
+          ],
+          "original_value": "68",
+          "validity_range": "A positive whole number of years. The Cockcroft-Gault equation is validated for adults, so values below about 18 are outside its intended use. The term 140 minus age must stay positive, which requires age below 140, so the valid range is roughly 18 to 110."
+        },
+        {
+          "description": "the biological sex of the patient",
+          "format_examples": [
+            "woman",
+            "man",
+            "female"
+          ],
+          "original_value": "woman",
+          "validity_range": "Must be either male or female. The equation applies a multiplicative correction of 0.85 for female patients and none for male patients, so the value must map unambiguously to one of these two categories."
+        },
+        {
+          "description": "the body weight of the patient in kilograms with unit",
+          "format_examples": [
+            "62 kg",
+            "75 kg",
+            "48.5 kg"
+          ],
+          "original_value": "62 kg",
+          "validity_range": "A positive real number in kilograms. Physically plausible adult weights are roughly 30 to 250 kg. Weight enters the numerator linearly, so it must be greater than zero."
+        },
+        {
+          "description": "the serum creatinine concentration of the patient in mg/dL with unit",
+          "format_examples": [
+            "1.4 mg/dL",
+            "0.9 mg/dL",
+            "2.1 mg/dL"
+          ],
+          "original_value": "1.4 mg/dL",
+          "validity_range": "A strictly positive real number in mg/dL, because serum creatinine is the divisor in the equation and zero or negative values are undefined. Clinically plausible values are roughly 0.2 to 15 mg/dL."
+        }
+      ],
+      "problem_id": "cockcroft_gault_crcl"
+    }
+  ]
+}

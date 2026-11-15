@@ -57,26 +57,43 @@ PROMPT = (
 
 # ----------------------------------------------------------------------------- pairs
 
+def _rel(p: Path) -> str:
+    try:
+        return str(p.relative_to(ROOT))
+    except ValueError:
+        return str(p)
+
+
 def load_corpus() -> list[dict]:
     return [json.loads(l) for l in CORPUS.read_text().splitlines() if l.strip()]
 
 
-def build_pairs(split: str, mode: str) -> list[dict]:
-    """Rows with their candidate entries. Cached on disk so every model sees the same pairs."""
-    path = PAIRS / f"{split}-{mode}.json"
+def build_pairs(split: str, mode: str, structs: dict | None = None) -> list[dict]:
+    """Rows with their candidate entries. Cached on disk so every model sees the same pairs.
+
+    With structs, retrieval embeds the rendered structures (values stripped) instead of the
+    raw questions (ARC_INDEX=spec), so candidates can differ."""
+    path = PAIRS / f"{split}-{mode}{'-struct' if structs else ''}.json"
     if path.exists():
         return json.loads(path.read_text())
     from backends import Embed
+    from structured import render
     rows = load_corpus()
-    seeds = {r["seed_entry"]: r["question"] for r in rows if r["split"] == "seed"}
+    seed_rows = {r["seed_entry"]: r for r in rows if r["split"] == "seed"}
+    seeds = {n: r["question"] for n, r in seed_rows.items()}
+    text = (lambda r: render(structs[r["id"]])) if structs else (lambda r: r["question"])
+    if structs:
+        missing = [r["id"] for r in rows if r["split"] in ("seed", split) and r["id"] not in structs]
+        if missing:
+            raise SystemExit(f"structures file lacks {len(missing)} rows, e.g. {missing[:5]}")
     names = list(seeds)
     e = Embed("embed-gemma", {}).e
-    seed_vecs = e.encode([seeds[n] for n in names])
+    seed_vecs = e.encode([text(seed_rows[n]) for n in names])
     out = []
     for r in rows:
         if r["split"] != split:
             continue
-        sims = seed_vecs @ e.one(r["question"])
+        sims = seed_vecs @ e.one(text(r))
         ranked = sorted(zip(names, map(float, sims)), key=lambda x: -x[1])
         if mode == "own":
             cands = [r["seed_entry"]] if r["seed_entry"] else [ranked[0][0]]
@@ -92,45 +109,127 @@ def build_pairs(split: str, mode: str) -> list[dict]:
                             "label": bool(r["should_hit"] and c == r["expected_entry"])} for c in cands],
         })
     PAIRS.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"seeds": seeds, "rows": out}, indent=1, ensure_ascii=False))
+    seed_ids = {n: r["id"] for n, r in seed_rows.items()}
+    path.write_text(json.dumps({"seeds": seeds, "seed_ids": seed_ids, "rows": out}, indent=1,
+                               ensure_ascii=False))
     return json.loads(path.read_text())
 
 
-def pair_text(seeds: dict, entry: str, raw: bool) -> str:
-    return seeds[entry] if raw else PROMPT.format(seed=seeds[entry])
+SEED_SPECS = ROOT / "eval" / "spec" / "specs.jsonl"   # Haiku structures, keyed "seed:<entry>"
+
+
+def seed_specs() -> dict[str, dict]:
+    out = {}
+    for line in SEED_SPECS.read_text().splitlines():
+        if line.strip():
+            r = json.loads(line)
+            if r.get("key", "").startswith("seed:"):
+                out[r["key"][5:]] = r["spec"]
+    return out
+
+
+def pair_text(seeds: dict, entry: str, raw: bool, prompt: str = "v1") -> str:
+    """v1: the prompt below. v2 / v3: the live gate's prompts (arc/clef.py PROMPT_V2 / V3),
+    with the entry's profile taken from its seed question's stored structure."""
+    if raw:
+        return seeds[entry]
+    if prompt in ("v2", "v3", "v4", "v5"):
+        sys.path.insert(0, str(ROOT))
+        from arc.clef import PROMPT_V2, PROMPT_V3, PROMPT_V4, PROMPT_V5, _profile
+        template = {"v2": PROMPT_V2, "v3": PROMPT_V3, "v4": PROMPT_V4, "v5": PROMPT_V5}[prompt]
+        return template.format(seed=seeds[entry], profile=_profile(seed_specs().get(entry)))
+    return PROMPT.format(seed=seeds[entry])
 
 
 # ----------------------------------------------------------------------------- run
 
-def run(model: str, split: str, mode: str, limit: int | None, gpu: bool, remote: bool) -> Path:
+def run_path(model: str, split: str, mode: str, input_kind: str, prompt: str = "v1") -> Path:
+    suffix = ("" if input_kind == "raw" else f"-{input_kind}") + ("" if prompt == "v1" else f"-p{prompt}")
+    return RUNS / model / f"{split}-{mode}{suffix}.jsonl"
+
+
+def _decide_row(b, raw: bool, input_kind: str, r: dict, seeds: dict, seed_ids: dict, structs: dict | None,
+                prompt: str = "v1"):
+    """One corpus row -> ({entry: P}, {entry: {field: P}}, usage). Raises on backend errors."""
+    import structured as st
+    entries = [c["entry"] for c in r["candidates"]]
+    if input_kind == "raw":
+        probs, usage = b.decide(r["question"], {e: pair_text(seeds, e, raw, prompt) for e in entries})
+        return probs, {}, usage
+    q = structs[r["id"]]
+    sd = {e: structs[seed_ids[e]] for e in entries}
+    if input_kind == "struct":
+        qs = {e: (st.render(sd[e]) if raw else st.STRUCT_PROMPT.format(seed=st.render(sd[e]))) for e in entries}
+        probs, usage = b.decide(st.render(q), qs)
+        return probs, {}, usage
+    # fields: a field the seed leaves unstated constrains nothing (p = 1)
+    fp: dict[str, dict[str, float]] = {e: {} for e in entries}
+    usage: dict = {}
+    asks = {(e, f) for e in entries for f in st.COMPARE if not st.unstated(st.field_text(sd[e], f))}
+    for e in entries:
+        for f in st.COMPARE:
+            if (e, f) not in asks:
+                fp[e][f] = 1.0
+            elif f == "method" and st.unstated(st.field_text(q, f)):
+                fp[e][f] = 1.0   # an unstated method in the request is allowed
+    asks = {(e, f) for (e, f) in asks if f not in fp[e]}
+    if raw:   # pair models: compare the two field texts directly, one field at a time
+        for f in st.COMPARE:
+            es = [e for e in entries if (e, f) in asks]
+            if es:
+                p, _ = b.decide(st.field_text(q, f), {e: st.field_text(sd[e], f) for e in es})
+                for e in es:
+                    fp[e][f] = p[e]
+    elif asks:  # decision models: one request, state = the request's whole structure
+        qs = {f"{e}..{f}": st.FIELD_PROMPT.format(label=st.FIELD_LABEL[f], seed=st.field_text(sd[e], f),
+                                                  extra=st.FIELD_EXTRA.get(f, "")) for (e, f) in asks}
+        p, usage = b.decide(st.render(q), qs)
+        for k, v in p.items():
+            e, f = k.split("..")
+            fp[e][f] = v
+    return {e: min(fp[e].values()) for e in entries}, fp, usage
+
+
+def run(model: str, split: str, mode: str, limit: int | None, gpu: bool, remote: bool,
+        input_kind: str = "raw", structs: dict | None = None, prompt: str = "v1") -> Path:
     from backends import RAW_SEED, make_backend
-    data = build_pairs(split, mode)
-    seeds, rows = data["seeds"], data["rows"][:limit] if limit else data["rows"]
-    out_dir = RUNS / model
-    out_dir.mkdir(parents=True, exist_ok=True)
-    path = out_dir / f"{split}-{mode}.jsonl"
+    import structured as st
+    data = build_pairs(split, mode, structs if input_kind != "raw" else None)
+    seeds, seed_ids = data["seeds"], data.get("seed_ids", {})
+    rows = data["rows"][:limit] if limit else data["rows"]
+    path = run_path(model, split, mode, input_kind, prompt)
+    path.parent.mkdir(parents=True, exist_ok=True)
     done = set()
     if path.exists():
-        done = {json.loads(l)["id"] for l in path.read_text().splitlines() if l.strip()}
+        # rows that errored (e.g. a rate limit) are dropped and retried; good rows are kept
+        recs = [json.loads(l) for l in path.read_text().splitlines() if l.strip()]
+        good = [r for r in recs if not r.get("error")]
+        if len(good) < len(recs):
+            path.write_text("".join(json.dumps(r) + "\n" for r in good))
+        done = {r["id"] for r in good}
     todo = [r for r in rows if r["id"] not in done]
-    print(f"{model}: {len(todo)} rows to score ({len(done)} already done) -> {path.relative_to(ROOT)}")
+    print(f"{model}: {len(todo)} rows to score ({len(done)} already done) -> {_rel(path)}")
     if not todo:
         return path
     raw = MODELS[model]["kind"] in RAW_SEED
     with make_backend(model, gpu=gpu, allow_remote_code=remote) as b, path.open("a") as f:
+        b.plain = input_kind != "raw"   # NLI: plain two-way entailment on structure text
         for i, r in enumerate(todo, 1):
-            qs = {c["entry"]: pair_text(seeds, c["entry"], raw) for c in r["candidates"]}
             t0 = time.perf_counter()
             try:
-                probs, usage = b.decide(r["question"], qs)
+                probs, field_p, usage = _decide_row(b, raw, input_kind, r, seeds, seed_ids, structs, prompt)
                 err = None
             except Exception as ex:  # keep going; the row is reported as an error
-                probs, usage, err = {}, {}, f"{type(ex).__name__}: {ex}"[:300]
+                probs, field_p, usage, err = {}, {}, {}, f"{type(ex).__name__}: {ex}"[:300]
             ms = (time.perf_counter() - t0) * 1000
+            cc = st.code_check(structs[r["id"]], r["question"]) if structs else None
             rec = {**{k: r[k] for k in ("id", "variant_type", "near_miss_category", "domain", "seed_entry",
                                         "expected_entry", "should_hit", "acceptable_either")},
-                   "candidates": [{**c, "p": probs.get(c["entry"])} for c in r["candidates"]],
-                   "ms": round(ms, 1), "usage": usage, "error": err, "prompt": PROMPT_VERSION}
+                   "candidates": [{**c, "p": probs.get(c["entry"]),
+                                   **({"field_p": field_p[c["entry"]]} if field_p else {})}
+                                  for c in r["candidates"]],
+                   "code_check": cc, "input": input_kind,
+                   "ms": round(ms, 1), "usage": usage, "error": err, "prompt": prompt}
             f.write(json.dumps(rec) + "\n")
             f.flush()
             ps = " ".join(f"{c['entry'][:18]}={probs.get(c['entry'], float('nan')):.2f}" for c in r["candidates"])
@@ -152,8 +251,26 @@ def _auc(pos: list[float], neg: list[float]) -> float | None:
     return wins / (len(pos) * len(neg))
 
 
-def score(path: Path, model: str) -> dict:
+def score(path: Path, model: str, structs: dict | None = None, code_checks: bool = False) -> dict:
+    """code_checks: reject (p = 0) every candidate of a row whose structure fails the code
+    checks (input with no value, evidence not in the question). Free; needs structures."""
     recs = [json.loads(l) for l in path.read_text().splitlines() if l.strip()]
+    cc_rejected = 0
+    if code_checks:
+        import structured as st
+        if not structs:
+            raise SystemExit("--code-checks needs --structures")
+        qtext = {r["id"]: r["question"] for r in load_corpus()}
+        for r in recs:
+            why = r.get("code_check")
+            if why is None:
+                why = st.code_check(structs[r["id"]], qtext[r["id"]])
+            r["code_check"] = why
+            if why:
+                cc_rejected += 1
+                for c in r["candidates"]:
+                    if c["p"] is not None:
+                        c["p"] = 0.0
     pairs = [(r, c) for r in recs if not r["error"] and not r["acceptable_either"] for c in r["candidates"]
              if c["p"] is not None]
     pos = [c["p"] for r, c in pairs if c["label"]]
@@ -201,7 +318,8 @@ def score(path: Path, model: str) -> dict:
     toks = sum((r["usage"] or {}).get("input_tokens", 0) or (r["usage"] or {}).get("prompt_tokens", 0) for r in recs)
     price = MODELS[model].get("price_per_mtok")
     m = {
-        "model": model, "file": str(path.relative_to(ROOT)), "rows": len(recs),
+        "model": model, "file": _rel(path), "rows": len(recs),
+        "code_checks": code_checks, "rows_rejected_by_code_checks": cc_rejected,
         "errors": sum(bool(r["error"]) for r in recs),
         "either_rows_skipped": sum(r["acceptable_either"] for r in recs),
         "positives": len(pos), "negatives": len(neg), "auc": _auc(pos, neg),
@@ -218,13 +336,15 @@ def score(path: Path, model: str) -> dict:
         "input_tokens": toks,
         "cost_usd": toks * price / 1e6 if price and toks else (0.0 if not price else None),
     }
-    path.with_suffix(".metrics.json").write_text(json.dumps(m, indent=2))
+    out = path.with_suffix(".cc.metrics.json" if code_checks else ".metrics.json")
+    out.write_text(json.dumps(m, indent=2))
     return m
 
 
 def show(m: dict) -> None:
     f = lambda x: "n/a" if x is None else f"{x:.3f}" if isinstance(x, float) else str(x)
-    print(f"\n== {m['model']}  ({m['file']})")
+    cc = f"  [+code checks: {m['rows_rejected_by_code_checks']} rows rejected]" if m.get("code_checks") else ""
+    print(f"\n== {m['model']}  ({m['file']}){cc}")
     print(f"rows {m['rows']}  errors {m['errors']}  positives {m['positives']}  negatives {m['negatives']}"
           f"  AUC {f(m['auc'])}")
     for key, label in [("at_default", "default threshold"), ("zero_false_hits", "zero false hits"),
@@ -251,12 +371,12 @@ def compare() -> None:
         print("no runs yet")
         return
     pct = lambda x: "  n/a" if x is None else f"{100 * x:5.1f}"
-    print(f"{'model':<22}{'run':<12}{'AUC':>6} | {'@default FH%':>12}{'recall%':>8} | {'@0 FH recall%':>14}"
+    print(f"{'model':<22}{'run':<20}{'AUC':>6} | {'@default FH%':>12}{'recall%':>8} | {'@0 FH recall%':>14}"
           f" | {'@FH<=2% recall%':>16} | {'ms':>7} {'$':>8}")
     for m in rows:
-        run_name = Path(m["file"]).name.replace(".jsonl", "")
+        run_name = Path(m["file"]).name.replace(".jsonl", "") + ("+cc" if m.get("code_checks") else "")
         d, z, t = m["at_default"], m["zero_false_hits"], m["false_hit_le_2pct"]
-        print(f"{m['model']:<22}{run_name:<12}{(m['auc'] or 0):6.3f} | {pct(d['false_hit_rate']):>12}"
+        print(f"{m['model']:<22}{run_name:<20}{(m['auc'] or 0):6.3f} | {pct(d['false_hit_rate']):>12}"
               f"{pct(d['recall']):>8} | {pct(z['recall'] if z else None):>14} | {pct(t['recall'] if t else None):>16}"
               f" | {(m['latency_ms_median'] or 0):7.0f} {(m['cost_usd'] or 0):8.4f}")
 
@@ -270,7 +390,14 @@ def main() -> None:
     ap.add_argument("--gpu", action="store_true", help="llama.cpp: use Metal instead of CPU only")
     ap.add_argument("--allow-remote-code", action="store_true")
     ap.add_argument("--final", action="store_true", help="required for the test split")
+    ap.add_argument("--input", default="raw", choices=["raw", "struct", "fields"],
+                    help="raw text, whole structure, or field-by-field structure comparison")
+    ap.add_argument("--structures", help="structures file, e.g. eval/spec/specs.jsonl (needed unless --input raw)")
+    ap.add_argument("--code-checks", action="store_true", help="also score with the code checks layered on")
     ap.add_argument("--score-only", action="store_true")
+    ap.add_argument("--prompt", default="v1", choices=["v1", "v2", "v3", "v4", "v5"],
+                    help="v1 = the prompt below; v2 = the live gate's richer prompt; "
+                         "v3 = v2 + read-every-word rule (arc/clef.py)")
     ap.add_argument("--compare", action="store_true")
     a = ap.parse_args()
     if a.compare:
@@ -279,10 +406,18 @@ def main() -> None:
         ap.error("--model is required")
     if a.split == "test" and not a.final:
         ap.error("the test split is held out; pass --final once the gate is frozen")
-    path = RUNS / a.model / f"{a.split}-{a.mode}.jsonl"
+    if (a.input != "raw" or a.code_checks) and not a.structures:
+        ap.error("--input struct/fields and --code-checks need --structures")
+    import structured
+    structs = structured.load(a.structures) if a.structures else None
+    if a.prompt in ("v2", "v3", "v4", "v5") and a.input != "raw":
+        ap.error(f"--prompt {a.prompt} applies to --input raw only")
+    path = run_path(a.model, a.split, a.mode, a.input, a.prompt)
     if not a.score_only:
-        path = run(a.model, a.split, a.mode, a.limit, a.gpu, a.allow_remote_code)
+        path = run(a.model, a.split, a.mode, a.limit, a.gpu, a.allow_remote_code, a.input, structs, a.prompt)
     show(score(path, a.model))
+    if a.code_checks:
+        show(score(path, a.model, structs, code_checks=True))
 
 
 if __name__ == "__main__":

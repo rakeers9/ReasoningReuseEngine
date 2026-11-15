@@ -44,8 +44,26 @@ class Served:
     cost: float
 
 
-def extract_parameters(request: str, params: list[ParamSpec], tag: str | None = None) -> dict[str, str]:
-    """IS2: the target model extracts each expected parameter from the raw input."""
+class ExtractionError(CacheInvocationError):
+    """IS2 output failed a code check (number doesn't match its evidence, evidence not in the
+    question, nothing extracted). The question goes to the model instead."""
+
+
+def extract_parameters(request: str, params: list[ParamSpec], tag: str | None = None,
+                       allow_implied: bool = True, form_out: dict | None = None) -> dict[str, str]:
+    """IS2: the target model extracts each expected parameter from the raw input.
+
+    config.EXTRACT_FORM "copy" (paper): each value copied as written, e.g. "$150k".
+    config.EXTRACT_FORM "number_unit" (DEVIATION, default): each value comes back as separate
+    fields, number (full plain digits, never shorthand), unit, text (non-numbers) and evidence
+    (the exact words). Code checks the number against its evidence, then rebuilds one value in
+    the style of the format examples ("$150,000"), so cached code never sees shorthand.
+
+    allow_implied=False (spec gate) drops the paper-style "implied value" rule, which is
+    where made-up values such as "300 K" came from."""
+    if config.EXTRACT_FORM == "number_unit":
+        from .extraction import extract_number_unit
+        return extract_number_unit(request, params, tag=tag, allow_implied=allow_implied, form_out=form_out)
     fields = {f"p{i}": (str, ...) for i in range(len(params))}
     Model = create_model("ExtractedParameters", __config__=ConfigDict(extra="forbid"), **fields)
     lines = []
@@ -54,14 +72,20 @@ def extract_parameters(request: str, params: list[ParamSpec], tag: str | None = 
         lines.append(f"p{i}: {p.description} (format examples: {examples})")
     prompt = (
         "Extract the following values from the input text. Copy each value as it appears in "
-        "the text, including its unit when it has one. If a value is implied rather than "
-        "stated, write it in the style of the format examples.\n\n"
+        "the text, including its unit when it has one. " +
+        ("If a value is implied rather than stated, write it in the style of the format examples.\n\n"
+         if allow_implied else
+         "Write each value in the style of its format examples. Never assume or compute a value.\n\n") +
         "Values to extract:\n" + "\n".join(lines) + f"\n\nInput text:\n{request}"
     )
     result = llm.call("extractor", prompt, model=config.TARGET_MODEL, schema=Model,
                       max_tokens=1024, tag=tag)
     data = result.parsed.model_dump()
-    return {p.description: data[f"p{i}"] for i, p in enumerate(params)}
+    values = {p.description: data[f"p{i}"] for i, p in enumerate(params)}
+    if config.EXPAND_SHORTHAND:   # DEVIATION: "$150k" -> "$150,000" before cached code parses it
+        from .normalize import expand_values
+        values = expand_values(values)
+    return values
 
 
 GATE_RULES = """\
@@ -158,7 +182,11 @@ def dispatch_root(cache: Cache, root_id: str, values: dict[str, Any]) -> tuple[d
     return output, ctx
 
 
-def _find(cache: Cache, request: str) -> tuple[EntryPoint | None, float]:
+def _find(cache: Cache, request: str, qspec: dict | None = None) -> tuple[EntryPoint | None, float]:
+    if config.INDEX == "spec" and qspec is not None and cache.specs:
+        from .spec import rank
+        top = rank(cache, qspec, k=1)
+        return (top[0][0], top[0][1]) if top else (None, -1.0)
     if config.INDEX == "cards" and cache.cards:
         from .verify import rank_entries
         top = rank_entries(cache, request, k=1)
@@ -166,21 +194,99 @@ def _find(cache: Cache, request: str) -> tuple[EntryPoint | None, float]:
     return cache.find_entry_point(request)
 
 
+def _entry_similarity(cache: Cache, request: str, ep: EntryPoint) -> float:
+    """Best cosine between the request and the texts IS1 would use for this entry."""
+    texts = [e.text for e in cache.entry_points if e.problem_id == ep.problem_id] or [ep.text]
+    if config.INDEX == "cards" and ep.problem_id in cache.cards:
+        card = cache.cards[ep.problem_id]
+        texts = [t for t in [*card.get("index_texts", []), card.get("intent", "")] if t] or texts
+    from . import embed
+    return embed.best_match(request, texts)[1]
+
+
+def _use_clef(cache: Cache, request: str, tag: str | None, trace: dict, shadow: bool,
+              entry_point: EntryPoint | None, before: int) -> CacheResult | None:
+    """ARC_GATE=clef (DEVIATION): structure retrieval -> Clef decides -> IS2 -> IS3 (arc/clef.py)."""
+    from . import clef
+    trace.update(gate="clef", index=config.CLEF_RETRIEVAL, clef_threshold=config.CLEF_THRESHOLD)
+    if entry_point is not None:                                    # forced entry: Clef judges only it
+        cands = [(entry_point, _entry_similarity(cache, request, entry_point))]
+        trace["forced_entry"] = True
+    else:
+        cands = clef.candidates(cache, request, tag=tag, trace=trace)
+    if not cands:
+        trace.update(stage="below_threshold", entry=None, similarity=-1.0, rejected_by=[])
+        return None
+    try:
+        ep, p, probs = clef.decide(cache, request, cands, tag=tag, trace=trace,
+                                   exclude_self=entry_point is not None)   # checks: no self-vouching
+    except llm.LLMError as e:                                       # never serve on a gate error
+        trace.update(stage="gate_rejected", rejected_by=["clef_error"], clef_error=str(e)[:300],
+                     entry=cands[0][0].problem_id, similarity=cands[0][1])
+        return None
+    best = ep or max(cands, key=lambda c: probs.get(c[0].problem_id, 0.0))[0]
+    sim = next(s for e, s in cands if e.problem_id == best.problem_id)
+    trace.update(entry=best.problem_id, entry_kind=best.kind, similarity=sim, clef_p=round(p, 4))
+    if ep is None:
+        trace.update(stage="gate_rejected", rejected_by=["clef"])
+        if not shadow:
+            return None
+    try:
+        values = extract_parameters(request, best.params, tag=tag,
+                                    form_out=trace.setdefault("extraction", {}))   # IS2
+        trace["values"] = values
+        if ep is not None:
+            trace.update(stage="dispatch", rejected_by=[])
+        try:
+            output, ctx = dispatch_root(cache, best.root_id, values)  # IS3
+        except Exception as e:
+            if ep is not None:
+                raise
+            trace["shadow_error"] = f"{type(e).__name__}: {e}"[:300]
+            return None
+        if ep is None:
+            trace["shadow_output"] = format_output(output)
+            return None
+    except CacheInvocationError:
+        raise
+    except Exception as e:  # any error inside cached code counts as a failed invocation
+        raise CacheInvocationError(f"{type(e).__name__}: {e}\n{traceback.format_exc(limit=4)}") from e
+    cost = llm.LEDGER.cost(CACHE_ROLES | {"decider"}, since=before)
+    trace["cost"] = cost
+    return CacheResult(output, ctx.narration(), best, sim, values, cost, ctx.lookups)   # IS4
+
+
 def use(cache: Cache, request: str, tag: str | None = None,
-        trace: dict | None = None, shadow: bool = False) -> CacheResult | None:
+        trace: dict | None = None, shadow: bool = False,
+        entry_point: EntryPoint | None = None) -> CacheResult | None:
     """Try the cache. Returns None on a miss; raises CacheInvocationError on failure.
 
     If `trace` is a dict, it is filled with what happened at each step (for evaluation).
     shadow=True (evaluation only): run the gate and the cached code even when the request
     would be turned away, and record what the code would have answered in trace, so any
     threshold or check combination can be scored afterwards from one run. Still returns
-    None for anything the live policy turns away."""
+    None for anything the live policy turns away.
+
+    entry_point (label-free certification only): skip IS1 and test this entry directly.
+    The gate and the code run as usual; the cosine IS1 would have seen is still put in
+    trace["similarity"], but the threshold is not applied."""
     trace = trace if trace is not None else {}
     before = len(llm.LEDGER.records)
-    ep, sim = _find(cache, request)                                # IS1
+    if config.GATE == "clef":
+        return _use_clef(cache, request, tag, trace, shadow, entry_point, before)
+    qspec = None
+    if config.GATE == "spec":                                      # spec gate: structure first
+        from . import spec as specmod
+        qspec = specmod.write_spec(request, tag=tag)
+        trace["spec"] = qspec
+    if entry_point is not None:                                    # forced entry: no IS1
+        ep, sim = entry_point, _entry_similarity(cache, request, entry_point)
+        trace["forced_entry"] = True
+    else:
+        ep, sim = _find(cache, request, qspec)                     # IS1
     trace.update(entry=ep.problem_id if ep else None, entry_kind=ep.kind if ep else None,
                  similarity=sim, gate=config.GATE, index=config.INDEX)
-    below = ep is None or sim < config.ENTRY_THRESHOLD
+    below = ep is None or (entry_point is None and sim < config.ENTRY_THRESHOLD)
     if ep is None or (below and not shadow):
         trace["stage"] = "below_threshold"
         return None
@@ -201,6 +307,16 @@ def use(cache: Cache, request: str, tag: str | None = None,
                 rejected = verify.failed(v["checks"])
                 trace.update(values=values, checks=v["checks"], uncovered_numbers=v["uncovered_numbers"],
                              form=v["form"])
+        elif config.GATE == "spec":                                # spec gate
+            if ep.problem_id not in cache.specs:
+                rejected, values = ["no_spec"], {}
+            else:
+                d = specmod.decide(qspec, cache.specs[ep.problem_id], request)
+                rejected = d["rejected"]
+                trace.update(spec_checks=d["checks"], spec_scores=d["scores"], spec_score=d["score"])
+                values = extract_parameters(request, ep.params, tag=tag, allow_implied=False) \
+                    if (not rejected and not below) or shadow else {}
+                trace["values"] = values
         else:
             values = extract_parameters(request, ep.params, tag=tag)   # IS2
             trace["values"] = values
@@ -232,6 +348,15 @@ def use(cache: Cache, request: str, tag: str | None = None,
 
 def format_output(output: dict[str, Any]) -> str:
     return "\n".join(f"{k}: {v}" for k, v in output.items())
+
+
+def answer_text(cache: Cache, result: "CacheResult") -> str:
+    """The answer shown to a user: the outputs, plus the entry's stated conventions (how it
+    rounds, which payment it totals from) so an exact amount says how it was computed.
+    Comparisons use format_output alone; the conventions are for the reader."""
+    text = format_output(result.output)
+    rules = cache.conventions.get(result.entry_point.problem_id) or []
+    return text + ("\nConventions: " + "; ".join(rules) if rules else "")
 
 
 def serve(cache: Cache, request: str) -> Served:

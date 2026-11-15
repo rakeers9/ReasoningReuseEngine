@@ -1,0 +1,21 @@
+def semantic_function(ctx):
+    '''Compute the end-of-year book value of an asset under declining-balance depreciation with a salvage-value floor, rounded to cents.'''
+    narrate(ctx, 'Computing end-of-year book value under declining-balance depreciation with a salvage value floor')
+    cost = load(ctx, 'the original acquisition cost of the asset with currency unit', d_type=float)
+    salvage = load(ctx, 'the salvage value (residual value) of the asset at the end of its useful life with currency unit', d_type=float)
+    life = load(ctx, 'the useful life of the asset expressed in years', d_type=int)
+    target_year = load(ctx, 'the target year number for which the end-of-year book value is requested', d_type=int)
+    method = load(ctx, 'the name of the declining-balance depreciation method to apply with its acceleration factor', d_type=str)
+    narrate(ctx, f'Cost {float(cost):.2f}; salvage {float(salvage):.2f}; useful life {life} years; target year {target_year}; method {method}')
+    rate_res = do(ctx, 'Derive the annual declining-balance depreciation rate from the useful life and the acceleration factor of the method.', payloads={'the useful life of the asset expressed in years': life, 'the name of the declining-balance depreciation method to apply with its acceleration factor': method})
+    rate_text = str(load(rate_res, 'annual depreciation rate as a fraction', d_type=str, ctx=ctx)).strip()
+    narrate(ctx, f'Annual depreciation rate: {rate_text}')
+    sched = do(ctx, 'Run the year-by-year declining-balance schedule from the acquisition cost up to the target year and return the book value at the end of that year.', payloads={'the original acquisition cost of the asset with currency unit': float(cost), 'annual depreciation rate as a fraction': rate_text, 'the salvage value (residual value) of the asset at the end of its useful life with currency unit': float(salvage), 'the target year number for which the end-of-year book value is requested': int(target_year)})
+    book_value = float(load(sched, 'book value at end of target year from schedule', d_type=float, ctx=ctx))
+    narrate(ctx, f'Schedule gives book value {book_value:.2f} at end of year {target_year}')
+    check = do(ctx, 'Cross-check the scheduled book value against the closed-form expression cost times (1 - rate) raised to the target year, when the salvage floor is not reached.', payloads={'the original acquisition cost of the asset with currency unit': float(cost), 'annual depreciation rate as a fraction': rate_text, 'the target year number for which the end-of-year book value is requested': int(target_year), 'book value at end of target year from schedule': book_value, 'the salvage value (residual value) of the asset at the end of its useful life with currency unit': float(salvage)})
+    agrees = load(check, 'closed-form book value agrees with schedule flag', d_type=bool, ctx=ctx)
+    narrate(ctx, 'Closed-form cross-check agrees with schedule' if agrees else 'Closed-form cross-check does not agree with schedule')
+    final = round(book_value, 2)
+    narrate(ctx, f'Final end-of-year book value: ${final:,.2f}')
+    return {'end-of-year book value of the asset in dollars rounded to cents': final}

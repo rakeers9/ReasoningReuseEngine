@@ -1,0 +1,237 @@
+{
+  "name": "buffer_ph_after_strong_acid",
+  "functions": [
+    {
+      "id": "compute_the_pka_of_a_weak_acid_from_its_06ba09",
+      "description": "Compute the pKa of a weak acid from its acid dissociation constant Ka.",
+      "inputs": [
+        "the acid dissociation constant Ka of the weak acid HA (dimensionless, in scientific notation)"
+      ],
+      "outputs": [
+        "the pKa of the weak acid"
+      ],
+      "aliases": [],
+      "origin": "builder:buffer_ph_after_strong_acid"
+    },
+    {
+      "id": "neutralize_an_added_strong_acid_against_34a454",
+      "description": "Neutralize an added strong acid against the conjugate base and update the moles of weak acid and conjugate base.",
+      "inputs": [
+        "the moles of the weak acid HA in the buffer",
+        "the moles of the conjugate base A- in the buffer",
+        "the moles of the strong acid HCl added"
+      ],
+      "outputs": [
+        "the moles of HA after neutralization",
+        "the moles of A- after neutralization"
+      ],
+      "aliases": [],
+      "origin": "builder:buffer_ph_after_strong_acid"
+    },
+    {
+      "id": "compute_buffer_ph_from_pka_and_the_moles_4ed27b",
+      "description": "Compute buffer pH from pKa and the moles of conjugate base and weak acid using the Henderson-Hasselbalch equation",
+      "inputs": [
+        "the pKa of the weak acid",
+        "the moles of the conjugate base A- after neutralization",
+        "the moles of HA after neutralization"
+      ],
+      "outputs": [
+        "the pH of the buffer after strong acid addition"
+      ],
+      "aliases": [],
+      "origin": "builder:buffer_ph_after_strong_acid"
+    },
+    {
+      "id": "sanity_check_the_buffer_ph_against_pka_a_ef8801",
+      "description": "Sanity-check the buffer pH against pKa and the direction of the acid-to-base ratio shift.",
+      "inputs": [
+        "the pH of the buffer after strong acid addition",
+        "the pKa of the weak acid",
+        "the moles of HA after neutralization",
+        "the moles of A- after neutralization"
+      ],
+      "outputs": [
+        "the sanity check result"
+      ],
+      "aliases": [],
+      "origin": "builder:buffer_ph_after_strong_acid"
+    },
+    {
+      "id": "determine_the_ph_of_a_weak_acid_and_conj_e80474",
+      "description": "Determine the pH of a weak acid and conjugate base buffer after a strong acid is added",
+      "inputs": [
+        "the name of the weak acid HA that forms the buffer",
+        "the amount in moles of the weak acid HA with unit",
+        "the name of the salt that supplies the conjugate base A- of the weak acid",
+        "the amount in moles of the conjugate base A- supplied by the salt with unit",
+        "the total volume of the buffer solution with unit",
+        "the acid dissociation constant Ka of the weak acid HA (dimensionless, in scientific notation)",
+        "the amount in moles and identity of the strong acid added to the buffer (HCl)"
+      ],
+      "outputs": [
+        "the pH of the buffer after the strong acid is added"
+      ],
+      "aliases": [],
+      "origin": "builder:buffer_ph_after_strong_acid"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "A buffer is made by dissolving \u25cf2 \u25cf1 and \u25cf4 \u25cf3 in water to make \u25cf5 of solution. Ka for \u25cf1 is \u25cf6. What is the pH after \u25cf7 is added?",
+      "kind": "template",
+      "root_id": "determine_the_ph_of_a_weak_acid_and_conj_e80474",
+      "params": [
+        {
+          "description": "the name of the weak acid HA that forms the buffer",
+          "format_examples": [
+            "acetic acid",
+            "formic acid",
+            "hypochlorous acid"
+          ],
+          "original_value": "acetic acid",
+          "validity_range": "Must be a named weak monoprotic acid with a defined Ka between 0 and 1 (exclusive), so that it partially dissociates and forms a buffer with its conjugate base. Strong acids (e.g. HCl) or non-acids are invalid for this class."
+        },
+        {
+          "description": "the amount in moles of the weak acid HA with unit",
+          "format_examples": [
+            "0.150 mol",
+            "2.5 mol",
+            "0.01 mol"
+          ],
+          "original_value": "0.150 mol",
+          "validity_range": "Must be a positive finite number of moles (greater than 0). Zero would mean no buffer exists."
+        },
+        {
+          "description": "the name of the salt that supplies the conjugate base A- of the weak acid",
+          "format_examples": [
+            "sodium acetate",
+            "potassium formate",
+            "sodium hypochlorite"
+          ],
+          "original_value": "sodium acetate",
+          "validity_range": "Must be a salt whose anion is the conjugate base of the weak acid in \u25cf1 and whose cation is spectator (fully soluble, no acid-base contribution). Must not be a different acid's conjugate base."
+        },
+        {
+          "description": "the amount in moles of the conjugate base A- supplied by the salt with unit",
+          "format_examples": [
+            "0.100 mol",
+            "1.2 mol",
+            "0.05 mol"
+          ],
+          "original_value": "0.100 mol",
+          "validity_range": "Must be a positive finite number of moles (greater than 0). Both acid and base must be present in nonzero amounts for the Henderson-Hasselbalch treatment to apply."
+        },
+        {
+          "description": "the total volume of the buffer solution with unit",
+          "format_examples": [
+            "500 mL",
+            "0.5 L",
+            "1.00 L"
+          ],
+          "original_value": "500 mL",
+          "validity_range": "Must be a positive finite volume. Since HA and A- share this volume, it cancels in the mole ratio, but it must be positive so the solution exists."
+        },
+        {
+          "description": "the acid dissociation constant Ka of the weak acid HA (dimensionless, in scientific notation)",
+          "format_examples": [
+            "1.8 \u00d7 10\u207b\u2075",
+            "6.8 \u00d7 10\u207b\u2074",
+            "3.0e-8"
+          ],
+          "original_value": "1.8 \u00d7 10\u207b\u2075",
+          "validity_range": "Must be a positive number strictly less than 1 (weak acid regime). Values far outside typical weak acid range (roughly 1e-12 to 1e-1) would make the acid not behave as a weak buffer component."
+        },
+        {
+          "description": "the amount in moles and identity of the strong acid added to the buffer (HCl)",
+          "format_examples": [
+            "0.020 mol HCl",
+            "0.005 mol HNO3",
+            "0.1 mol HBr"
+          ],
+          "original_value": "0.020 mol HCl",
+          "validity_range": "Must be a non-negative amount of a strong acid that fully dissociates (e.g. HCl, HBr, HNO3). The Henderson-Hasselbalch result is valid only while added moles are less than the moles of conjugate base (\u25cf4); beyond that the conjugate base is exhausted and the buffer no longer applies."
+        }
+      ],
+      "problem_id": "buffer_ph_after_strong_acid"
+    },
+    {
+      "text": "A buffer is made by dissolving 0.150 mol acetic acid and 0.100 mol sodium acetate in water to make 500 mL of solution. Ka for acetic acid is 1.8 \u00d7 10\u207b\u2075. What is the pH after 0.020 mol HCl is added?",
+      "kind": "original",
+      "root_id": "determine_the_ph_of_a_weak_acid_and_conj_e80474",
+      "params": [
+        {
+          "description": "the name of the weak acid HA that forms the buffer",
+          "format_examples": [
+            "acetic acid",
+            "formic acid",
+            "hypochlorous acid"
+          ],
+          "original_value": "acetic acid",
+          "validity_range": "Must be a named weak monoprotic acid with a defined Ka between 0 and 1 (exclusive), so that it partially dissociates and forms a buffer with its conjugate base. Strong acids (e.g. HCl) or non-acids are invalid for this class."
+        },
+        {
+          "description": "the amount in moles of the weak acid HA with unit",
+          "format_examples": [
+            "0.150 mol",
+            "2.5 mol",
+            "0.01 mol"
+          ],
+          "original_value": "0.150 mol",
+          "validity_range": "Must be a positive finite number of moles (greater than 0). Zero would mean no buffer exists."
+        },
+        {
+          "description": "the name of the salt that supplies the conjugate base A- of the weak acid",
+          "format_examples": [
+            "sodium acetate",
+            "potassium formate",
+            "sodium hypochlorite"
+          ],
+          "original_value": "sodium acetate",
+          "validity_range": "Must be a salt whose anion is the conjugate base of the weak acid in \u25cf1 and whose cation is spectator (fully soluble, no acid-base contribution). Must not be a different acid's conjugate base."
+        },
+        {
+          "description": "the amount in moles of the conjugate base A- supplied by the salt with unit",
+          "format_examples": [
+            "0.100 mol",
+            "1.2 mol",
+            "0.05 mol"
+          ],
+          "original_value": "0.100 mol",
+          "validity_range": "Must be a positive finite number of moles (greater than 0). Both acid and base must be present in nonzero amounts for the Henderson-Hasselbalch treatment to apply."
+        },
+        {
+          "description": "the total volume of the buffer solution with unit",
+          "format_examples": [
+            "500 mL",
+            "0.5 L",
+            "1.00 L"
+          ],
+          "original_value": "500 mL",
+          "validity_range": "Must be a positive finite volume. Since HA and A- share this volume, it cancels in the mole ratio, but it must be positive so the solution exists."
+        },
+        {
+          "description": "the acid dissociation constant Ka of the weak acid HA (dimensionless, in scientific notation)",
+          "format_examples": [
+            "1.8 \u00d7 10\u207b\u2075",
+            "6.8 \u00d7 10\u207b\u2074",
+            "3.0e-8"
+          ],
+          "original_value": "1.8 \u00d7 10\u207b\u2075",
+          "validity_range": "Must be a positive number strictly less than 1 (weak acid regime). Values far outside typical weak acid range (roughly 1e-12 to 1e-1) would make the acid not behave as a weak buffer component."
+        },
+        {
+          "description": "the amount in moles and identity of the strong acid added to the buffer (HCl)",
+          "format_examples": [
+            "0.020 mol HCl",
+            "0.005 mol HNO3",
+            "0.1 mol HBr"
+          ],
+          "original_value": "0.020 mol HCl",
+          "validity_range": "Must be a non-negative amount of a strong acid that fully dissociates (e.g. HCl, HBr, HNO3). The Henderson-Hasselbalch result is valid only while added moles are less than the moles of conjugate base (\u25cf4); beyond that the conjugate base is exhausted and the buffer no longer applies."
+        }
+      ],
+      "problem_id": "buffer_ph_after_strong_acid"
+    }
+  ]
+}

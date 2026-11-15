@@ -17,6 +17,7 @@ import math
 import signal
 import threading
 from contextlib import contextmanager
+from dataclasses import dataclass
 
 ALLOWED_MODULES = {
     "math", "cmath", "fractions", "decimal", "itertools", "functools", "re",
@@ -37,8 +38,10 @@ class FunctionTimeout(TimeoutError):
     pass
 
 
-def check_source(source: str) -> ast.Module:
+def check_source(source: str, require_function: bool = True,
+                 forbidden: set[str] | None = None) -> ast.Module:
     """Parse `source` and reject anything outside the allowed surface."""
+    forbidden = FORBIDDEN_NAMES if forbidden is None else forbidden
     tree = ast.parse(source)
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -48,11 +51,12 @@ def check_source(source: str) -> ast.Module:
         elif isinstance(node, ast.ImportFrom):
             if (node.module or "").split(".")[0] not in ALLOWED_MODULES:
                 raise UnsafeCodeError(f"import from '{node.module}' is not allowed")
-        elif isinstance(node, ast.Name) and node.id in FORBIDDEN_NAMES:
+        elif isinstance(node, ast.Name) and node.id in forbidden:
             raise UnsafeCodeError(f"use of '{node.id}' is not allowed")
         elif isinstance(node, ast.Attribute) and node.attr.startswith("__"):
             raise UnsafeCodeError(f"access to '{node.attr}' is not allowed")
-    if not any(isinstance(n, ast.FunctionDef) and n.name == "semantic_function" for n in tree.body):
+    if require_function and not any(isinstance(n, ast.FunctionDef) and n.name == "semantic_function"
+                                    for n in tree.body):
         raise UnsafeCodeError("source must define `def semantic_function(ctx):`")
     return tree
 
@@ -106,3 +110,57 @@ def time_limit(seconds: float):
     finally:
         signal.setitimer(signal.ITIMER_REAL, 0)
         signal.signal(signal.SIGALRM, previous)
+
+
+# ----------------------------------------------------------------------------- standalone programs
+# Tie-break solves (arc/labelfree.adjudicate) are whole programs that print their answer. They
+# run in a separate Python process: a hard timeout that works from any thread, nothing shared
+# with this process, and the same static checks plus restricted builtins inside the child.
+
+PROGRAM_FORBIDDEN = FORBIDDEN_NAMES | {"getattr"}
+
+_BOOT = """
+import builtins, sys
+ALLOWED = %r
+FORBIDDEN = %r
+src = sys.stdin.read()
+safe = {k: getattr(builtins, k) for k in dir(builtins) if not k.startswith("_") and k not in FORBIDDEN}
+real_import = builtins.__import__
+def guarded_import(name, globals=None, locals=None, fromlist=(), level=0):
+    if name.split(".")[0] not in ALLOWED:
+        raise ImportError("import of '%%s' is not allowed" %% name)
+    return real_import(name, globals, locals, fromlist, level)
+safe["__import__"] = guarded_import
+safe["__build_class__"] = builtins.__build_class__
+safe["__name__"] = "__main__"
+exec(compile(src, "<program>", "exec"), {"__builtins__": safe, "__name__": "__main__"})
+"""
+
+
+@dataclass
+class ProgramRun:
+    ok: bool
+    stdout: str
+    error: str = ""
+
+
+def run_program(source: str, seconds: float = 10, max_output: int = 4000) -> ProgramRun:
+    """Run a standalone program that prints its answer. ok=False on unsafe code, a timeout,
+    an exception or a non-zero exit; stdout is what it printed (capped)."""
+    import subprocess
+    import sys
+    try:
+        check_source(source, require_function=False, forbidden=PROGRAM_FORBIDDEN)
+    except (UnsafeCodeError, SyntaxError) as e:
+        return ProgramRun(False, "", f"{type(e).__name__}: {e}")
+    boot = _BOOT % (sorted(ALLOWED_MODULES), sorted(PROGRAM_FORBIDDEN))
+    try:
+        proc = subprocess.run([sys.executable, "-I", "-S", "-c", boot], input=source, capture_output=True,
+                              text=True, timeout=seconds, env={"PATH": "/usr/bin:/bin"})
+    except subprocess.TimeoutExpired:
+        return ProgramRun(False, "", f"timed out after {seconds:g}s")
+    out = proc.stdout[-max_output:]
+    if proc.returncode != 0:
+        last = (proc.stderr.strip().splitlines() or ["exit code %d" % proc.returncode])[-1]
+        return ProgramRun(False, out, last[:300])
+    return ProgramRun(True, out)

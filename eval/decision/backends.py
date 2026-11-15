@@ -139,9 +139,11 @@ class LlamaServer(Backend):
         self.base = None
 
     def __enter__(self):
-        exe = shutil.which("llama-server")
+        # Homebrew has no llama.cpp bottle for macOS 14, so we build it from source in ~/src.
+        local = Path.home() / "src" / "llama.cpp" / "build" / "bin" / "llama-server"
+        exe = os.environ.get("LLAMA_SERVER") or shutil.which("llama-server") or (str(local) if local.exists() else None)
         if not exe:
-            raise SystemExit("llama-server not found. Install it with: brew install llama.cpp")
+            raise SystemExit("llama-server not found: build ~/src/llama.cpp or set LLAMA_SERVER")
         port = _free_port()
         self.base = f"http://127.0.0.1:{port}"
         log = open(ROOT / "eval" / "decision" / f".llama-{self.name}.log", "w")
@@ -217,15 +219,48 @@ class Reranker(Backend):
         from sentence_transformers import CrossEncoder
         import torch
         self.name, self._sig = name, torch.nn.Sigmoid()
+        # Instruction-following rerankers (Qwen3) get the gate instruction; plain pair
+        # classifiers (LangCache) score the bare (question, seed question) pair.
+        extra = dict(prompts={"gate": self.INSTRUCT}, default_prompt_name="gate") if spec.get("instruct") else {}
         self.model = CrossEncoder(spec["repo"], device="cpu", local_files_only=True,
                                   model_kwargs={"dtype": torch.float32},  # bf16 is slow on CPU
-                                  prompts={"gate": self.INSTRUCT}, default_prompt_name="gate")
+                                  **extra)
 
     def decide(self, state, questions):
         # questions here carry the raw seed text (see run_decision.pair_text)
         ids = list(questions)
         scores = self.model.predict([(state, questions[q]) for q in ids], activation_fn=self._sig)
         return {q: float(s) for q, s in zip(ids, scores)}, {}
+
+
+class NLI(Backend):
+    """NLI cross-encoder: premise = incoming question, hypothesis = a fixed sentence naming
+    the seed question. P(yes) = softmax probability of 'entailment'."""
+
+    HYPOTHESIS = ("This question can be answered exactly by re-running the solution to this example "
+                  "question with new input values: {seed}")
+
+    def __init__(self, name, spec):
+        from sentence_transformers import CrossEncoder
+        import torch
+        self.name, self.torch = name, torch
+        self.model = CrossEncoder(spec["repo"], device="cpu", local_files_only=True,
+                                  model_kwargs={"dtype": torch.float32})
+        labels = {v.lower(): int(k) for k, v in self.model.model.config.id2label.items()}
+        self.ent = labels["entailment"]
+
+    def _ent(self, pairs):
+        logits = self.model.predict(pairs, convert_to_tensor=True)
+        return self.torch.softmax(logits.float(), dim=-1)[:, self.ent]
+
+    def decide(self, state, questions):
+        ids = list(questions)
+        if getattr(self, "plain", False):   # structure/field text: same meaning = entails both ways
+            fwd = self._ent([(state, questions[q]) for q in ids])
+            bwd = self._ent([(questions[q], state) for q in ids])
+            return {q: float(min(a, b)) for q, a, b in zip(ids, fwd, bwd)}, {}
+        p = self._ent([(state, self.HYPOTHESIS.format(seed=questions[q])) for q in ids])
+        return {q: float(x) for q, x in zip(ids, p)}, {}
 
 
 class HFDecision(Backend):
@@ -238,6 +273,61 @@ class HFDecision(Backend):
         out = self.model.system_one(state=state, questions=noul_questions(questions))
         ans = out["answers"]
         return {q: _p_yes(ans[q]) for q in questions}, out.get("usage") or {}
+
+
+def laya_questions(questions: dict[str, str], form: str = "noul") -> dict:
+    """Our yes/no questions in Laya's format. "noul": Laya's native P(true). "choice": the
+    model card's workaround for its noul label bias, a two-option choice with neutral keys."""
+    if form == "noul":
+        return noul_questions(questions)
+    if form == "choice":
+        return {qid: {"type": "choice", "instructions": text,
+                      "criteria": {"a": "Yes: the statement holds.", "b": "No: the statement does not hold."}}
+                for qid, text in questions.items()}
+    raise ValueError(f"unknown Laya form {form!r} (noul or choice)")
+
+
+def laya_p_yes(ans: dict, form: str = "noul") -> float:
+    if form == "choice":
+        return float(ans["probabilities"]["a"])
+    return _p_yes(ans)
+
+
+class Laya(Backend):
+    """Laya decision models (pip package `laya`, weights convaiinnovations/laya), run locally.
+    Laya silently cuts an instruction longer than its head budget (head_max_len, 192 tokens by
+    default), and our gate prompts are longer than that, so the spec widens max_len and
+    head_max_len, and usage reports any instruction that was still cut."""
+
+    def __init__(self, name, spec):
+        os.environ.setdefault("USE_TF", "0")   # an installed TensorFlow can hang laya's model build
+        from huggingface_hub import snapshot_download
+        import laya
+        try:
+            # scoped to this checkpoint's files: the repo's images and .py are never downloaded
+            root = snapshot_download(spec["repo"], local_files_only=True, allow_patterns=spec.get("allow"))
+        except Exception:
+            raise SystemExit(f"{spec['repo']} is not downloaded. Run eval/decision/download.py {name} first.")
+        self.name, self.form = name, spec.get("form", "noul")
+        self.agent = laya.Agent(root, subfolder=spec.get("subfolder"), device=os.environ.get("LAYA_DEVICE"))
+        for k in ("max_len", "head_max_len"):
+            if spec.get(k):
+                self.agent.cfg[k] = spec[k]
+        self.head = int(self.agent.cfg.get("head_max_len", 192))
+
+    def _cut(self, qs: dict) -> list[str]:
+        """Questions whose instruction does not fit the head budget (two short options kept)."""
+        return [q for q, d in qs.items()
+                if len(self.agent.tok(f"{d['type']} question: {d['instructions']}",
+                                      add_special_tokens=False)["input_ids"]) > self.head - 24]
+
+    def decide(self, state, questions):
+        qs = laya_questions(questions, self.form)
+        out = self.agent.predict(state, qs)
+        u = out.get("usage") or {}
+        usage = {"input_tokens": u.get("input_tokens", 0), "state_truncated": bool(u.get("truncated")),
+                 "instruction_cut": self._cut(qs)}
+        return {q: laya_p_yes(out["answers"][q], self.form) for q in questions}, usage
 
 
 class Gliner(Backend):
@@ -278,7 +368,7 @@ class Embed(Backend):
         return {q: float(s) for q, s in zip(ids, sims)}, {}
 
 
-RAW_SEED = {"reranker", "embed"}   # these compare against the bare seed text, not the noul prompt
+RAW_SEED = {"reranker", "embed", "nli"}   # these get the bare seed text, not the noul prompt
 
 
 def make_backend(name: str, gpu: bool = False, allow_remote_code: bool = False) -> Backend:
@@ -294,10 +384,14 @@ def make_backend(name: str, gpu: bool = False, allow_remote_code: bool = False) 
         return JevK5(name, spec, gpu=gpu)
     if kind == "reranker":
         return Reranker(name, spec)
+    if kind == "nli":
+        return NLI(name, spec)
     if kind == "hf_decision":
         return HFDecision(name, spec)
     if kind == "gliner":
         return Gliner(name, spec)
+    if kind == "laya":
+        return Laya(name, spec)
     if kind == "embed":
         return Embed(name, spec)
     raise ValueError(kind)

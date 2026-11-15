@@ -25,6 +25,8 @@ def fetch(name: str) -> None:
     print(f"-> {name}: {s['repo']} {s.get('file', '')} (~{s['mb']} MB)", flush=True)
     if s.get("file"):
         p = hf_hub_download(s["repo"], s["file"])
+    elif s.get("allow"):
+        p = snapshot_download(s["repo"], allow_patterns=s["allow"])
     else:
         p = snapshot_download(s["repo"], allow_patterns=["*.json", "*.safetensors", "*.txt", "*.model",
                                                           "*.py", "*.jinja", "backbone/*", "tokenizer*"])

@@ -1,0 +1,185 @@
+{
+  "name": "frcp_answer_deadline",
+  "functions": [
+    {
+      "id": "parse_the_calendar_date_text_of_service_dd56dc",
+      "description": "Parse the calendar date text of service into a calendar date value.",
+      "inputs": [
+        "the calendar date on which the summons and complaint were served on the defendant, including weekday if given"
+      ],
+      "outputs": [
+        "the parsed service date"
+      ],
+      "aliases": [],
+      "origin": "builder:frcp_answer_deadline"
+    },
+    {
+      "id": "determine_the_number_of_days_allowed_to_252fe1",
+      "description": "Determine the number of days allowed to serve an answer given the waiver status of service under the governing rule",
+      "inputs": [
+        "the waiver status of service for the defendant, stating whether the defendant waived formal service or not",
+        "the governing procedural rule that sets the time to serve an answer, cited by rule number"
+      ],
+      "outputs": [
+        "the response period in days"
+      ],
+      "aliases": [],
+      "origin": "builder:frcp_answer_deadline"
+    },
+    {
+      "id": "count_calendar_days_forward_from_the_par_98ecb4",
+      "description": "Count calendar days forward from the parsed service date, excluding the service day, to get the nominal answer deadline.",
+      "inputs": [
+        "the parsed service date",
+        "the response period in days"
+      ],
+      "outputs": [
+        "the nominal deadline date"
+      ],
+      "aliases": [],
+      "origin": "builder:frcp_answer_deadline"
+    },
+    {
+      "id": "determine_the_weekday_name_of_a_calendar_7bb4e6",
+      "description": "Determine the weekday name of a calendar date.",
+      "inputs": [
+        "the calendar date"
+      ],
+      "outputs": [
+        "the weekday name of the date"
+      ],
+      "aliases": [],
+      "origin": "builder:frcp_answer_deadline"
+    },
+    {
+      "id": "look_up_the_united_states_federal_legal_a8a402",
+      "description": "Look up the United States federal legal holidays that fall within a given date range.",
+      "inputs": [
+        "the start date of the date range",
+        "the end date of the date range"
+      ],
+      "outputs": [
+        "the list of federal legal holidays in the date range"
+      ],
+      "aliases": [],
+      "origin": "builder:frcp_answer_deadline"
+    },
+    {
+      "id": "check_whether_a_calendar_date_is_a_weeke_fc2044",
+      "description": "Check whether a calendar date is a weekend day or a federal legal holiday.",
+      "inputs": [
+        "the calendar date to check"
+      ],
+      "outputs": [
+        "whether the date is a weekend or federal legal holiday"
+      ],
+      "aliases": [],
+      "origin": "builder:frcp_answer_deadline"
+    },
+    {
+      "id": "advance_a_nominal_deadline_date_forward_5eaed1",
+      "description": "Advance a nominal deadline date forward to the next day that is not a weekend day or federal legal holiday.",
+      "inputs": [
+        "the nominal deadline date"
+      ],
+      "outputs": [
+        "the adjusted last day to serve an answer"
+      ],
+      "aliases": [],
+      "origin": "builder:frcp_answer_deadline"
+    },
+    {
+      "id": "compute_the_last_day_to_serve_an_answer_f0bb6a",
+      "description": "Compute the last day to serve an answer after service of the summons and complaint under the governing procedural rule.",
+      "inputs": [
+        "the calendar date on which the summons and complaint were served on the defendant, including weekday if given",
+        "the waiver status of service for the defendant, stating whether the defendant waived formal service or not",
+        "the governing procedural rule that sets the time to serve an answer, cited by rule number"
+      ],
+      "outputs": [
+        "the last day to serve an answer",
+        "the weekday of the last day to serve an answer"
+      ],
+      "aliases": [],
+      "origin": "builder:frcp_answer_deadline"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "Under \u25cf3, a defendant who \u25cf2 is served with the summons and complaint on \u25cf1. What is the last day to serve an answer?",
+      "kind": "template",
+      "root_id": "compute_the_last_day_to_serve_an_answer_f0bb6a",
+      "params": [
+        {
+          "description": "the calendar date on which the summons and complaint were served on the defendant, including weekday if given",
+          "format_examples": [
+            "Friday, March 6, 2026",
+            "Monday, June 1, 2025",
+            "2026-03-06"
+          ],
+          "original_value": "Friday, March 6, 2026",
+          "validity_range": "Must be a valid calendar date (real day, month, and year) that is a day on which service occurred; the triggering date must be a real date so that day counting is defined. Weekday label, if present, must match the actual weekday of that date. Dates far in the past or future are logically valid but may fall under different holiday calendars or rule versions."
+        },
+        {
+          "description": "the waiver status of service for the defendant, stating whether the defendant waived formal service or not",
+          "format_examples": [
+            "did not waive service",
+            "has not waived service",
+            "waived service"
+          ],
+          "original_value": "did not waive service",
+          "validity_range": "Must be a binary status: either the defendant did not waive service (so the standard 21-day answer period under Rule 12(a)(1)(A)(i) applies) or the defendant waived service (a different period applies, such as 60 days after the waiver request was sent under Rule 4(d)). Any other phrasing must reduce to one of these two states."
+        },
+        {
+          "description": "the governing procedural rule that sets the time to serve an answer, cited by rule number",
+          "format_examples": [
+            "Federal Rule of Civil Procedure 12(a)",
+            "FRCP 12(a)(1)(A)(i)",
+            "Federal Rule of Civil Procedure 12(a)(1)"
+          ],
+          "original_value": "Federal Rule of Civil Procedure 12(a)",
+          "validity_range": "Must identify a rule that prescribes a response deadline measured from service of a pleading or summons. Rule 12(a) covers answers to complaints in federal court; other rules or jurisdictions (for example state procedure or responses to counterclaims) prescribe different periods, so the parameter selects which period-length rule applies."
+        }
+      ],
+      "problem_id": "frcp_answer_deadline"
+    },
+    {
+      "text": "Under Federal Rule of Civil Procedure 12(a), a defendant who did not waive service is served with the summons and complaint on Friday, March 6, 2026. What is the last day to serve an answer?",
+      "kind": "original",
+      "root_id": "compute_the_last_day_to_serve_an_answer_f0bb6a",
+      "params": [
+        {
+          "description": "the calendar date on which the summons and complaint were served on the defendant, including weekday if given",
+          "format_examples": [
+            "Friday, March 6, 2026",
+            "Monday, June 1, 2025",
+            "2026-03-06"
+          ],
+          "original_value": "Friday, March 6, 2026",
+          "validity_range": "Must be a valid calendar date (real day, month, and year) that is a day on which service occurred; the triggering date must be a real date so that day counting is defined. Weekday label, if present, must match the actual weekday of that date. Dates far in the past or future are logically valid but may fall under different holiday calendars or rule versions."
+        },
+        {
+          "description": "the waiver status of service for the defendant, stating whether the defendant waived formal service or not",
+          "format_examples": [
+            "did not waive service",
+            "has not waived service",
+            "waived service"
+          ],
+          "original_value": "did not waive service",
+          "validity_range": "Must be a binary status: either the defendant did not waive service (so the standard 21-day answer period under Rule 12(a)(1)(A)(i) applies) or the defendant waived service (a different period applies, such as 60 days after the waiver request was sent under Rule 4(d)). Any other phrasing must reduce to one of these two states."
+        },
+        {
+          "description": "the governing procedural rule that sets the time to serve an answer, cited by rule number",
+          "format_examples": [
+            "Federal Rule of Civil Procedure 12(a)",
+            "FRCP 12(a)(1)(A)(i)",
+            "Federal Rule of Civil Procedure 12(a)(1)"
+          ],
+          "original_value": "Federal Rule of Civil Procedure 12(a)",
+          "validity_range": "Must identify a rule that prescribes a response deadline measured from service of a pleading or summons. Rule 12(a) covers answers to complaints in federal court; other rules or jurisdictions (for example state procedure or responses to counterclaims) prescribe different periods, so the parameter selects which period-length rule applies."
+        }
+      ],
+      "problem_id": "frcp_answer_deadline"
+    }
+  ]
+}

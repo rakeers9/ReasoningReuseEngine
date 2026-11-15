@@ -1,0 +1,171 @@
+{
+  "name": "bayes_ppv",
+  "functions": [
+    {
+      "id": "convert_the_prevalence_sensitivity_and_s_f7c8cf",
+      "description": "Convert the prevalence, sensitivity, and specificity percentages into probabilities between 0 and 1",
+      "inputs": [
+        "the prevalence of the disease in the population as a percentage with unit (the fraction of the population that has the disease)",
+        "the sensitivity of the test as a percentage with unit (the probability that a person with the disease tests positive)",
+        "the specificity of the test as a percentage with unit (the probability that a person without the disease tests negative)"
+      ],
+      "outputs": [
+        "prevalence probability P(D)",
+        "sensitivity P(+|D)",
+        "specificity P(-|D')"
+      ],
+      "aliases": [],
+      "origin": "builder:bayes_ppv"
+    },
+    {
+      "id": "derive_the_probability_of_not_having_the_18fc8c",
+      "description": "Derive the probability of not having the disease and the false-positive rate from prevalence and specificity.",
+      "inputs": [
+        "prevalence probability P(D)",
+        "specificity P(-|D')"
+      ],
+      "outputs": [
+        "probability of not having the disease P(D')",
+        "false-positive rate P(+|D')"
+      ],
+      "aliases": [],
+      "origin": "builder:bayes_ppv"
+    },
+    {
+      "id": "compute_the_total_probability_of_a_posit_18c872",
+      "description": "Compute the total probability of a positive test by the law of total probability over disease and non-disease groups",
+      "inputs": [
+        "sensitivity P(+|D)",
+        "prevalence probability P(D)",
+        "probability of not having the disease P(D')",
+        "false-positive rate P(+|D')"
+      ],
+      "outputs": [
+        "total probability of a positive test P(+)"
+      ],
+      "aliases": [],
+      "origin": "builder:bayes_ppv"
+    },
+    {
+      "id": "apply_bayes_theorem_to_obtain_the_probab_f4c0c4",
+      "description": "Apply Bayes' theorem to obtain the probability of disease given a positive test from sensitivity, prevalence, and total positive probability",
+      "inputs": [
+        "sensitivity P(+|D)",
+        "prevalence probability P(D)",
+        "total probability of a positive test P(+)"
+      ],
+      "outputs": [
+        "posterior probability of disease given a positive test P(D|+)"
+      ],
+      "aliases": [],
+      "origin": "builder:bayes_ppv"
+    },
+    {
+      "id": "verify_a_posterior_probability_by_counti_250b96",
+      "description": "Verify a posterior probability by counting expected true and false positives in a hypothetical population of fixed size.",
+      "inputs": [
+        "prevalence probability P(D)",
+        "sensitivity P(+|D)",
+        "false-positive rate P(+|D')",
+        "posterior probability of disease given a positive test P(D|+)"
+      ],
+      "outputs": [
+        "fraction of positive results that are true positives"
+      ],
+      "aliases": [],
+      "origin": "builder:bayes_ppv"
+    },
+    {
+      "id": "compute_the_posterior_probability_of_dis_607706",
+      "description": "Compute the posterior probability of disease given a positive test from prevalence, sensitivity, and specificity percentages.",
+      "inputs": [
+        "the prevalence of the disease in the population as a percentage with unit (the fraction of the population that has the disease)",
+        "the sensitivity of the test as a percentage with unit (the probability that a person with the disease tests positive)",
+        "the specificity of the test as a percentage with unit (the probability that a person without the disease tests negative)"
+      ],
+      "outputs": [
+        "posterior probability of disease given a positive test with base-rate interpretation"
+      ],
+      "aliases": [],
+      "origin": "builder:bayes_ppv"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "A disease affects \u25cf1 of a population. A test for it has \u25cf2 sensitivity and \u25cf3 specificity. If a randomly chosen person tests positive, what is the probability they actually have the disease?",
+      "kind": "template",
+      "root_id": "compute_the_posterior_probability_of_dis_607706",
+      "params": [
+        {
+          "description": "the prevalence of the disease in the population as a percentage with unit (the fraction of the population that has the disease)",
+          "format_examples": [
+            "1.5%",
+            "0.8%",
+            "12 percent"
+          ],
+          "original_value": "1.5%",
+          "validity_range": "Strictly between 0% and 100%. At 0% or 100% the disease is absent or universal, so P(disease | positive) is undefined or trivial. Values must be non-negative."
+        },
+        {
+          "description": "the sensitivity of the test as a percentage with unit (the probability that a person with the disease tests positive)",
+          "format_examples": [
+            "92%",
+            "0.95 as a fraction",
+            "85 percent"
+          ],
+          "original_value": "92%",
+          "validity_range": "Between 0% and 100% inclusive. Sensitivity of 0% makes P(+) depend only on false positives; the posterior is still defined provided P(+) > 0."
+        },
+        {
+          "description": "the specificity of the test as a percentage with unit (the probability that a person without the disease tests negative)",
+          "format_examples": [
+            "96%",
+            "99.5%",
+            "90 percent"
+          ],
+          "original_value": "96%",
+          "validity_range": "Between 0% and 100% inclusive. Specificity of 100% gives zero false positives; the posterior is undefined only if P(+) = 0, which requires sensitivity 0% together with specificity 100%."
+        }
+      ],
+      "problem_id": "bayes_ppv"
+    },
+    {
+      "text": "A disease affects 1.5% of a population. A test for it has 92% sensitivity and 96% specificity. If a randomly chosen person tests positive, what is the probability they actually have the disease?",
+      "kind": "original",
+      "root_id": "compute_the_posterior_probability_of_dis_607706",
+      "params": [
+        {
+          "description": "the prevalence of the disease in the population as a percentage with unit (the fraction of the population that has the disease)",
+          "format_examples": [
+            "1.5%",
+            "0.8%",
+            "12 percent"
+          ],
+          "original_value": "1.5%",
+          "validity_range": "Strictly between 0% and 100%. At 0% or 100% the disease is absent or universal, so P(disease | positive) is undefined or trivial. Values must be non-negative."
+        },
+        {
+          "description": "the sensitivity of the test as a percentage with unit (the probability that a person with the disease tests positive)",
+          "format_examples": [
+            "92%",
+            "0.95 as a fraction",
+            "85 percent"
+          ],
+          "original_value": "92%",
+          "validity_range": "Between 0% and 100% inclusive. Sensitivity of 0% makes P(+) depend only on false positives; the posterior is still defined provided P(+) > 0."
+        },
+        {
+          "description": "the specificity of the test as a percentage with unit (the probability that a person without the disease tests negative)",
+          "format_examples": [
+            "96%",
+            "99.5%",
+            "90 percent"
+          ],
+          "original_value": "96%",
+          "validity_range": "Between 0% and 100% inclusive. Specificity of 100% gives zero false positives; the posterior is undefined only if P(+) = 0, which requires sensitivity 0% together with specificity 100%."
+        }
+      ],
+      "problem_id": "bayes_ppv"
+    }
+  ]
+}

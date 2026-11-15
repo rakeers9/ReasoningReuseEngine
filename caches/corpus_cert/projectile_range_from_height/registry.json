@@ -1,0 +1,158 @@
+{
+  "name": "projectile_range_from_height",
+  "functions": [
+    {
+      "id": "solve_a_quadratic_equation_a_t_2_b_t_c_0_612bd1",
+      "description": "Solve a quadratic equation a t^2 + b t + c = 0 and return its positive real root.",
+      "inputs": [
+        "coefficients a, b and c of a quadratic equation a t^2 + b t + c = 0"
+      ],
+      "outputs": [
+        "the positive real root of the quadratic"
+      ],
+      "aliases": [],
+      "origin": "builder:projectile_range_from_height"
+    },
+    {
+      "id": "resolve_a_launch_velocity_into_horizonta_6c8c3a",
+      "description": "Resolve a launch velocity into horizontal and vertical components using the launch angle above horizontal",
+      "inputs": [
+        "the launch speed of the ball",
+        "the launch angle of the ball measured above the horizontal"
+      ],
+      "outputs": [
+        "initial horizontal velocity component",
+        "initial vertical velocity component"
+      ],
+      "aliases": [],
+      "origin": "builder:projectile_range_from_height"
+    },
+    {
+      "id": "compute_the_time_until_a_projectile_laun_9ed848",
+      "description": "Compute the time until a projectile launched from a given height returns to ground level under constant gravity.",
+      "inputs": [
+        "the height of the cliff above its base",
+        "the initial vertical velocity component",
+        "the gravitational acceleration magnitude"
+      ],
+      "outputs": [
+        "time of flight until the ball reaches ground level"
+      ],
+      "aliases": [],
+      "origin": "builder:projectile_range_from_height"
+    },
+    {
+      "id": "compute_the_horizontal_distance_from_the_1274aa",
+      "description": "Compute the horizontal distance from the cliff base to where a ball launched from the top of a cliff lands.",
+      "inputs": [
+        "the height of the cliff above its base, with unit",
+        "the launch speed of the ball, with unit",
+        "the launch angle of the ball measured above the horizontal, with unit",
+        "the gravitational acceleration magnitude, with unit"
+      ],
+      "outputs": [
+        "horizontal distance from the base of the cliff to the landing point"
+      ],
+      "aliases": [],
+      "origin": "builder:projectile_range_from_height"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "A ball is launched from the top of a \u25cf1 cliff at \u25cf2, \u25cf3 above the horizontal. Taking g = \u25cf4, how far from the base of the cliff does it land?",
+      "kind": "template",
+      "root_id": "compute_the_horizontal_distance_from_the_1274aa",
+      "params": [
+        {
+          "description": "the height of the cliff above its base, with unit",
+          "format_examples": [
+            "20.0 m",
+            "45 m",
+            "12.5 metres"
+          ],
+          "original_value": "20.0 m",
+          "validity_range": "Strictly positive finite length (height > 0). A height of zero reduces to ground-level launch, which is a degenerate case; negative heights (launch point below the base) are not in the class as described."
+        },
+        {
+          "description": "the launch speed of the ball, with unit",
+          "format_examples": [
+            "25.0 m/s",
+            "12 m/s",
+            "40.5 metres per second"
+          ],
+          "original_value": "25.0 m/s",
+          "validity_range": "Strictly positive finite speed (v0 > 0). Speed zero means no motion and no landing distance, so it is excluded."
+        },
+        {
+          "description": "the launch angle of the ball measured above the horizontal, with unit",
+          "format_examples": [
+            "35\u00b0",
+            "20 degrees",
+            "-10\u00b0"
+          ],
+          "original_value": "35\u00b0",
+          "validity_range": "Angle in the open interval (-90\u00b0, 90\u00b0) for a nonzero forward range. 0\u00b0 is a horizontal launch and is valid; negative angles mean launch below horizontal and are valid. \u00b190\u00b0 (straight up or straight down) gives zero horizontal displacement and is a degenerate case."
+        },
+        {
+          "description": "the gravitational acceleration magnitude, with unit",
+          "format_examples": [
+            "9.81 m/s\u00b2",
+            "9.8 m/s\u00b2",
+            "1.62 m/s\u00b2"
+          ],
+          "original_value": "9.81 m/s\u00b2",
+          "validity_range": "Strictly positive finite acceleration magnitude (g > 0), taken as downward. Values near 9.8 m/s\u00b2 correspond to Earth; any positive value gives a valid instance of the same class."
+        }
+      ],
+      "problem_id": "projectile_range_from_height"
+    },
+    {
+      "text": "A ball is launched from the top of a 20.0 m cliff at 25.0 m/s, 35\u00b0 above the horizontal. Taking g = 9.81 m/s\u00b2, how far from the base of the cliff does it land?",
+      "kind": "original",
+      "root_id": "compute_the_horizontal_distance_from_the_1274aa",
+      "params": [
+        {
+          "description": "the height of the cliff above its base, with unit",
+          "format_examples": [
+            "20.0 m",
+            "45 m",
+            "12.5 metres"
+          ],
+          "original_value": "20.0 m",
+          "validity_range": "Strictly positive finite length (height > 0). A height of zero reduces to ground-level launch, which is a degenerate case; negative heights (launch point below the base) are not in the class as described."
+        },
+        {
+          "description": "the launch speed of the ball, with unit",
+          "format_examples": [
+            "25.0 m/s",
+            "12 m/s",
+            "40.5 metres per second"
+          ],
+          "original_value": "25.0 m/s",
+          "validity_range": "Strictly positive finite speed (v0 > 0). Speed zero means no motion and no landing distance, so it is excluded."
+        },
+        {
+          "description": "the launch angle of the ball measured above the horizontal, with unit",
+          "format_examples": [
+            "35\u00b0",
+            "20 degrees",
+            "-10\u00b0"
+          ],
+          "original_value": "35\u00b0",
+          "validity_range": "Angle in the open interval (-90\u00b0, 90\u00b0) for a nonzero forward range. 0\u00b0 is a horizontal launch and is valid; negative angles mean launch below horizontal and are valid. \u00b190\u00b0 (straight up or straight down) gives zero horizontal displacement and is a degenerate case."
+        },
+        {
+          "description": "the gravitational acceleration magnitude, with unit",
+          "format_examples": [
+            "9.81 m/s\u00b2",
+            "9.8 m/s\u00b2",
+            "1.62 m/s\u00b2"
+          ],
+          "original_value": "9.81 m/s\u00b2",
+          "validity_range": "Strictly positive finite acceleration magnitude (g > 0), taken as downward. Values near 9.8 m/s\u00b2 correspond to Earth; any positive value gives a valid instance of the same class."
+        }
+      ],
+      "problem_id": "projectile_range_from_height"
+    }
+  ]
+}

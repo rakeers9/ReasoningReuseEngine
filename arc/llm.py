@@ -25,6 +25,9 @@ _client: anthropic.Anthropic | None = None
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
 OPUS_LIKE = {"claude-opus-5-5"}
 SMALL_ROLES = {"target", "extractor", "converter"}   # the target model T at invocation time
+# Roles that run the customer's own production model (which may be Opus). Only these may
+# call Opus without ARC_ALLOW_OPUS=1; every other role stays Haiku-only.
+CUSTOMER_MODEL_ROLES = {"resolve"}
 
 
 class LLMError(RuntimeError):
@@ -34,7 +37,7 @@ class LLMError(RuntimeError):
 def client() -> anthropic.Anthropic:
     global _client
     if _client is None:
-        _client = anthropic.Anthropic(max_retries=4)
+        _client = anthropic.Anthropic(max_retries=4, timeout=300.0)  # a dead connection must not hang a run
     return _client
 
 
@@ -148,6 +151,8 @@ class LLMResult:
     thinking: str = ""
     model: str = ""
     cost: float = 0.0
+    input_tokens: int = 0
+    output_tokens: int = 0
 
 
 def call(
@@ -163,8 +168,10 @@ def call(
     tag: str | None = None,
 ) -> LLMResult:
     """Make one model call, record its cost, and return text (and parsed JSON)."""
-    if "opus" in model.lower() and os.environ.get("ARC_ALLOW_OPUS") != "1":
-        # Project rule: Haiku only, in every role. Opus must be an explicit opt-in.
+    if "opus" in model.lower() and os.environ.get("ARC_ALLOW_OPUS") != "1" and role not in CUSTOMER_MODEL_ROLES:
+        # Project rule: Haiku only, in every role. Opus must be an explicit opt-in. One exception
+        # (user decision 2026-11-15): "resolve" re-solves a backlog record with the CUSTOMER'S
+        # own production model, whatever it is, so the answers can be compared like for like.
         raise LLMError(f"{role}: refusing to call {model}. This project runs Haiku only; "
                        "set ARC_ALLOW_OPUS=1 to override on purpose.")
     messages = [{"role": "user", "content": prompt}]
@@ -248,4 +255,83 @@ def call(
     parsed = getattr(response, "parsed_output", None) if schema is not None else None
     if schema is not None and parsed is None:
         raise LLMError(f"{role} call returned no parseable output")
-    return LLMResult(text=text, parsed=parsed, thinking=thinking, model=served_model, cost=cost)
+    return LLMResult(text=text, parsed=parsed, thinking=thinking, model=served_model, cost=cost,
+                     input_tokens=usage.input_tokens, output_tokens=usage.output_tokens)
+
+
+# ----------------------------------------------------------------------------
+# Clef (Cloudflare Workers AI): yes/no decisions, used by the cache gate
+# ----------------------------------------------------------------------------
+
+def _cloudflare_post(url: str, body: dict, headers: dict, timeout: float = 60, tries: int = 3) -> dict:
+    """One HTTP call to Workers AI, retried on rate limits and server errors. Tests replace this."""
+    import urllib.error
+    import urllib.request
+    data = json.dumps(body).encode()
+    for attempt in range(tries):
+        req = urllib.request.Request(url, data, {"Content-Type": "application/json", **headers})
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.load(r)
+        except urllib.error.HTTPError as e:
+            msg = e.read().decode(errors="replace")[:300]
+            if e.code in (429, 500, 502, 503, 504) and attempt < tries - 1:
+                time.sleep(2 ** attempt)
+                continue
+            raise LLMError(f"Cloudflare HTTP {e.code}: {msg}") from None
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+            if attempt < tries - 1:
+                time.sleep(2 ** attempt)
+                continue
+            raise LLMError(f"Cloudflare network error: {e}") from None
+    raise LLMError("Cloudflare: no response")
+
+
+def _p_yes(ans: Any) -> float:
+    if isinstance(ans, (int, float)):
+        return float(ans)
+    if isinstance(ans, dict):
+        for k in ("noul", "probability", "p", "value", "yes", "true"):
+            if isinstance(ans.get(k), (int, float)):
+                return float(ans[k])
+        probs = ans.get("probabilities")
+        if isinstance(probs, dict):
+            for k in ("true", "yes", "True", "Yes"):
+                if k in probs:
+                    return float(probs[k])
+    raise LLMError(f"Clef: cannot read P(yes) from {json.dumps(ans)[:200]}")
+
+
+def decide(state: str, questions: dict[str, str], *, model: str | None = None,
+           tag: str | None = None) -> dict[str, float]:
+    """Ask Clef one yes/no question per key about `state`. Returns {key: P(yes)}.
+    Cost (input tokens x CLEF_PRICE_PER_MTOK) goes into the ledger under role "decider"."""
+    model = model or config.CLEF_MODEL
+    acct, tok = os.environ.get("CLOUDFLARE_ACCOUNT_ID"), os.environ.get("CLOUDFLARE_API_TOKEN")
+    if not acct or not tok:
+        raise LLMError("Clef needs CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN in .env")
+    url = f"https://api.cloudflare.com/client/v4/accounts/{acct}/ai/run/@cf/cloudflare/{model}"
+    body = {"model": model, "state": state,
+            "questions": {k: {"type": "noul", "instructions": v} for k, v in questions.items()}}
+    started = time.time()
+    try:
+        out = _cloudflare_post(url, body, {"Authorization": f"Bearer {tok}"})
+        if isinstance(out.get("result"), dict):
+            if out.get("success") is False:
+                raise LLMError(f"Clef error: {out.get('errors')}")
+            out = out["result"]
+        probs = {k: _p_yes(out["answers"][k]) for k in questions}
+    except (LLMError, KeyError, TypeError) as e:
+        _log({"time": started, "seconds": round(time.time() - started, 2), "role": "decider",
+              "model": f"cloudflare/{model}", "tag": tag, "prompt": {"state": state, "questions": questions},
+              "cost": 0.0, "error": str(e)[:300]})
+        raise LLMError(str(e)) from e
+    usage = out.get("usage") or {}
+    tin = int(usage.get("input_tokens") or usage.get("prompt_tokens") or 0)
+    cost = tin * config.CLEF_PRICE_PER_MTOK / 1e6
+    LEDGER.add(Record(role="decider", model=f"cloudflare/{model}", input_tokens=tin, output_tokens=0,
+                      cache_write=0, cache_read=0, cost=cost, tag=tag))
+    _log({"time": started, "seconds": round(time.time() - started, 2), "role": "decider",
+          "model": f"cloudflare/{model}", "tag": tag, "prompt": {"state": state, "questions": questions},
+          "response": probs, "cost": cost, "input_tokens": tin})
+    return probs

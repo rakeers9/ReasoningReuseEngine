@@ -1,0 +1,157 @@
+{
+  "name": "bayes_ppv",
+  "functions": [
+    {
+      "id": "convert_the_percentage_prevalence_sensit_8268b0",
+      "description": "Convert the percentage prevalence, sensitivity and specificity into probabilities in the unit interval",
+      "inputs": [
+        "the prevalence of the disease in the population with unit (base rate, percentage or probability)",
+        "the sensitivity of the test, i.e. the true positive rate P(positive | disease), with unit (percentage or probability)",
+        "the specificity of the test, i.e. the true negative rate P(negative | no disease), with unit (percentage or probability)"
+      ],
+      "outputs": [
+        "prevalence probability P(disease)",
+        "sensitivity probability P(positive | disease)",
+        "specificity probability P(negative | no disease)",
+        "false positive probability P(positive | no disease) as one minus specificity",
+        "probability of no disease P(not disease)"
+      ],
+      "aliases": [],
+      "origin": "builder:bayes_ppv"
+    },
+    {
+      "id": "compute_the_true_positive_joint_probabil_33bd3e",
+      "description": "Compute the true positive joint probability, the false positive joint probability and the total probability of a positive test from prevalence, sensitivity and false positive rate by the law of total probability.",
+      "inputs": [
+        "prevalence probability P(disease)",
+        "sensitivity probability P(positive | disease)",
+        "false positive probability P(positive | no disease) as one minus specificity",
+        "probability of no disease P(not disease)"
+      ],
+      "outputs": [
+        "true positive joint probability P(positive and disease)",
+        "false positive joint probability P(positive and no disease)",
+        "total probability of a positive test P(positive)"
+      ],
+      "aliases": [],
+      "origin": "builder:bayes_ppv"
+    },
+    {
+      "id": "apply_bayes_theorem_to_divide_the_true_p_e0bf5c",
+      "description": "Apply Bayes theorem to divide the true positive joint probability by the total probability of a positive test to get the posterior probability of disease given a positive test",
+      "inputs": [
+        "true positive joint probability P(positive and disease)",
+        "total probability of a positive test P(positive)"
+      ],
+      "outputs": [
+        "posterior probability of disease given a positive test P(disease | positive)"
+      ],
+      "aliases": [],
+      "origin": "builder:bayes_ppv"
+    },
+    {
+      "id": "express_a_probability_as_a_percentage_by_9a29c9",
+      "description": "Express a probability as a percentage by multiplying it by one hundred.",
+      "inputs": [
+        "posterior probability of disease given a positive test P(disease | positive)"
+      ],
+      "outputs": [
+        "posterior probability as a percentage"
+      ],
+      "aliases": [],
+      "origin": "builder:bayes_ppv"
+    },
+    {
+      "id": "compute_the_probability_that_a_person_ha_c6f4c0",
+      "description": "Compute the probability that a person has the disease given a positive test from the prevalence, sensitivity and specificity of the test.",
+      "inputs": [
+        "the prevalence of the disease in the population with unit (base rate, percentage or probability)",
+        "the sensitivity of the test, i.e. the true positive rate P(positive | disease), with unit (percentage or probability)",
+        "the specificity of the test, i.e. the true negative rate P(negative | no disease), with unit (percentage or probability)"
+      ],
+      "outputs": [
+        "probability of disease given a positive test as a percentage and as a probability"
+      ],
+      "aliases": [],
+      "origin": "builder:bayes_ppv"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "A disease affects \u25cf1 of a population. A test for it has \u25cf2 sensitivity and \u25cf3 specificity. If a randomly chosen person tests positive, what is the probability they actually have the disease?",
+      "kind": "template",
+      "root_id": "compute_the_probability_that_a_person_ha_c6f4c0",
+      "params": [
+        {
+          "description": "the prevalence of the disease in the population with unit (base rate, percentage or probability)",
+          "format_examples": [
+            "1.5%",
+            "0.3%",
+            "12.5%"
+          ],
+          "original_value": "1.5%",
+          "validity_range": "Must be a proportion between 0 and 100 percent (0 to 1 as a probability). Strictly between 0 and 100 percent for a non-degenerate problem: at 0 no one has the disease so the posterior is 0 and the question is trivial, at 100 everyone has it so the posterior is 1 regardless of the test. Values outside 0 to 100 percent are logically impossible. Also the value must be consistent with a population, so no negative numbers."
+        },
+        {
+          "description": "the sensitivity of the test, i.e. the true positive rate P(positive | disease), with unit (percentage or probability)",
+          "format_examples": [
+            "92%",
+            "99.5%",
+            "75%"
+          ],
+          "original_value": "92%",
+          "validity_range": "Must be between 0 and 100 percent inclusive. A sensitivity of 0 means the test never detects the disease, so P(positive) comes only from false positives and the posterior is 0 unless the false positive mass is also 0; values above 100 percent are impossible. Sensitivity and specificity are independent of prevalence and must be treated as conditional rates."
+        },
+        {
+          "description": "the specificity of the test, i.e. the true negative rate P(negative | no disease), with unit (percentage or probability)",
+          "format_examples": [
+            "96%",
+            "99%",
+            "80%"
+          ],
+          "original_value": "96%",
+          "validity_range": "Must be between 0 and 100 percent inclusive. A specificity of 100 percent means no false positives, so the posterior equals 1 whenever sensitivity is positive. A specificity of 0 means every healthy person tests positive. Values outside 0 to 100 percent are logically impossible. The false positive rate used in the calculation is one minus this value, so it lies in the same range."
+        }
+      ],
+      "problem_id": "bayes_ppv"
+    },
+    {
+      "text": "A disease affects 1.5% of a population. A test for it has 92% sensitivity and 96% specificity. If a randomly chosen person tests positive, what is the probability they actually have the disease?",
+      "kind": "original",
+      "root_id": "compute_the_probability_that_a_person_ha_c6f4c0",
+      "params": [
+        {
+          "description": "the prevalence of the disease in the population with unit (base rate, percentage or probability)",
+          "format_examples": [
+            "1.5%",
+            "0.3%",
+            "12.5%"
+          ],
+          "original_value": "1.5%",
+          "validity_range": "Must be a proportion between 0 and 100 percent (0 to 1 as a probability). Strictly between 0 and 100 percent for a non-degenerate problem: at 0 no one has the disease so the posterior is 0 and the question is trivial, at 100 everyone has it so the posterior is 1 regardless of the test. Values outside 0 to 100 percent are logically impossible. Also the value must be consistent with a population, so no negative numbers."
+        },
+        {
+          "description": "the sensitivity of the test, i.e. the true positive rate P(positive | disease), with unit (percentage or probability)",
+          "format_examples": [
+            "92%",
+            "99.5%",
+            "75%"
+          ],
+          "original_value": "92%",
+          "validity_range": "Must be between 0 and 100 percent inclusive. A sensitivity of 0 means the test never detects the disease, so P(positive) comes only from false positives and the posterior is 0 unless the false positive mass is also 0; values above 100 percent are impossible. Sensitivity and specificity are independent of prevalence and must be treated as conditional rates."
+        },
+        {
+          "description": "the specificity of the test, i.e. the true negative rate P(negative | no disease), with unit (percentage or probability)",
+          "format_examples": [
+            "96%",
+            "99%",
+            "80%"
+          ],
+          "original_value": "96%",
+          "validity_range": "Must be between 0 and 100 percent inclusive. A specificity of 100 percent means no false positives, so the posterior equals 1 whenever sensitivity is positive. A specificity of 0 means every healthy person tests positive. Values outside 0 to 100 percent are logically impossible. The false positive rate used in the calculation is one minus this value, so it lies in the same range."
+        }
+      ],
+      "problem_id": "bayes_ppv"
+    }
+  ]
+}

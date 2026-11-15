@@ -34,7 +34,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 CORPUS = ROOT / "eval" / "corpus" / "cache_eval_corpus.jsonl"
 RUNS = ROOT / "eval" / "runs"
-TOL = 0.01  # 1% relative tolerance on numbers
+# Answers must be right to the precision they are WRITTEN in (CLAUDE.md, production rule):
+# a served number counts only if it is within half a unit of its own last stated digit of the
+# true value ("18.6 atm" for 18.571 is right, "$5,053.27" for $5,053.07 is wrong). Money must
+# be right to the cent whatever is written. No percentage tolerance.
+MONEY_UNITS = {"$", "£", "€", "¥", "₹"}
+EPS = 1e-9
 
 # ----------------------------------------------------------------------------- scoring
 
@@ -44,14 +49,28 @@ MONTHS = "january february march april may june july august september october no
 
 def _numbers(text: str) -> list[tuple[float, bool]]:
     """Every number in the text, with whether a % sign follows it."""
+    return [(v, pct) for v, pct, _ in _numbers_with_precision(text)]
+
+
+def _numbers_with_precision(text: str) -> list[tuple[float, bool, float]]:
+    """(value, followed by %, half a unit in its last stated digit) for every number."""
     out = []
     for m in NUM.finditer(text):
+        raw = m.group().replace(",", "")
         try:
-            v = float(m.group().replace(",", ""))
+            v = float(raw)
         except ValueError:
             continue
-        out.append((v, text[m.end():m.end() + 2].lstrip().startswith("%")))
+        mant, _, exp = raw.lower().partition("e")
+        decimals = len(mant.split(".")[1]) if "." in mant else 0
+        half = 0.5 * 10 ** -decimals * (10 ** int(exp) if exp else 1)
+        out.append((v, text[m.end():m.end() + 2].lstrip().startswith("%"), half))
     return out
+
+
+def _agrees(served: float, half: float, truth: float, money: bool) -> bool:
+    tol = 0.005 if money else half      # money: to the cent, whatever precision is written
+    return abs(served - truth) <= tol + EPS * max(1.0, abs(truth))
 
 
 def _dates(text: str) -> set[tuple[int, int, int]]:
@@ -71,16 +90,16 @@ def score(row: dict, served_text: str) -> tuple[bool | None, str]:
     """Is the served answer right? Returns (correct, how). None = could not score."""
     v = row["answer_value"]
     if v is not None:
-        close = lambda x: abs(x - v) <= TOL * abs(v) if v else abs(x) < 1e-9
-        nums = _numbers(served_text)
-        if any(close(x) for x, _ in nums):
+        money = (row.get("answer_unit") or "").strip() in MONEY_UNITS
+        nums = _numbers_with_precision(served_text)
+        if any(_agrees(x, h, v, money) for x, _, h in nums):
             return True, "number"
-        if any(pct and close(x / 100) for x, pct in nums):
+        if any(pct and _agrees(x / 100, h / 100, v, False) for x, pct, h in nums):
             return True, "percent"
-        # Same number in another SI scale (e.g. 0.01266 m for 12.66 mm). Counted correct but
-        # flagged, so a reviewer can check these by hand.
-        if any(close(x * f) for x, _ in nums for f in (1e3, 1e-3, 1e6, 1e-6)):
-            return True, "scaled"
+        # A value 1000x off with no unit saying so is WRONG (it hid a "$150k" read as $150 bug).
+        # Report it separately so it is easy to find, but never count it as right.
+        if any(_agrees(x * f, h * f, v, False) for x, _, h in nums for f in (1e3, 1e-3, 1e6, 1e-6)):
+            return False, "scaled_without_unit"
         return False, "no_match"
     want = _dates(row["answer"])
     if want:
