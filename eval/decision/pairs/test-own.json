@@ -1,0 +1,2652 @@
+{
+ "seeds": {
+  "perfect_gas_pressure": "Suppose that 10.0 mol C2H6(g) is confined to 4.860 dm3 at 27°C. Predict the pressure exerted by the ethane from the perfect gas equation.",
+  "buffer_ph_after_strong_acid": "A buffer is made by dissolving 0.150 mol acetic acid and 0.100 mol sodium acetate in water to make 500 mL of solution. Ka for acetic acid is 1.8 × 10⁻⁵. What is the pH after 0.020 mol HCl is added?",
+  "projectile_range_from_height": "A ball is launched from the top of a 20.0 m cliff at 25.0 m/s, 35° above the horizontal. Taking g = 9.81 m/s², how far from the base of the cliff does it land?",
+  "ss_beam_udl_max_deflection": "A simply supported steel beam spans 6.0 m and carries a uniform load of 12 kN/m. With E = 200 GPa and I = 8.0 × 10⁻⁵ m⁴, what is the maximum deflection?",
+  "count_divisible_or_not": "How many positive integers less than 1000 are divisible by 3 or 5 but not by 7?",
+  "circular_seating_not_adjacent": "In how many ways can 8 people be seated around a round table if two particular people, A and B, refuse to sit next to each other?",
+  "bayes_ppv": "A disease affects 1.5% of a population. A test for it has 92% sensitivity and 96% specificity. If a randomly chosen person tests positive, what is the probability they actually have the disease?",
+  "one_sample_t_test": "A sample of 36 bolts has a mean length of 50.4 mm and a sample standard deviation of 1.2 mm. At α = 0.05, test whether the true mean length differs from 50 mm. Give the test statistic and your conclusion.",
+  "loan_payment_total_interest": "A $350,000 mortgage has a 6.25% annual interest rate, compounded monthly, over 30 years. What is the monthly payment, and how much total interest is paid over the life of the loan?",
+  "npv_annuity_salvage": "A project costs $120,000 upfront and returns $35,000 at the end of each year for 5 years, plus a $10,000 salvage value at the end of year 5. At a discount rate of 8%, what is the NPV, and should the project be accepted?",
+  "bond_price_semiannual": "A 10-year bond with a $1,000 face value pays a 5% annual coupon in semiannual installments. If the market yield is 6.2% (annual, compounded semiannually), what is the bond's price?",
+  "upc_intestate_spouse_share": "Under the Uniform Probate Code (using its base dollar amounts), a man dies without a will, leaving an estate of $900,000. He is survived by his wife and two children from a prior marriage who are not her children. How much does the wife inherit?",
+  "frcp_answer_deadline": "Under Federal Rule of Civil Procedure 12(a), a defendant who did not waive service is served with the summons and complaint on Friday, March 6, 2026. What is the last day to serve an answer?",
+  "ddb_book_value": "Equipment costs $80,000, has a salvage value of $8,000, and a useful life of 6 years. Using double-declining-balance depreciation, what is its book value at the end of year 3?",
+  "hardy_weinberg_carriers": "In a population of 2,500 people, 196 have cystic fibrosis, a recessive condition. Assuming Hardy-Weinberg equilibrium, how many people are expected to be carriers?",
+  "cockcroft_gault_crcl": "Using the Cockcroft-Gault equation, estimate the creatinine clearance of a 68-year-old woman who weighs 62 kg and has a serum creatinine of 1.4 mg/dL.",
+  "linear_market_tax_dwl": "Demand is Q = 120 − 2P and supply is Q = 3P − 30. A $5 per-unit tax is imposed on sellers. What is the new price buyers pay, and what is the deadweight loss?"
+ },
+ "seed_ids": {
+  "perfect_gas_pressure": "q001",
+  "buffer_ph_after_strong_acid": "q026",
+  "projectile_range_from_height": "q047",
+  "ss_beam_udl_max_deflection": "q068",
+  "count_divisible_or_not": "q089",
+  "circular_seating_not_adjacent": "q111",
+  "bayes_ppv": "q132",
+  "one_sample_t_test": "q153",
+  "loan_payment_total_interest": "q174",
+  "npv_annuity_salvage": "q195",
+  "bond_price_semiannual": "q216",
+  "upc_intestate_spouse_share": "q237",
+  "frcp_answer_deadline": "q258",
+  "ddb_book_value": "q279",
+  "hardy_weinberg_carriers": "q300",
+  "cockcroft_gault_crcl": "q321",
+  "linear_market_tax_dwl": "q342"
+ },
+ "rows": [
+  {
+   "id": "q002",
+   "question": "What pressure do 10 moles of ethane exert in a 4.86 litre container at 27 °C, treating it as a perfect gas?",
+   "variant_type": "paraphrase",
+   "near_miss_category": null,
+   "domain": "chemistry",
+   "seed_entry": "perfect_gas_pressure",
+   "expected_entry": "perfect_gas_pressure",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "perfect_gas_pressure",
+     "retrieval_sim": 0.8966,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q003",
+   "question": "10.0 mol of ethane gas (C2H6) is held in a 4.860 dm3 vessel at 27°C. Assuming ideal behaviour, calculate the pressure.",
+   "variant_type": "paraphrase",
+   "near_miss_category": null,
+   "domain": "chemistry",
+   "seed_entry": "perfect_gas_pressure",
+   "expected_entry": "perfect_gas_pressure",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "perfect_gas_pressure",
+     "retrieval_sim": 0.9266,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q006",
+   "question": "Suppose that 3.20 mol CO2(g) is confined to 15.0 dm3 at 45°C. Predict the pressure exerted by the carbon dioxide from the perfect gas equation.",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "chemistry",
+   "seed_entry": "perfect_gas_pressure",
+   "expected_entry": "perfect_gas_pressure",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "perfect_gas_pressure",
+     "retrieval_sim": 0.834,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q012",
+   "question": "Ten moles of ethane are confined to a 4.86-litre vessel at twenty-seven degrees Celsius. Treating the gas as ideal, what is its pressure?",
+   "variant_type": "hard_positive",
+   "near_miss_category": null,
+   "domain": "chemistry",
+   "seed_entry": "perfect_gas_pressure",
+   "expected_entry": "perfect_gas_pressure",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "perfect_gas_pressure",
+     "retrieval_sim": 0.8938,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q013",
+   "question": "Suppose that 10.0 mol C2H6(g) is confined to 4.860 dm3 at 27°C and is then compressed isothermally to 2.430 dm3. Predict the new pressure from the perfect gas equation.",
+   "variant_type": "near_miss",
+   "near_miss_category": "process_two_states",
+   "domain": "chemistry",
+   "seed_entry": "perfect_gas_pressure",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "perfect_gas_pressure",
+     "retrieval_sim": 0.9486,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q014",
+   "question": "Suppose that 10.0 mol C2H6(g) is confined to 4.860 dm3 at 27°C. Predict the pressure exerted by the ethane from the van der Waals equation, with a = 5.507 atm dm6 mol-2 and b = 0.0651 dm3 mol-1.",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_method",
+   "domain": "chemistry",
+   "seed_entry": "perfect_gas_pressure",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "perfect_gas_pressure",
+     "retrieval_sim": 0.951,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q019",
+   "question": "Suppose that 10.0 mol C2H6(g) is confined to 4.860 dm3 at 27°C. By how much does the pressure increase when the gas is heated to 127°C at constant volume? Treat it as a perfect gas.",
+   "variant_type": "near_miss",
+   "near_miss_category": "change_in_quantity",
+   "domain": "chemistry",
+   "seed_entry": "perfect_gas_pressure",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "perfect_gas_pressure",
+     "retrieval_sim": 0.9159,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q022",
+   "question": "Suppose that 10.0 mol C2H6(g) is confined to 4.860 dm3 at 27°C, where its compressibility factor is Z = 0.85. Predict the pressure exerted by the ethane.",
+   "variant_type": "near_miss",
+   "near_miss_category": "extra_condition",
+   "domain": "chemistry",
+   "seed_entry": "perfect_gas_pressure",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "perfect_gas_pressure",
+     "retrieval_sim": 0.941,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q023",
+   "question": "10.0 mol C2H6(g) and 5.00 mol CH4(g) are confined together to 4.860 dm3 at 27°C. Treating both as perfect gases, what is the partial pressure of the ethane?",
+   "variant_type": "near_miss",
+   "near_miss_category": "benign_extra_info",
+   "domain": "chemistry",
+   "seed_entry": "perfect_gas_pressure",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": true,
+   "candidates": [
+    {
+     "entry": "perfect_gas_pressure",
+     "retrieval_sim": 0.9218,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q030",
+   "question": "A buffer is made by dissolving 0.200 mol acetic acid and 0.200 mol sodium acetate in water to make 1.00 L of solution. Ka for acetic acid is 1.8 × 10⁻⁵. What is the pH after 0.050 mol HCl is added?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "chemistry",
+   "seed_entry": "buffer_ph_after_strong_acid",
+   "expected_entry": "buffer_ph_after_strong_acid",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "buffer_ph_after_strong_acid",
+     "retrieval_sim": 0.9769,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q033",
+   "question": "A solution contains 0.250 mol NH3 and 0.180 mol NH4Cl in 1.00 L. The Ka of NH4+ is 5.6 × 10⁻¹⁰. Find the pH after 0.030 mol of HCl is added.",
+   "variant_type": "reparam_reworded",
+   "near_miss_category": null,
+   "domain": "chemistry",
+   "seed_entry": "buffer_ph_after_strong_acid",
+   "expected_entry": "buffer_ph_after_strong_acid",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "buffer_ph_after_strong_acid",
+     "retrieval_sim": 0.7887,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q035",
+   "question": "Starting with a buffer of 150 mmol acetic acid and 100 mmol acetate ion (Ka 1.8×10^-5), how does the pH come out after you add 20 mmol of strong acid (HCl)?",
+   "variant_type": "reparam_reworded",
+   "near_miss_category": null,
+   "domain": "chemistry",
+   "seed_entry": "buffer_ph_after_strong_acid",
+   "expected_entry": "buffer_ph_after_strong_acid",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "buffer_ph_after_strong_acid",
+     "retrieval_sim": 0.8834,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q037",
+   "question": "A buffer contains 0.150 mol acetic acid and 0.100 mol sodium acetate in 500 mL (Ka = 1.8 × 10⁻⁵). A student adds 2.0 mL of concentrated HCl containing 0.020 mol HCl. What is the new pH?",
+   "variant_type": "hard_positive",
+   "near_miss_category": null,
+   "domain": "chemistry",
+   "seed_entry": "buffer_ph_after_strong_acid",
+   "expected_entry": "buffer_ph_after_strong_acid",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "buffer_ph_after_strong_acid",
+     "retrieval_sim": 0.9156,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q039",
+   "question": "A buffer is made by dissolving 0.150 mol acetic acid and 0.100 mol sodium acetate in water to make 500 mL of solution. Ka for acetic acid is 1.8 × 10⁻⁵. What is the pH of the buffer?",
+   "variant_type": "near_miss",
+   "near_miss_category": "missing_step",
+   "domain": "chemistry",
+   "seed_entry": "buffer_ph_after_strong_acid",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "buffer_ph_after_strong_acid",
+     "retrieval_sim": 0.9848,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q042",
+   "question": "A buffer is made by dissolving 0.150 mol acetic acid and 0.100 mol sodium acetate in water to make 500 mL of solution. Ka for acetic acid is 1.8 × 10⁻⁵. How many moles of HCl can be added before the pH falls below 4.00?",
+   "variant_type": "near_miss",
+   "near_miss_category": "inverse_problem",
+   "domain": "chemistry",
+   "seed_entry": "buffer_ph_after_strong_acid",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "buffer_ph_after_strong_acid",
+     "retrieval_sim": 0.9858,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q043",
+   "question": "A buffer is made by dissolving 0.150 mol acetic acid and 0.100 mol sodium acetate in water to make 500 mL of solution. Ka for acetic acid is 1.8 × 10⁻⁵. What is the acetate ion concentration after 0.020 mol HCl is added?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_target",
+   "domain": "chemistry",
+   "seed_entry": "buffer_ph_after_strong_acid",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "buffer_ph_after_strong_acid",
+     "retrieval_sim": 0.9873,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q044",
+   "question": "0.150 mol acetic acid is dissolved in water to make 500 mL of solution. Ka for acetic acid is 1.8 × 10⁻⁵. What is the pH?",
+   "variant_type": "near_miss",
+   "near_miss_category": "regime_change",
+   "domain": "chemistry",
+   "seed_entry": "buffer_ph_after_strong_acid",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "buffer_ph_after_strong_acid",
+     "retrieval_sim": 0.8984,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q049",
+   "question": "What is the horizontal range of a ball fired at 25.0 m/s and 35° elevation from a 20.0 m tall cliff top, landing on level ground at the cliff's base? Use g = 9.81 m/s².",
+   "variant_type": "paraphrase",
+   "near_miss_category": null,
+   "domain": "physics",
+   "seed_entry": "projectile_range_from_height",
+   "expected_entry": "projectile_range_from_height",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "projectile_range_from_height",
+     "retrieval_sim": 0.9432,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q052",
+   "question": "A ball is launched from the top of a 10.0 m cliff at 30.0 m/s, 50° above the horizontal. Taking g = 9.81 m/s², how far from the base of the cliff does it land?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "physics",
+   "seed_entry": "projectile_range_from_height",
+   "expected_entry": "projectile_range_from_height",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "projectile_range_from_height",
+     "retrieval_sim": 0.9643,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q053",
+   "question": "A ball is launched from the top of a 20.0 m cliff on the Moon at 25.0 m/s, 35° above the horizontal. Taking g = 1.62 m/s², how far from the base of the cliff does it land?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "physics",
+   "seed_entry": "projectile_range_from_height",
+   "expected_entry": "projectile_range_from_height",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "projectile_range_from_height",
+     "retrieval_sim": 0.9273,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q057",
+   "question": "A ball is thrown horizontally at 25.0 m/s from the top of a 20.0 m cliff. Taking g = 9.81 m/s², how far from the base of the cliff does it land?",
+   "variant_type": "hard_positive",
+   "near_miss_category": null,
+   "domain": "physics",
+   "seed_entry": "projectile_range_from_height",
+   "expected_entry": "projectile_range_from_height",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "projectile_range_from_height",
+     "retrieval_sim": 0.9629,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q063",
+   "question": "A ball is launched from level ground at 25.0 m/s, 35° above the horizontal. Taking g = 9.81 m/s², how far away does it land?",
+   "variant_type": "near_miss",
+   "near_miss_category": "missing_step",
+   "domain": "physics",
+   "seed_entry": "projectile_range_from_height",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": true,
+   "candidates": [
+    {
+     "entry": "projectile_range_from_height",
+     "retrieval_sim": 0.9309,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q064",
+   "question": "A ball is launched from the top of a 20.0 m cliff at 25.0 m/s, 35° above the horizontal. Air resistance is significant, with a quadratic drag coefficient of 0.002 kg/m and a ball mass of 0.15 kg. Taking g = 9.81 m/s², how far from the base of the cliff does it land?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_method",
+   "domain": "physics",
+   "seed_entry": "projectile_range_from_height",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "projectile_range_from_height",
+     "retrieval_sim": 0.9582,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q065",
+   "question": "A ball is launched from the top of a 20.0 m cliff at 25.0 m/s, 35° above the horizontal. Taking g = 9.81 m/s², how far has it travelled horizontally when it reaches the highest point of its path?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_target",
+   "domain": "physics",
+   "seed_entry": "projectile_range_from_height",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "projectile_range_from_height",
+     "retrieval_sim": 0.9831,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q067",
+   "question": "A ball is launched from the top of a cliff at 25.0 m/s, 35° above the horizontal. Taking g = 9.81 m/s², how far from the base of the cliff does it land?",
+   "variant_type": "underspecified",
+   "near_miss_category": "missing_given",
+   "domain": "physics",
+   "seed_entry": "projectile_range_from_height",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "projectile_range_from_height",
+     "retrieval_sim": 0.9923,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q069",
+   "question": "Find the midspan deflection of a 6.0 m simply supported steel beam under a uniformly distributed load of 12 kN/m, given E = 200 GPa and I = 8.0e-5 m^4.",
+   "variant_type": "paraphrase",
+   "near_miss_category": null,
+   "domain": "engineering",
+   "seed_entry": "ss_beam_udl_max_deflection",
+   "expected_entry": "ss_beam_udl_max_deflection",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "ss_beam_udl_max_deflection",
+     "retrieval_sim": 0.944,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q070",
+   "question": "A steel beam (E = 200 GPa, I = 8.0 × 10⁻⁵ m⁴) is pinned at both ends over a 6.0 m span and loaded with 12 kN/m along its whole length. How much does it sag at most?",
+   "variant_type": "paraphrase",
+   "near_miss_category": null,
+   "domain": "engineering",
+   "seed_entry": "ss_beam_udl_max_deflection",
+   "expected_entry": "ss_beam_udl_max_deflection",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "ss_beam_udl_max_deflection",
+     "retrieval_sim": 0.9209,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q072",
+   "question": "A simply supported steel beam spans 5.0 m and carries a uniform load of 8 kN/m. With E = 200 GPa and I = 5.0 × 10⁻⁵ m⁴, what is the maximum deflection?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "engineering",
+   "seed_entry": "ss_beam_udl_max_deflection",
+   "expected_entry": "ss_beam_udl_max_deflection",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "ss_beam_udl_max_deflection",
+     "retrieval_sim": 0.9274,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q073",
+   "question": "A simply supported steel beam spans 8.0 m and carries a uniform load of 20 kN/m. With E = 200 GPa and I = 2.5 × 10⁻⁴ m⁴, what is the maximum deflection?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "engineering",
+   "seed_entry": "ss_beam_udl_max_deflection",
+   "expected_entry": "ss_beam_udl_max_deflection",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "ss_beam_udl_max_deflection",
+     "retrieval_sim": 0.9274,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q082",
+   "question": "A simply supported steel beam spans 6.0 m and carries a single point load of 72 kN at midspan. With E = 200 GPa and I = 8.0 × 10⁻⁵ m⁴, what is the maximum deflection?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_setup",
+   "domain": "engineering",
+   "seed_entry": "ss_beam_udl_max_deflection",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "ss_beam_udl_max_deflection",
+     "retrieval_sim": 0.955,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q085",
+   "question": "A steel beam fixed at both ends spans 6.0 m and carries a uniform load of 12 kN/m. With E = 200 GPa and I = 8.0 × 10⁻⁵ m⁴, what is the maximum deflection?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_setup",
+   "domain": "engineering",
+   "seed_entry": "ss_beam_udl_max_deflection",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "ss_beam_udl_max_deflection",
+     "retrieval_sim": 0.9802,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q086",
+   "question": "A simply supported steel beam 300 mm deep spans 6.0 m and carries a uniform load of 12 kN/m. With E = 200 GPa and I = 8.0 × 10⁻⁵ m⁴, what is the maximum bending stress?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_target",
+   "domain": "engineering",
+   "seed_entry": "ss_beam_udl_max_deflection",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "ss_beam_udl_max_deflection",
+     "retrieval_sim": 0.9608,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q087",
+   "question": "A simply supported steel beam spans 6.0 m and carries a uniform imposed load of 12 kN/m plus its own self-weight of 0.6 kN/m. With E = 200 GPa and I = 8.0 × 10⁻⁵ m⁴, what is the maximum deflection?",
+   "variant_type": "near_miss",
+   "near_miss_category": "extra_condition",
+   "domain": "engineering",
+   "seed_entry": "ss_beam_udl_max_deflection",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": true,
+   "candidates": [
+    {
+     "entry": "ss_beam_udl_max_deflection",
+     "retrieval_sim": 0.9845,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q092",
+   "question": "Find the number of positive whole numbers smaller than 1,000 that are divisible by 3 or 5 and not divisible by 7.",
+   "variant_type": "paraphrase",
+   "near_miss_category": null,
+   "domain": "math",
+   "seed_entry": "count_divisible_or_not",
+   "expected_entry": "count_divisible_or_not",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "count_divisible_or_not",
+     "retrieval_sim": 0.9366,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q093",
+   "question": "How many positive integers less than 500 are divisible by 2 or 7 but not by 5?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "math",
+   "seed_entry": "count_divisible_or_not",
+   "expected_entry": "count_divisible_or_not",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "count_divisible_or_not",
+     "retrieval_sim": 0.8877,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q098",
+   "question": "How many natural numbers less than ten thousand are divisible by either 7 or 11 but not by 13?",
+   "variant_type": "reparam_reworded",
+   "near_miss_category": null,
+   "domain": "math",
+   "seed_entry": "count_divisible_or_not",
+   "expected_entry": "count_divisible_or_not",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "count_divisible_or_not",
+     "retrieval_sim": 0.8673,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q099",
+   "question": "A school has 999 lockers numbered 1 to 999. Every locker whose number is a multiple of 3 or 5 is painted red, except that lockers whose number is a multiple of 7 are left unpainted. How many lockers are painted red?",
+   "variant_type": "hard_positive",
+   "near_miss_category": null,
+   "domain": "math",
+   "seed_entry": "count_divisible_or_not",
+   "expected_entry": "count_divisible_or_not",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "count_divisible_or_not",
+     "retrieval_sim": 0.7065,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q101",
+   "question": "How many positive integers less than 1000 are divisible by 3 and 5 but not by 7?",
+   "variant_type": "near_miss",
+   "near_miss_category": "logic_change",
+   "domain": "math",
+   "seed_entry": "count_divisible_or_not",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "count_divisible_or_not",
+     "retrieval_sim": 0.9976,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q104",
+   "question": "What is the sum of all positive integers less than 1000 that are divisible by 3 or 5 but not by 7?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_target",
+   "domain": "math",
+   "seed_entry": "count_divisible_or_not",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "count_divisible_or_not",
+     "retrieval_sim": 0.9303,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q106",
+   "question": "How many positive integers less than 1000 are divisible by 3, 5, or 7?",
+   "variant_type": "near_miss",
+   "near_miss_category": "logic_change",
+   "domain": "math",
+   "seed_entry": "count_divisible_or_not",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "count_divisible_or_not",
+     "retrieval_sim": 0.9229,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q107",
+   "question": "How many positive integers less than 1000 are divisible by none of 3, 5, and 7?",
+   "variant_type": "near_miss",
+   "near_miss_category": "logic_change",
+   "domain": "math",
+   "seed_entry": "count_divisible_or_not",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "count_divisible_or_not",
+     "retrieval_sim": 0.9362,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q115",
+   "question": "In how many ways can 6 people be seated around a round table if two particular people, A and B, refuse to sit next to each other?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "math",
+   "seed_entry": "circular_seating_not_adjacent",
+   "expected_entry": "circular_seating_not_adjacent",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "circular_seating_not_adjacent",
+     "retrieval_sim": 0.9525,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q117",
+   "question": "In how many ways can 12 people be seated around a round table if two particular people, A and B, refuse to sit next to each other?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "math",
+   "seed_entry": "circular_seating_not_adjacent",
+   "expected_entry": "circular_seating_not_adjacent",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "circular_seating_not_adjacent",
+     "retrieval_sim": 0.9441,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q121",
+   "question": "A round table 2 metres across seats 8 people. In how many ways can they be seated if A and B refuse to sit next to each other?",
+   "variant_type": "hard_positive",
+   "near_miss_category": null,
+   "domain": "math",
+   "seed_entry": "circular_seating_not_adjacent",
+   "expected_entry": "circular_seating_not_adjacent",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "circular_seating_not_adjacent",
+     "retrieval_sim": 0.9561,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q122",
+   "question": "Eight knights sit at a round table. Sir A and Sir B have quarrelled and must not be adjacent. Up to rotation, how many arrangements are there?",
+   "variant_type": "hard_positive",
+   "near_miss_category": null,
+   "domain": "math",
+   "seed_entry": "circular_seating_not_adjacent",
+   "expected_entry": "circular_seating_not_adjacent",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "circular_seating_not_adjacent",
+     "retrieval_sim": 0.8311,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q125",
+   "question": "In how many ways can 8 people be seated around a round table if two particular people, A and B, must sit directly opposite each other?",
+   "variant_type": "near_miss",
+   "near_miss_category": "logic_change",
+   "domain": "math",
+   "seed_entry": "circular_seating_not_adjacent",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "circular_seating_not_adjacent",
+     "retrieval_sim": 0.9335,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q126",
+   "question": "In how many ways can 8 people be seated around a round table if three particular people, A, B and C, must not have any two of them sitting next to each other?",
+   "variant_type": "near_miss",
+   "near_miss_category": "extra_condition",
+   "domain": "math",
+   "seed_entry": "circular_seating_not_adjacent",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "circular_seating_not_adjacent",
+     "retrieval_sim": 0.9301,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q127",
+   "question": "In how many ways can 8 people be seated around a round table if A and B refuse to sit next to each other, and arrangements that are mirror images of each other count as the same?",
+   "variant_type": "near_miss",
+   "near_miss_category": "extra_condition",
+   "domain": "math",
+   "seed_entry": "circular_seating_not_adjacent",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "circular_seating_not_adjacent",
+     "retrieval_sim": 0.9366,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q128",
+   "question": "In how many ways can 8 people be seated around a round table if A and B refuse to sit next to each other, and C and D also refuse to sit next to each other?",
+   "variant_type": "near_miss",
+   "near_miss_category": "extra_condition",
+   "domain": "math",
+   "seed_entry": "circular_seating_not_adjacent",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "circular_seating_not_adjacent",
+     "retrieval_sim": 0.9798,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q136",
+   "question": "A disease affects 0.5% of a population. A test for it has 99% sensitivity and 95% specificity. If a randomly chosen person tests positive, what is the probability they actually have the disease?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "probability",
+   "seed_entry": "bayes_ppv",
+   "expected_entry": "bayes_ppv",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "bayes_ppv",
+     "retrieval_sim": 0.9113,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q138",
+   "question": "A disease affects 2% of a population. A test for it has 95% sensitivity and 98% specificity. If a randomly chosen person tests positive, what is the probability they actually have the disease?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "probability",
+   "seed_entry": "bayes_ppv",
+   "expected_entry": "bayes_ppv",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "bayes_ppv",
+     "retrieval_sim": 0.908,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q139",
+   "question": "1 in 200 people carry a gene variant. A screening test detects it 97% of the time when present and gives a false positive 3% of the time when absent. Given a positive screen, what is the chance the person carries the variant?",
+   "variant_type": "reparam_reworded",
+   "near_miss_category": null,
+   "domain": "probability",
+   "seed_entry": "bayes_ppv",
+   "expected_entry": "bayes_ppv",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "bayes_ppv",
+     "retrieval_sim": 0.7464,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q142",
+   "question": "Out of 10,000 people, 150 have a disease. A test correctly identifies 92% of those who have it and correctly clears 96% of those who don't. If someone tests positive, what is the probability they have the disease?",
+   "variant_type": "hard_positive",
+   "near_miss_category": null,
+   "domain": "probability",
+   "seed_entry": "bayes_ppv",
+   "expected_entry": "bayes_ppv",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "bayes_ppv",
+     "retrieval_sim": 0.8842,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q146",
+   "question": "A disease affects 1.5% of a population. A test for it has 92% sensitivity and 96% specificity. If a person tests positive twice on independent tests, what is the probability they have the disease?",
+   "variant_type": "near_miss",
+   "near_miss_category": "process_two_states",
+   "domain": "probability",
+   "seed_entry": "bayes_ppv",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "bayes_ppv",
+     "retrieval_sim": 0.9512,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q149",
+   "question": "A disease affects 1.5% of a population. A test for it has 92% sensitivity and 96% specificity. If a randomly chosen person tests positive, what is the probability they do not have the disease?",
+   "variant_type": "near_miss",
+   "near_miss_category": "sign_change",
+   "domain": "probability",
+   "seed_entry": "bayes_ppv",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "bayes_ppv",
+     "retrieval_sim": 0.99,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q150",
+   "question": "A test for a disease has 92% sensitivity and 96% specificity. What is the positive likelihood ratio of the test?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_target",
+   "domain": "probability",
+   "seed_entry": "bayes_ppv",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "bayes_ppv",
+     "retrieval_sim": 0.8554,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q152",
+   "question": "A disease affects 1.5% of a population. A test for it has 92% sensitivity. If a randomly chosen person tests positive, what is the probability they actually have the disease?",
+   "variant_type": "underspecified",
+   "near_miss_category": "missing_given",
+   "domain": "probability",
+   "seed_entry": "bayes_ppv",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "bayes_ppv",
+     "retrieval_sim": 0.9905,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q158",
+   "question": "A sample of 50 bolts has a mean length of 101.2 mm and a sample standard deviation of 4.5 mm. At α = 0.05, test whether the true mean length differs from 100 mm. Give the test statistic and your conclusion.",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "statistics",
+   "seed_entry": "one_sample_t_test",
+   "expected_entry": "one_sample_t_test",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "one_sample_t_test",
+     "retrieval_sim": 0.9404,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q161",
+   "question": "Researchers measured the resting heart rates of 40 athletes: mean 58.3 bpm, standard deviation 7.9 bpm. Test at α = 0.01 whether the mean differs from 60 bpm (two-sided).",
+   "variant_type": "reparam_reworded",
+   "near_miss_category": null,
+   "domain": "statistics",
+   "seed_entry": "one_sample_t_test",
+   "expected_entry": "one_sample_t_test",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "one_sample_t_test",
+     "retrieval_sim": 0.6425,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q162",
+   "question": "A sample of 64 batteries lasted an average of 19.6 hours (s = 2.4 h). Is the mean lifetime different from 20 hours at a 5% significance level?",
+   "variant_type": "reparam_reworded",
+   "near_miss_category": null,
+   "domain": "statistics",
+   "seed_entry": "one_sample_t_test",
+   "expected_entry": "one_sample_t_test",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "one_sample_t_test",
+     "retrieval_sim": 0.6549,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q163",
+   "question": "Machine 3 produced a sample of 36 bolts with a mean length of 50.4 mm and a sample standard deviation of 1.2 mm. At α = 0.05, test whether the true mean length differs from 50 mm.",
+   "variant_type": "hard_positive",
+   "near_miss_category": null,
+   "domain": "statistics",
+   "seed_entry": "one_sample_t_test",
+   "expected_entry": "one_sample_t_test",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "one_sample_t_test",
+     "retrieval_sim": 0.9461,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q166",
+   "question": "A sample of 36 bolts has a mean length of 50.4 mm. The population standard deviation is known to be 1.2 mm. At α = 0.05, test whether the true mean length differs from 50 mm. Give the test statistic and your conclusion.",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_method",
+   "domain": "statistics",
+   "seed_entry": "one_sample_t_test",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "one_sample_t_test",
+     "retrieval_sim": 0.994,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q168",
+   "question": "A sample of 36 bolts from Machine A has a mean length of 50.4 mm (s = 1.2 mm), and a sample of 40 bolts from Machine B has a mean of 50.1 mm (s = 1.0 mm). At α = 0.05, test whether the two machines' mean lengths differ.",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_method",
+   "domain": "statistics",
+   "seed_entry": "one_sample_t_test",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "one_sample_t_test",
+     "retrieval_sim": 0.9082,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q169",
+   "question": "A sample of 36 bolts has a mean length of 50.4 mm and a sample standard deviation of 1.2 mm. At α = 0.05, test whether the population variance differs from 1.0 mm².",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_method",
+   "domain": "statistics",
+   "seed_entry": "one_sample_t_test",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "one_sample_t_test",
+     "retrieval_sim": 0.9588,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q173",
+   "question": "A sample of 36 bolts has a mean length of 50.4 mm. At α = 0.05, test whether the true mean length differs from 50 mm.",
+   "variant_type": "underspecified",
+   "near_miss_category": "missing_given",
+   "domain": "statistics",
+   "seed_entry": "one_sample_t_test",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "one_sample_t_test",
+     "retrieval_sim": 0.9514,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q176",
+   "question": "Calculate the monthly installment and lifetime interest for a $350k mortgage at 6.25% annual interest compounded monthly, repaid over 30 years.",
+   "variant_type": "paraphrase",
+   "near_miss_category": null,
+   "domain": "finance",
+   "seed_entry": "loan_payment_total_interest",
+   "expected_entry": "loan_payment_total_interest",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "loan_payment_total_interest",
+     "retrieval_sim": 0.9222,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q177",
+   "question": "I'm taking out $350,000 at 6.25% for 30 years, paid monthly. How much will I pay each month and how much of that ends up being interest overall?",
+   "variant_type": "paraphrase",
+   "near_miss_category": null,
+   "domain": "finance",
+   "seed_entry": "loan_payment_total_interest",
+   "expected_entry": "loan_payment_total_interest",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "loan_payment_total_interest",
+     "retrieval_sim": 0.8854,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q183",
+   "question": "What is the monthly instalment on a 25-year, £275,000 loan at 5.1% per year compounded monthly, and what is the total interest?",
+   "variant_type": "reparam_reworded",
+   "near_miss_category": null,
+   "domain": "finance",
+   "seed_entry": "loan_payment_total_interest",
+   "expected_entry": "loan_payment_total_interest",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "loan_payment_total_interest",
+     "retrieval_sim": 0.7786,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q185",
+   "question": "A $350,000 mortgage has a 6.25% annual interest rate, compounded monthly, over 30 years. Property taxes of $4,200 per year are paid separately. What is the monthly loan payment, and how much total interest is paid?",
+   "variant_type": "hard_positive",
+   "near_miss_category": null,
+   "domain": "finance",
+   "seed_entry": "loan_payment_total_interest",
+   "expected_entry": "loan_payment_total_interest",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "loan_payment_total_interest",
+     "retrieval_sim": 0.9423,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q186",
+   "question": "A $350,000 mortgage has a 6.25% annual interest rate, compounded monthly, over 30 years. What is the remaining balance after 5 years of payments?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_target",
+   "domain": "finance",
+   "seed_entry": "loan_payment_total_interest",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "loan_payment_total_interest",
+     "retrieval_sim": 0.9516,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q188",
+   "question": "A $350,000 mortgage has a 6.25% annual interest rate, compounded monthly, over 30 years. If the borrower pays an extra $500 every month, how much total interest is paid and how long does payoff take?",
+   "variant_type": "near_miss",
+   "near_miss_category": "extra_condition",
+   "domain": "finance",
+   "seed_entry": "loan_payment_total_interest",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "loan_payment_total_interest",
+     "retrieval_sim": 0.9581,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q190",
+   "question": "A $350,000 mortgage has a 6.25% annual interest rate, compounded monthly, over 30 years. How much interest is paid in the first year?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_target",
+   "domain": "finance",
+   "seed_entry": "loan_payment_total_interest",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "loan_payment_total_interest",
+     "retrieval_sim": 0.9725,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q194",
+   "question": "A $350,000 mortgage has a 6.25% annual interest rate, compounded monthly. What is the monthly payment, and how much total interest is paid over the life of the loan?",
+   "variant_type": "underspecified",
+   "near_miss_category": "missing_given",
+   "domain": "finance",
+   "seed_entry": "loan_payment_total_interest",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "loan_payment_total_interest",
+     "retrieval_sim": 0.992,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q196",
+   "question": "With an 8% discount rate, compute the net present value of a project that needs $120,000 today and generates $35,000 per year for five years, with $10,000 salvage at the end. Accept or reject?",
+   "variant_type": "paraphrase",
+   "near_miss_category": null,
+   "domain": "finance",
+   "seed_entry": "npv_annuity_salvage",
+   "expected_entry": "npv_annuity_salvage",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "npv_annuity_salvage",
+     "retrieval_sim": 0.9443,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q199",
+   "question": "A project costs $250,000 upfront and returns $60,000 at the end of each year for 6 years, plus a $20,000 salvage value at the end of year 6. At a discount rate of 10%, what is the NPV, and should the project be accepted?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "finance",
+   "seed_entry": "npv_annuity_salvage",
+   "expected_entry": "npv_annuity_salvage",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "npv_annuity_salvage",
+     "retrieval_sim": 0.8755,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q200",
+   "question": "A project costs $50,000 upfront and returns $12,000 at the end of each year for 4 years, plus a $0 salvage value at the end of year 4. At a discount rate of 9%, what is the NPV, and should the project be accepted?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "finance",
+   "seed_entry": "npv_annuity_salvage",
+   "expected_entry": "npv_annuity_salvage",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "npv_annuity_salvage",
+     "retrieval_sim": 0.8797,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q205",
+   "question": "Proposed by the marketing team in 2025, a project costs $120,000 upfront and returns $35,000 at the end of each year for 5 years, plus a $10,000 salvage value at the end of year 5. At a discount rate of 8%, what is the NPV, and should the project be accepted?",
+   "variant_type": "hard_positive",
+   "near_miss_category": null,
+   "domain": "finance",
+   "seed_entry": "npv_annuity_salvage",
+   "expected_entry": "npv_annuity_salvage",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "npv_annuity_salvage",
+     "retrieval_sim": 0.9303,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q208",
+   "question": "A project costs $120,000 upfront and returns $35,000 at the end of each year for 5 years, plus a $10,000 salvage value at the end of year 5. What is the simple payback period?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_target",
+   "domain": "finance",
+   "seed_entry": "npv_annuity_salvage",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "npv_annuity_salvage",
+     "retrieval_sim": 0.9284,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q209",
+   "question": "A project costs $120,000 upfront and returns $35,000 at the end of each year for 5 years, plus a $10,000 salvage value at the end of year 5. At a discount rate of 8%, what is the profitability index?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_target",
+   "domain": "finance",
+   "seed_entry": "npv_annuity_salvage",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "npv_annuity_salvage",
+     "retrieval_sim": 0.9548,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q211",
+   "question": "A project costs $120,000 upfront and returns $35,000 at the end of year 1, growing by 3% per year for 5 years in total, plus a $10,000 salvage value at the end of year 5. At a discount rate of 8%, what is the NPV?",
+   "variant_type": "near_miss",
+   "near_miss_category": "extra_condition",
+   "domain": "finance",
+   "seed_entry": "npv_annuity_salvage",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "npv_annuity_salvage",
+     "retrieval_sim": 0.9533,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q214",
+   "question": "A project costs $120,000 upfront and returns $35,000 at the end of each year for 5 years, plus a $10,000 salvage value at the end of year 5. The discount rate is 8% for years 1-3 and 10% for years 4-5. What is the NPV?",
+   "variant_type": "near_miss",
+   "near_miss_category": "extra_condition",
+   "domain": "finance",
+   "seed_entry": "npv_annuity_salvage",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "npv_annuity_salvage",
+     "retrieval_sim": 0.9791,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q221",
+   "question": "A 20-year bond with a $1,000 face value pays a 7% annual coupon in semiannual installments. If the market yield is 7% (annual, compounded semiannually), what is the bond's price?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "finance",
+   "seed_entry": "bond_price_semiannual",
+   "expected_entry": "bond_price_semiannual",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "bond_price_semiannual",
+     "retrieval_sim": 0.8966,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q222",
+   "question": "A 8-year bond with a $5,000 face value pays a 3% annual coupon in semiannual installments. If the market yield is 4.5% (annual, compounded semiannually), what is the bond's price?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "finance",
+   "seed_entry": "bond_price_semiannual",
+   "expected_entry": "bond_price_semiannual",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "bond_price_semiannual",
+     "retrieval_sim": 0.8796,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q223",
+   "question": "What should you pay for a $1,000 Treasury note maturing in 7 years with a 4.25% coupon paid twice yearly, if comparable yields are 4.60%?",
+   "variant_type": "reparam_reworded",
+   "near_miss_category": null,
+   "domain": "finance",
+   "seed_entry": "bond_price_semiannual",
+   "expected_entry": "bond_price_semiannual",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "bond_price_semiannual",
+     "retrieval_sim": 0.7799,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q224",
+   "question": "A corporate bond has par $100, a 6.5% coupon paid semi-annually and 12 years to maturity. Its yield to maturity is 5.8% (bond-equivalent basis). Price it.",
+   "variant_type": "reparam_reworded",
+   "near_miss_category": null,
+   "domain": "finance",
+   "seed_entry": "bond_price_semiannual",
+   "expected_entry": "bond_price_semiannual",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "bond_price_semiannual",
+     "retrieval_sim": 0.8124,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q228",
+   "question": "A 10-year bond with a $1,000 face value pays a 5% annual coupon in semiannual installments and is priced at $920. What is its yield to maturity?",
+   "variant_type": "near_miss",
+   "near_miss_category": "inverse_problem",
+   "domain": "finance",
+   "seed_entry": "bond_price_semiannual",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "bond_price_semiannual",
+     "retrieval_sim": 0.9449,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q232",
+   "question": "A 10-year zero-coupon bond has a $1,000 face value. If the market yield is 6.2% (annual, compounded semiannually), what is the bond's price?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_setup",
+   "domain": "finance",
+   "seed_entry": "bond_price_semiannual",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": true,
+   "candidates": [
+    {
+     "entry": "bond_price_semiannual",
+     "retrieval_sim": 0.9328,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q233",
+   "question": "A 10-year bond with a $1,000 face value pays a 5% annual coupon in semiannual installments. Two months after a coupon payment, with 9 years and 10 months to maturity and a yield of 6.2% (compounded semiannually), what is its clean price?",
+   "variant_type": "near_miss",
+   "near_miss_category": "timing_change",
+   "domain": "finance",
+   "seed_entry": "bond_price_semiannual",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "bond_price_semiannual",
+     "retrieval_sim": 0.9632,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q234",
+   "question": "A 10-year bond with a $1,000 face value pays a 5% annual coupon in semiannual installments, trades at $1,020, and is callable in 5 years at $1,025. What is its yield to call?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_target",
+   "domain": "finance",
+   "seed_entry": "bond_price_semiannual",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "bond_price_semiannual",
+     "retrieval_sim": 0.9389,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q238",
+   "question": "A husband dies intestate in a UPC state with a $900,000 estate. His wife survives him, along with his two children from an earlier marriage (not hers). Using the UPC base figures, what is the wife's share?",
+   "variant_type": "paraphrase",
+   "near_miss_category": null,
+   "domain": "law",
+   "seed_entry": "upc_intestate_spouse_share",
+   "expected_entry": "upc_intestate_spouse_share",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "upc_intestate_spouse_share",
+     "retrieval_sim": 0.8946,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q239",
+   "question": "Applying UPC §2-102 base amounts: decedent (male) leaves $900,000, no will, a surviving spouse, and two kids from his first marriage who are not the spouse's descendants. Compute the surviving spouse's intestate share.",
+   "variant_type": "paraphrase",
+   "near_miss_category": null,
+   "domain": "law",
+   "seed_entry": "upc_intestate_spouse_share",
+   "expected_entry": "upc_intestate_spouse_share",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "upc_intestate_spouse_share",
+     "retrieval_sim": 0.8871,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q241",
+   "question": "Under the Uniform Probate Code (using its base dollar amounts), a man dies without a will, leaving an estate of $600,000. He is survived by his wife and two children from a prior marriage who are not her children. How much does the wife inherit?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "law",
+   "seed_entry": "upc_intestate_spouse_share",
+   "expected_entry": "upc_intestate_spouse_share",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "upc_intestate_spouse_share",
+     "retrieval_sim": 0.9572,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q248",
+   "question": "Married for 12 years, a man dies without a will in a Uniform Probate Code state (base dollar amounts), leaving an estate of $900,000. He is survived by his wife and two children from a prior marriage who are not her children. How much does the wife inherit?",
+   "variant_type": "hard_positive",
+   "near_miss_category": null,
+   "domain": "law",
+   "seed_entry": "upc_intestate_spouse_share",
+   "expected_entry": "upc_intestate_spouse_share",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "upc_intestate_spouse_share",
+     "retrieval_sim": 0.9505,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q251",
+   "question": "Under the Uniform Probate Code (using its base dollar amounts), a man dies without a will, leaving an estate of $900,000. He has no descendants and is survived by his wife and his father. How much does the wife inherit?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_rule_branch",
+   "domain": "law",
+   "seed_entry": "upc_intestate_spouse_share",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "upc_intestate_spouse_share",
+     "retrieval_sim": 0.9692,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q252",
+   "question": "Under the Uniform Probate Code (using its base dollar amounts), a man dies without a will, leaving an estate of $900,000. He is survived by his wife and two children from a prior marriage who are not her children. How much does each child inherit?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_target",
+   "domain": "law",
+   "seed_entry": "upc_intestate_spouse_share",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "upc_intestate_spouse_share",
+     "retrieval_sim": 0.9964,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q253",
+   "question": "In a Uniform Probate Code state, a man dies with a will leaving his entire $900,000 estate to his two children from a prior marriage, leaving nothing to his wife of 15 years. What can the wife claim?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_doctrine",
+   "domain": "law",
+   "seed_entry": "upc_intestate_spouse_share",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "upc_intestate_spouse_share",
+     "retrieval_sim": 0.9032,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q254",
+   "question": "Under the Uniform Probate Code, a man dies without a will, leaving an estate of $900,000. He and his wife divorced the year before he died. He is survived by his ex-wife and two children from a prior marriage. How much does the ex-wife inherit?",
+   "variant_type": "near_miss",
+   "near_miss_category": "extra_condition",
+   "domain": "law",
+   "seed_entry": "upc_intestate_spouse_share",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "upc_intestate_spouse_share",
+     "retrieval_sim": 0.9672,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q260",
+   "question": "When is a federal answer due if the defendant was personally served on Friday, March 6, 2026 (no waiver of service)? Apply Rule 12(a).",
+   "variant_type": "paraphrase",
+   "near_miss_category": null,
+   "domain": "law",
+   "seed_entry": "frcp_answer_deadline",
+   "expected_entry": "frcp_answer_deadline",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "frcp_answer_deadline",
+     "retrieval_sim": 0.9273,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q262",
+   "question": "Under Federal Rule of Civil Procedure 12(a), a defendant who did not waive service is served with the summons and complaint on Monday, November 2, 2026. What is the last day to serve an answer?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "law",
+   "seed_entry": "frcp_answer_deadline",
+   "expected_entry": "frcp_answer_deadline",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "frcp_answer_deadline",
+     "retrieval_sim": 0.9037,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q265",
+   "question": "Our client was personally served with a federal complaint on Tuesday, September 15, 2026. She hasn't waived service. When is her answer due under FRCP 12?",
+   "variant_type": "reparam_reworded",
+   "near_miss_category": null,
+   "domain": "law",
+   "seed_entry": "frcp_answer_deadline",
+   "expected_entry": "frcp_answer_deadline",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "frcp_answer_deadline",
+     "retrieval_sim": 0.7777,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q267",
+   "question": "A corporation is served with process on Saturday, August 1, 2026 in a U.S. district court case and did not waive service. By what date must it answer?",
+   "variant_type": "reparam_reworded",
+   "near_miss_category": null,
+   "domain": "law",
+   "seed_entry": "frcp_answer_deadline",
+   "expected_entry": "frcp_answer_deadline",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "frcp_answer_deadline",
+     "retrieval_sim": 0.7934,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q270",
+   "question": "Under Federal Rule of Civil Procedure 12(a), a defendant timely waived service after the plaintiff sent the waiver request on Friday, March 6, 2026. What is the last day to serve an answer?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_rule_branch",
+   "domain": "law",
+   "seed_entry": "frcp_answer_deadline",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "frcp_answer_deadline",
+     "retrieval_sim": 0.8743,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q271",
+   "question": "Under Federal Rule of Civil Procedure 12(a), the United States is a defendant, and the U.S. attorney was served on Friday, March 6, 2026. What is the last day for the United States to serve an answer?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_rule_branch",
+   "domain": "law",
+   "seed_entry": "frcp_answer_deadline",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "frcp_answer_deadline",
+     "retrieval_sim": 0.9062,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q273",
+   "question": "Under Federal Rule of Civil Procedure 12(a)(4), the court denied the defendant's Rule 12(b)(6) motion to dismiss on Friday, March 6, 2026. What is the last day to serve the answer?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_rule_branch",
+   "domain": "law",
+   "seed_entry": "frcp_answer_deadline",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "frcp_answer_deadline",
+     "retrieval_sim": 0.8621,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q278",
+   "question": "Under Federal Rule of Civil Procedure 12(a), a defendant who did not waive service is served with the summons and complaint. What is the last day to serve an answer?",
+   "variant_type": "underspecified",
+   "near_miss_category": "missing_given",
+   "domain": "law",
+   "seed_entry": "frcp_answer_deadline",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "frcp_answer_deadline",
+     "retrieval_sim": 0.9095,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q282",
+   "question": "Cost $80,000; salvage $8,000; life 6 years; method DDB. What is the net book value at the close of the third year?",
+   "variant_type": "paraphrase",
+   "near_miss_category": null,
+   "domain": "accounting",
+   "seed_entry": "ddb_book_value",
+   "expected_entry": "ddb_book_value",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "ddb_book_value",
+     "retrieval_sim": 0.9024,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q283",
+   "question": "Equipment costs $50,000, has a salvage value of $5,000, and a useful life of 5 years. Using double-declining-balance depreciation, what is its book value at the end of year 3?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "accounting",
+   "seed_entry": "ddb_book_value",
+   "expected_entry": "ddb_book_value",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "ddb_book_value",
+     "retrieval_sim": 0.8802,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q287",
+   "question": "Compute the net book value at the end of year 4 for a machine with cost $200,000, residual value $20,000 and a 10-year life, using 200% declining balance.",
+   "variant_type": "reparam_reworded",
+   "near_miss_category": null,
+   "domain": "accounting",
+   "seed_entry": "ddb_book_value",
+   "expected_entry": "ddb_book_value",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "ddb_book_value",
+     "retrieval_sim": 0.6996,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q288",
+   "question": "A laptop fleet costing €24,000 has a €2,400 residual value and a 4-year life. Using DDB, what is the book value at the end of year 2?",
+   "variant_type": "reparam_reworded",
+   "near_miss_category": null,
+   "domain": "accounting",
+   "seed_entry": "ddb_book_value",
+   "expected_entry": "ddb_book_value",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "ddb_book_value",
+     "retrieval_sim": 0.7253,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q291",
+   "question": "Equipment costs $80,000, has a salvage value of $8,000, and a useful life of 6 years. Using straight-line depreciation, what is its book value at the end of year 3?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_method",
+   "domain": "accounting",
+   "seed_entry": "ddb_book_value",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "ddb_book_value",
+     "retrieval_sim": 0.9669,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q292",
+   "question": "Equipment costs $80,000, has a salvage value of $8,000, and a useful life of 6 years. Using double-declining-balance depreciation, what is the depreciation expense in year 3?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_target",
+   "domain": "accounting",
+   "seed_entry": "ddb_book_value",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "ddb_book_value",
+     "retrieval_sim": 0.9894,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q296",
+   "question": "Equipment costs $80,000, has a salvage value of $8,000, and a useful life of 6 years. Using double-declining-balance depreciation, what is the accumulated depreciation at the end of year 3?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_target",
+   "domain": "accounting",
+   "seed_entry": "ddb_book_value",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "ddb_book_value",
+     "retrieval_sim": 0.9897,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q298",
+   "question": "Equipment costs $80,000, has a salvage value of $8,000, and a useful life of 6 years. Using double-declining-balance depreciation with a switch to straight-line when that gives a larger charge, what is its book value at the end of year 3?",
+   "variant_type": "near_miss",
+   "near_miss_category": "benign_extra_info",
+   "domain": "accounting",
+   "seed_entry": "ddb_book_value",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": true,
+   "candidates": [
+    {
+     "entry": "ddb_book_value",
+     "retrieval_sim": 0.9797,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q303",
+   "question": "Out of 2,500 individuals, 196 show the recessive cystic fibrosis phenotype. Under Hardy-Weinberg assumptions, how many are expected to be unaffected carriers?",
+   "variant_type": "paraphrase",
+   "near_miss_category": null,
+   "domain": "biology",
+   "seed_entry": "hardy_weinberg_carriers",
+   "expected_entry": "hardy_weinberg_carriers",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "hardy_weinberg_carriers",
+     "retrieval_sim": 0.9448,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q307",
+   "question": "In an isolated village of 4,000, 160 people have albinism, an autosomal recessive trait. If the population is in Hardy-Weinberg equilibrium, about how many heterozygous carriers are there?",
+   "variant_type": "reparam_reworded",
+   "near_miss_category": null,
+   "domain": "biology",
+   "seed_entry": "hardy_weinberg_carriers",
+   "expected_entry": "hardy_weinberg_carriers",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "hardy_weinberg_carriers",
+     "retrieval_sim": 0.7603,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q308",
+   "question": "A recessive coat-colour allele is present in a herd of 900 cattle, and 81 animals show the recessive phenotype. Under HWE, estimate the number of heterozygotes.",
+   "variant_type": "reparam_reworded",
+   "near_miss_category": null,
+   "domain": "biology",
+   "seed_entry": "hardy_weinberg_carriers",
+   "expected_entry": "hardy_weinberg_carriers",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "hardy_weinberg_carriers",
+     "retrieval_sim": 0.6493,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q309",
+   "question": "Phenylketonuria affects 1 in 10,000 newborns. Under Hardy-Weinberg assumptions, how many carriers would you expect in a city of 2,000,000?",
+   "variant_type": "reparam_reworded",
+   "near_miss_category": null,
+   "domain": "biology",
+   "seed_entry": "hardy_weinberg_carriers",
+   "expected_entry": "hardy_weinberg_carriers",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "hardy_weinberg_carriers",
+     "retrieval_sim": 0.7301,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q315",
+   "question": "Among 2,500 males in a population, 196 have an X-linked recessive condition. Assuming Hardy-Weinberg equilibrium, how many carrier females are expected among 2,500 females?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_setup",
+   "domain": "biology",
+   "seed_entry": "hardy_weinberg_carriers",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "hardy_weinberg_carriers",
+     "retrieval_sim": 0.8727,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q316",
+   "question": "In a population of 2,500 people, 196 have an autosomal dominant condition. Assuming Hardy-Weinberg equilibrium, how many affected people are heterozygous?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_setup",
+   "domain": "biology",
+   "seed_entry": "hardy_weinberg_carriers",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "hardy_weinberg_carriers",
+     "retrieval_sim": 0.8597,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q318",
+   "question": "In a population of 2,500 people, 196 have cystic fibrosis, a recessive condition. Assuming Hardy-Weinberg equilibrium, what fraction of the unaffected people are carriers?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_target",
+   "domain": "biology",
+   "seed_entry": "hardy_weinberg_carriers",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "hardy_weinberg_carriers",
+     "retrieval_sim": 0.9833,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q320",
+   "question": "196 people in a population have cystic fibrosis, a recessive condition. Assuming Hardy-Weinberg equilibrium, how many people are expected to be carriers?",
+   "variant_type": "underspecified",
+   "near_miss_category": "missing_given",
+   "domain": "biology",
+   "seed_entry": "hardy_weinberg_carriers",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "hardy_weinberg_carriers",
+     "retrieval_sim": 0.9584,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q324",
+   "question": "Apply the Cockcroft–Gault equation to a 62 kg, 68-year-old female with serum creatinine 1.4 mg/dL. What estimated creatinine clearance do you get?",
+   "variant_type": "paraphrase",
+   "near_miss_category": null,
+   "domain": "medicine",
+   "seed_entry": "cockcroft_gault_crcl",
+   "expected_entry": "cockcroft_gault_crcl",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "cockcroft_gault_crcl",
+     "retrieval_sim": 0.9676,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q325",
+   "question": "Using the Cockcroft-Gault equation, estimate the creatinine clearance of a 75-year-old woman who weighs 58 kg and has a serum creatinine of 1.0 mg/dL.",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "medicine",
+   "seed_entry": "cockcroft_gault_crcl",
+   "expected_entry": "cockcroft_gault_crcl",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "cockcroft_gault_crcl",
+     "retrieval_sim": 0.9214,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q326",
+   "question": "Using the Cockcroft-Gault equation, estimate the creatinine clearance of a 45-year-old woman who weighs 70 kg and has a serum creatinine of 0.8 mg/dL.",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "medicine",
+   "seed_entry": "cockcroft_gault_crcl",
+   "expected_entry": "cockcroft_gault_crcl",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "cockcroft_gault_crcl",
+     "retrieval_sim": 0.9032,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q331",
+   "question": "Using the Cockcroft-Gault equation, estimate the creatinine clearance of a 78-year-old man who weighs 70 kg and has a serum creatinine of 1.3 mg/dL.",
+   "variant_type": "hard_positive",
+   "near_miss_category": null,
+   "domain": "medicine",
+   "seed_entry": "cockcroft_gault_crcl",
+   "expected_entry": "cockcroft_gault_crcl",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "cockcroft_gault_crcl",
+     "retrieval_sim": 0.8511,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q333",
+   "question": "Using the Cockcroft-Gault equation with ideal body weight, estimate the creatinine clearance of a 68-year-old woman who is 5 ft 4 in tall, weighs 62 kg, and has a serum creatinine of 1.4 mg/dL.",
+   "variant_type": "near_miss",
+   "near_miss_category": "extra_condition",
+   "domain": "medicine",
+   "seed_entry": "cockcroft_gault_crcl",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "cockcroft_gault_crcl",
+     "retrieval_sim": 0.971,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q336",
+   "question": "A 68-year-old woman is 160 cm tall, weighs 95 kg, and has a serum creatinine of 1.4 mg/dL. Using the Cockcroft-Gault equation with adjusted body weight, estimate her creatinine clearance.",
+   "variant_type": "near_miss",
+   "near_miss_category": "extra_condition",
+   "domain": "medicine",
+   "seed_entry": "cockcroft_gault_crcl",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "cockcroft_gault_crcl",
+     "retrieval_sim": 0.9382,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q337",
+   "question": "A 68-year-old woman has a 24-hour urine collection of 1,440 mL with a urine creatinine of 80 mg/dL, and a serum creatinine of 1.4 mg/dL. What is her measured creatinine clearance?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_method",
+   "domain": "medicine",
+   "seed_entry": "cockcroft_gault_crcl",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "cockcroft_gault_crcl",
+     "retrieval_sim": 0.8087,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q341",
+   "question": "Using the Cockcroft-Gault equation, estimate the creatinine clearance of a 68-year-old woman who has a serum creatinine of 1.4 mg/dL.",
+   "variant_type": "underspecified",
+   "near_miss_category": "missing_given",
+   "domain": "medicine",
+   "seed_entry": "cockcroft_gault_crcl",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "cockcroft_gault_crcl",
+     "retrieval_sim": 0.9773,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q344",
+   "question": "A market has demand Q = 120 − 2P and supply Q = −30 + 3P. If sellers must pay a $5 per-unit excise tax, what price do buyers face, and how large is the deadweight loss?",
+   "variant_type": "paraphrase",
+   "near_miss_category": null,
+   "domain": "economics",
+   "seed_entry": "linear_market_tax_dwl",
+   "expected_entry": "linear_market_tax_dwl",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "linear_market_tax_dwl",
+     "retrieval_sim": 0.951,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q345",
+   "question": "With demand Q = 120 – 2P, supply Q = 3P – 30 and a $5 per-unit tax collected from sellers, compute the consumer price and the welfare loss (DWL).",
+   "variant_type": "paraphrase",
+   "near_miss_category": null,
+   "domain": "economics",
+   "seed_entry": "linear_market_tax_dwl",
+   "expected_entry": "linear_market_tax_dwl",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "linear_market_tax_dwl",
+     "retrieval_sim": 0.9175,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q346",
+   "question": "Demand is Q = 200 − 4P and supply is Q = 6P − 50. A $10 per-unit tax is imposed on sellers. What is the new price buyers pay, and what is the deadweight loss?",
+   "variant_type": "reparam",
+   "near_miss_category": null,
+   "domain": "economics",
+   "seed_entry": "linear_market_tax_dwl",
+   "expected_entry": "linear_market_tax_dwl",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "linear_market_tax_dwl",
+     "retrieval_sim": 0.9145,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q352",
+   "question": "A market with 40 identical firms has demand Q = 120 − 2P and supply Q = 3P − 30. A $5 per-unit tax is imposed on sellers. What is the new price buyers pay, and what is the deadweight loss?",
+   "variant_type": "hard_positive",
+   "near_miss_category": null,
+   "domain": "economics",
+   "seed_entry": "linear_market_tax_dwl",
+   "expected_entry": "linear_market_tax_dwl",
+   "should_hit": true,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "linear_market_tax_dwl",
+     "retrieval_sim": 0.9225,
+     "label": true
+    }
+   ]
+  },
+  {
+   "id": "q355",
+   "question": "Demand is Q = 120 − 2P and supply is Q = 3P − 30. A $5 per-unit tax is imposed on sellers. How much tax revenue does the government collect?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_target",
+   "domain": "economics",
+   "seed_entry": "linear_market_tax_dwl",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "linear_market_tax_dwl",
+     "retrieval_sim": 0.9372,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q358",
+   "question": "Demand is Q = 120 − 2P and supply is Q = 3P − 30. A binding price ceiling of $25 is imposed. What is the resulting shortage, and what is the deadweight loss?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_setup",
+   "domain": "economics",
+   "seed_entry": "linear_market_tax_dwl",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "linear_market_tax_dwl",
+     "retrieval_sim": 0.8253,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q359",
+   "question": "Demand is Q = 120 − 2P and supply is Q = 3P − 30. A 10% ad valorem tax (on the price buyers pay) is imposed on sellers. What is the new price buyers pay, and what is the deadweight loss?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_method",
+   "domain": "economics",
+   "seed_entry": "linear_market_tax_dwl",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "linear_market_tax_dwl",
+     "retrieval_sim": 0.9251,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q360",
+   "question": "Demand is Q = 120 − 2P and supply is Q = 3P − 30. A $5 per-unit tax is imposed on sellers. What share of the tax burden falls on buyers?",
+   "variant_type": "near_miss",
+   "near_miss_category": "different_target",
+   "domain": "economics",
+   "seed_entry": "linear_market_tax_dwl",
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "linear_market_tax_dwl",
+     "retrieval_sim": 0.954,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q367",
+   "question": "Write a haiku about autumn.",
+   "variant_type": "out_of_domain",
+   "near_miss_category": "unrelated_task",
+   "domain": "general",
+   "seed_entry": null,
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "projectile_range_from_height",
+     "retrieval_sim": 0.4496,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q368",
+   "question": "Explain why real gases deviate from the perfect gas law at high pressure.",
+   "variant_type": "out_of_domain",
+   "near_miss_category": "topical_conceptual",
+   "domain": "chemistry",
+   "seed_entry": null,
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "perfect_gas_pressure",
+     "retrieval_sim": 0.6113,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q370",
+   "question": "Why does a projectile follow a parabolic path when air resistance is ignored?",
+   "variant_type": "out_of_domain",
+   "near_miss_category": "topical_conceptual",
+   "domain": "physics",
+   "seed_entry": null,
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "projectile_range_from_height",
+     "retrieval_sim": 0.6226,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q371",
+   "question": "What is the difference between a simply supported beam and a cantilever?",
+   "variant_type": "out_of_domain",
+   "near_miss_category": "topical_conceptual",
+   "domain": "engineering",
+   "seed_entry": null,
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "ss_beam_udl_max_deflection",
+     "retrieval_sim": 0.7261,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q372",
+   "question": "Prove that there are infinitely many primes.",
+   "variant_type": "out_of_domain",
+   "near_miss_category": "topical_conceptual",
+   "domain": "math",
+   "seed_entry": null,
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "count_divisible_or_not",
+     "retrieval_sim": 0.5298,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q373",
+   "question": "What is the difference between sensitivity and specificity?",
+   "variant_type": "out_of_domain",
+   "near_miss_category": "topical_conceptual",
+   "domain": "probability",
+   "seed_entry": null,
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "bayes_ppv",
+     "retrieval_sim": 0.5957,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q375",
+   "question": "Should I choose a 15-year or a 30-year mortgage?",
+   "variant_type": "out_of_domain",
+   "near_miss_category": "topical_conceptual",
+   "domain": "finance",
+   "seed_entry": null,
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "loan_payment_total_interest",
+     "retrieval_sim": 0.6923,
+     "label": false
+    }
+   ]
+  },
+  {
+   "id": "q382",
+   "question": "Why is the Cockcroft-Gault equation less accurate in obese patients?",
+   "variant_type": "out_of_domain",
+   "near_miss_category": "topical_conceptual",
+   "domain": "medicine",
+   "seed_entry": null,
+   "expected_entry": null,
+   "should_hit": false,
+   "acceptable_either": false,
+   "candidates": [
+    {
+     "entry": "cockcroft_gault_crcl",
+     "retrieval_sim": 0.5909,
+     "label": false
+    }
+   ]
+  }
+ ]
+}

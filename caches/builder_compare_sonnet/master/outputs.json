@@ -1,0 +1,14 @@
+{
+  "fam_perfect_gas_pressure": {
+    "pressure in Pa": {
+      "kind": "measure",
+      "unit": "Pa",
+      "decimals": null
+    },
+    "pressure in atm": {
+      "kind": "measure",
+      "unit": "atm",
+      "decimals": null
+    }
+  }
+}

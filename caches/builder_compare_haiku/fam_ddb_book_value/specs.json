@@ -1,0 +1,35 @@
+{
+  "fam_ddb_book_value": {
+    "task": "compute",
+    "deliverable": "book value at the end of a given year",
+    "method": "double-declining-balance depreciation",
+    "conditions": [
+      "asset has a salvage value",
+      "asset has a useful life",
+      "value measured at the end of a specific year"
+    ],
+    "inputs": [
+      {
+        "name": "asset cost",
+        "value": "$0.42 million",
+        "evidence": "A machine costs $0.42 million"
+      },
+      {
+        "name": "salvage value",
+        "value": "$59,600",
+        "evidence": "has a salvage value of $59,600"
+      },
+      {
+        "name": "useful life",
+        "value": "10 years",
+        "evidence": "a useful life of 10 years"
+      },
+      {
+        "name": "year of measurement",
+        "value": "year 8",
+        "evidence": "at the end of year 8"
+      }
+    ],
+    "output_form": "a dollar amount"
+  }
+}

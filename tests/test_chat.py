@@ -18,6 +18,8 @@ def isolated(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "FAMILY_MIN_SIGHTINGS", 3.0)
     monkeypatch.setattr(config, "GATE", "v2")
     monkeypatch.setattr(config, "FAMILY_CHECK", "embed")
+    monkeypatch.setattr(config, "FAMILY_BUILD_CHECK", "off")
+    monkeypatch.setattr(config, "BUILD_COST_DEFAULT", 0.034)
     monkeypatch.setattr(families.FamilyTracker, "_embed", lambda self, texts: fake_embed(texts))
 
 
@@ -139,3 +141,14 @@ def test_learn_builds_ready_families_and_reloads_the_cache(tmp_path, monkeypatch
 def test_llm_result_carries_token_counts():
     r = llm.LLMResult(text="x")
     assert r.input_tokens == 0 and r.output_tokens == 0
+
+
+def test_learning_with_no_build_budget_still_groups_questions(tmp_path):
+    # regression (chat run 2026-11-15): a zero build budget skipped grouping too, so no family formed
+    b = bot(production(model="claude-opus-5-5", tout=1500))
+    for i in range(3):
+        b.chat(f"mortgage question number {i} with 200000 dollars at 6 percent")
+    calls = []
+    assert b.learn(build_fn=lambda fid, recs: calls.append(fid), max_builds=0) == []
+    assert calls == [] and len(b.tracker.families) == 1 and b.tracker.families["f0001"].size == 3
+    assert (tmp_path / "families.json").exists()

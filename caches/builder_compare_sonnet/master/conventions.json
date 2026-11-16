@@ -1,0 +1,10 @@
+{
+  "fam_perfect_gas_pressure": [
+    "Use R = 8.314462618 J/(mol K) (SI value) with p = nRT/V, where V is in m3 and T in K",
+    "Do not round n, R, T, V, nRT or the pressure in Pa at any intermediate step; keep about 50 significant digits (Decimal) throughout",
+    "Convert volume to m3 exactly: 1 L = 1 dm3 = 0.001 m3, 1 mL = 1 cm3 = 1e-6 m3",
+    "Convert temperature to K exactly: K = C + 273.15; K = (F - 32) x 5/9 + 273.15",
+    "Convert pressure to atm by dividing the unrounded Pa value by exactly 101325 Pa per atm",
+    "Do not round the result in the solver itself; the Pa and atm values are returned as full-precision unrounded numbers"
+  ]
+}

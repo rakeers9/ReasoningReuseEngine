@@ -12,6 +12,16 @@ function names from its caller; it reaches everything through these primitives:
     convert(ctx, value, type)            programmatic type coercion, then T
     smart_convert(ctx, text, type)       T rewrites to a Python literal
     invoke_tool(ctx, name, args)         call a registered external tool
+
+DEVIATION (not in the paper): two unit helpers from arc/units.py are also exposed, so cached
+code never types conversion factors by hand. They take no ctx and raise units.UnitError,
+which turns the invocation into a fallback like any other error in cached code:
+
+    convert_unit(value, from_unit, to_unit, substance=None)   exact unit conversion
+    same_quantity(unit_a, unit_b, substance=None)             can unit_a convert to unit_b?
+
+They are always present (flag-free): a function cached with them must keep running whatever
+the current settings, and code that doesn't call them is unaffected.
 """
 
 from __future__ import annotations
@@ -21,7 +31,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from . import config, embed, llm
+from . import config, embed, llm, units
 
 
 class CacheInvocationError(Exception):
@@ -276,7 +286,13 @@ def invoke_tool(ctx: Context, name: str, args: dict | None = None) -> Any:
     return ctx.tools[name](**(args or {}))
 
 
-PRIMITIVES = {
+PAPER_PRIMITIVES = {
     "load": load, "do": do, "narrate": narrate, "lm": lm, "extract": extract,
     "convert": convert, "smart_convert": smart_convert, "invoke_tool": invoke_tool,
 }
+
+# DEVIATION: unit helpers (see module docstring). UnitError is deliberately not exposed, so
+# cached code can't catch a unit failure and carry on with a guessed value.
+UNIT_PRIMITIVES = {"convert_unit": units.convert, "same_quantity": units.same_quantity}
+
+PRIMITIVES = {**PAPER_PRIMITIVES, **UNIT_PRIMITIVES}

@@ -1,0 +1,32 @@
+{
+  "fam_perfect_gas_pressure": [
+    "The gas constant is the fixed value R = 0.0820573661 L·atm/(mol·K), used exactly as written with no further rounding.",
+    "Pressure is p = n x R x T / V computed as a single Decimal expression at 60 significant digits, with no intermediate rounding of nR or nRT.",
+    "The final pressure is returned at full working precision with no quantize step, so it is not rounded to 4 decimal places or any other place value.",
+    "Volume is converted exactly to litres before use: m3 x 1000, dm3 and litre x 1, mL, cm3 and cc x 0.001, microlitre x 0.000001.",
+    "Amount is converted exactly to mol: mol x 1, kmol x 1000, mmol x 0.001, umol x 0.000001, with number words read as integers.",
+    "Celsius converts to kelvin by adding exactly 273.15, not 273.",
+    "Fahrenheit converts to kelvin as (F + 459.67) x 5 / 9 and Rankine as R x 5 / 9, with the division carried at 60 significant digits.",
+    "A temperature given in kelvin is used unchanged.",
+    "Amount, volume and absolute temperature must be strictly greater than zero; a value equal to zero or below raises an error, so zero is excluded.",
+    "Numeric text goes straight into Decimal from the string with no float conversion, and comma digit-group separators are stripped before parsing.",
+    "The SI cross-check is a separate returned value that does not feed the primary answer: volume in m3 is litres / 1000, then p = n x 8.314 x T / V_m3 in Pa, then divided by 101325 Pa per atm.",
+    "The cross-check uses R = 8.314 J/(mol·K) and 101325 Pa per atm, not the L·atm gas constant used for the primary answer.",
+    "The relative difference returned by the cross-check is (cross-check pressure - primary pressure) / primary pressure, returned unrounded."
+  ],
+  "fam_ddb_book_value": [
+    "Money text parsing strips the dollar sign, commas, and the words usd, dollar, and dollars, then multiplies the number exactly by its scale word: k or thousand = 1000; m, mn, or million = 1000000; b, bn, or billion = 1000000000; no word = 1.",
+    "Cost and salvage are kept as exact decimals at parse time with no rounding.",
+    "Year counts are read as whole numbers: the words years, yrs, and yr are dropped, hyphens become spaces, and number words are summed (for example twenty five = 25).",
+    "The code raises an error unless cost is strictly greater than salvage, useful life is at least 2 years, and target year is at least 0.",
+    "The DDB rate is 2 divided by useful life in years, held as an exact fraction (for example 2/10 = 20 percent, or 2/3 for a 3-year life) and not rounded to a percent.",
+    "Each year's depreciation is the exact rate times the opening book value, computed at 60 significant digits, with no rounding to cents or any other unit.",
+    "The salvage floor is a cap, not a switch: if rate times opening book would take closing book below salvage, depreciation is set to opening book minus salvage, so the book lands exactly on salvage.",
+    "Once opening book is at or below salvage, depreciation is zero for that year and every later year; the code never switches to straight-line.",
+    "Useful life does not stop depreciation: years beyond the useful life keep applying DDB, limited only by the salvage floor.",
+    "The year loop runs years 1 through the target year inclusive, so the target year's depreciation is included; a target year of 0 returns the cost unchanged.",
+    "Closing book value is opening book value minus that year's depreciation, carried at 60 significant digits with no intermediate rounding.",
+    "The only rounding step is the final one: the end-of-target-year book value is rounded to the nearest cent with ROUND_HALF_UP (ties away from zero).",
+    "The reported result is a plain decimal in dollars with exactly two decimal places, with no thousands separator, currency symbol, or unit suffix."
+  ]
+}

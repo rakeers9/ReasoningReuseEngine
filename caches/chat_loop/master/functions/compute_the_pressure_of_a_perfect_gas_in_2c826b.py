@@ -1,0 +1,25 @@
+def semantic_function(ctx):
+    '''Compute the pressure of a perfect gas in bar from the container volume, the amount of gas and its temperature.'''
+    from decimal import Decimal
+    narrate(ctx, 'Computing the pressure of a perfect gas from its container volume, amount of gas and temperature, reported in bar')
+    raw_volume = load(ctx, 'the volume of the flask or container holding the gas with unit', d_type=str)
+    raw_amount = load(ctx, 'the amount of gas in moles with unit', d_type=str)
+    gas_name = load(ctx, 'the name or chemical formula of the gas', d_type=str)
+    raw_temperature = load(ctx, 'the temperature of the gas with unit', d_type=str)
+    narrate(ctx, 'Gas: ' + str(gas_name).strip() + '; volume text ' + repr(raw_volume) + '; amount text ' + repr(raw_amount) + '; temperature text ' + repr(raw_temperature))
+    vol_res = do(ctx, 'Convert a container volume text into cubic metres using exact unit factors.', payloads={'the volume of the flask or container holding the gas with unit': str(raw_volume)})
+    volume_m3 = str(load(vol_res, 'volume in cubic metres', d_type=str, ctx=ctx)).strip()
+    narrate(ctx, 'Volume in cubic metres: ' + volume_m3)
+    amt_res = do(ctx, 'Convert an amount of substance given as raw text into moles using exact unit factors.', payloads={'the amount of gas in moles with unit': str(raw_amount)})
+    n_mol = str(load(amt_res, 'amount of substance in moles', d_type=str, ctx=ctx)).strip()
+    narrate(ctx, 'Amount of substance in moles: ' + n_mol)
+    temp_res = do(ctx, 'Convert a temperature text with unit into kelvin, applying the Celsius or Fahrenheit offset when needed and rejecting non-physical values.', payloads={'the temperature of the gas with unit': str(raw_temperature)})
+    T_K = str(load(temp_res, 'temperature in kelvin', d_type=str, ctx=ctx)).strip()
+    narrate(ctx, 'Temperature in kelvin: ' + T_K)
+    gas_res = do(ctx, 'Apply the ideal gas law to compute pressure in pascals from amount in moles, temperature in kelvin and volume in cubic metres', payloads={'amount of substance in moles': n_mol, 'temperature in kelvin': T_K, 'volume in cubic metres': volume_m3})
+    p_pa = str(load(gas_res, 'pressure in pascals', d_type=str, ctx=ctx)).strip()
+    narrate(ctx, 'Ideal gas law pressure: ' + p_pa + ' Pa')
+    bar_res = do(ctx, 'Convert a pressure given in pascals into bar using the exact factor 1 bar = 100000 Pa.', payloads={'pressure in pascals': p_pa})
+    p_bar = str(load(bar_res, 'pressure in bar', d_type=str, ctx=ctx)).strip()
+    narrate(ctx, 'Pressure of the gas in bar: ' + p_bar)
+    return {'pressure of the gas in bar': Decimal(p_bar)}

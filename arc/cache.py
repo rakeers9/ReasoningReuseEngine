@@ -79,6 +79,10 @@ class Cache:
         # Conventions (label-free builds, arc/labelfree.py): problem_id -> one-line rules for
         # every rounding or convention choice the entry's code makes that changes the answer.
         self.conventions: dict[str, list[str]] = {}
+        # Output specs (label-free builds): problem_id -> {output name: {"kind": money | count |
+        # measure | text, "unit": str, "decimals": int | None}}. The presenter rounds and
+        # converts at the end from this; the cached code returns full precision.
+        self.outputs: dict[str, dict[str, dict]] = {}
 
     # -- functions -----------------------------------------------------------
 
@@ -149,6 +153,8 @@ class Cache:
             (folder / "specs.json").write_text(json.dumps(self.specs, indent=2, ensure_ascii=False))
         if self.conventions:
             (folder / "conventions.json").write_text(json.dumps(self.conventions, indent=2, ensure_ascii=False))
+        if self.outputs:
+            (folder / "outputs.json").write_text(json.dumps(self.outputs, indent=2, ensure_ascii=False))
 
     @classmethod
     def load(cls, folder: Path) -> "Cache":
@@ -171,6 +177,8 @@ class Cache:
             cache.specs = json.loads((folder / "specs.json").read_text())
         if (folder / "conventions.json").exists():
             cache.conventions = json.loads((folder / "conventions.json").read_text())
+        if (folder / "outputs.json").exists():
+            cache.outputs = json.loads((folder / "outputs.json").read_text())
         return cache
 
     def merge(self, other: "Cache") -> None:
@@ -182,6 +190,7 @@ class Cache:
         self.cards.update(other.cards)
         self.specs.update(other.specs)
         self.conventions.update(other.conventions)
+        self.outputs.update(other.outputs)
 
     def summary(self) -> dict[str, Any]:
         return {"functions": len(self.functions), "entry_points": len(self.entry_points)}

@@ -72,7 +72,7 @@ def _units_compatible(a: str, b: str) -> bool:
 
 
 # the unit written after a number, skipping spaces and LaTeX spacing ("50.7\ \text{atm}")
-_UNIT_AFTER = re.compile(r"(?:\s|\\[ ,;!:]|~|\\text\{|\\mathrm\{|\\rm\{|\{)*([A-Za-zµ°%][A-Za-zµ°%/·²³]*)")
+_UNIT_AFTER = re.compile(r"(?:\s|\\[ ,;!:]|~|\\text\{|\\mathrm\{|\\rm\{|\{)*([A-Za-zµ°%][A-Za-zµ°%/·²³0-9]*)")
 
 
 def _tokens(text: str) -> list[tuple[str, str]]:
@@ -107,18 +107,72 @@ def written_numbers(text: str) -> list[Written]:
     return out
 
 
+_LONG_DECIMAL = re.compile(r"(?<![\w.])([-+]?)(\d+\.\d+)(?![\d.])")
+
+
+def round_long_numbers(text: str, sig: int = 12, min_decimals: int = 6) -> str:
+    """Shorten every decimal number in `text` to `sig` significant digits, but never to fewer
+    than `min_decimals` decimals (so money keeps its cents however large). Shorter numbers,
+    integers and words are left as written.
+
+    ONLY for comparing two machine-computed full-precision values (the convention check: cached
+    code vs a program, both in Decimal at 50-80 digits), where tail digits are numerical noise
+    and an 80-digit string makes the judge balk. Never use it on a customer-facing answer: those
+    are compared to the precision they are written in (number_check)."""
+    from decimal import ROUND_HALF_EVEN, Decimal
+
+    def short(m: re.Match) -> str:
+        d = Decimal(m.group(2))
+        keep = max(sig - 1 - d.adjusted(), min_decimals) if d else min_decimals
+        if len(m.group(2).split(".")[1]) <= keep:
+            return m.group(0)
+        return m.group(1) + format(d.quantize(Decimal(1).scaleb(-keep), rounding=ROUND_HALF_EVEN), "f")
+
+    return _LONG_DECIMAL.sub(short, text)
+
+
 def numbers(text: str) -> list[float]:
     """Every number in the text, with 1.2×10^6, 1.2 × 10⁶ and 1.2e6 all read as 1.2e6."""
     return [w.value for w in written_numbers(text)]
 
 
+# Unit -> (dimension, factor to that dimension's base). When both numbers state a unit, the
+# rescale factor is the one these imply, never a guessed power of 1000 (5.13 MPa is 5130 kPa,
+# not 5130000 kPa). Lowercased, as written_numbers stores units ("mpa" is MPa).
+_FACTORS: dict[str, tuple[str, float]] = {
+    "pa": ("pressure", 1.0), "hpa": ("pressure", 1e2), "kpa": ("pressure", 1e3), "mpa": ("pressure", 1e6),
+    "gpa": ("pressure", 1e9), "bar": ("pressure_bar", 1.0), "mbar": ("pressure_bar", 1e-3),
+    "g": ("mass", 1.0), "mg": ("mass", 1e-3), "kg": ("mass", 1e3), "µg": ("mass", 1e-6), "ug": ("mass", 1e-6),
+    "m": ("length", 1.0), "mm": ("length", 1e-3), "cm": ("length", 1e-2), "km": ("length", 1e3),
+    "µm": ("length", 1e-6), "um": ("length", 1e-6), "nm": ("length", 1e-9),
+    "m3": ("volume", 1.0), "m³": ("volume", 1.0), "dm3": ("volume", 1e-3), "dm³": ("volume", 1e-3),
+    "l": ("volume", 1e-3), "dl": ("volume", 1e-4), "ml": ("volume", 1e-6), "cm3": ("volume", 1e-6),
+    "cm³": ("volume", 1e-6),
+    "j": ("energy", 1.0), "kj": ("energy", 1e3), "mj": ("energy", 1e6),
+    "w": ("power", 1.0), "kw": ("power", 1e3), "mw": ("power", 1e6),
+    "n": ("force", 1.0), "kn": ("force", 1e3),
+    "mol": ("amount", 1.0), "mmol": ("amount", 1e-3), "µmol": ("amount", 1e-6), "umol": ("amount", 1e-6),
+    "mol/l": ("molarity", 1.0), "mmol/l": ("molarity", 1e-3), "µmol/l": ("molarity", 1e-6),
+    "umol/l": ("molarity", 1e-6),
+    "s": ("time", 1.0), "ms": ("time", 1e-3),
+    "hz": ("frequency", 1.0), "khz": ("frequency", 1e3), "mhz": ("frequency", 1e6),
+    "v": ("voltage", 1.0), "mv": ("voltage", 1e-3), "kv": ("voltage", 1e3),
+    "n/m": ("stiffness", 1.0), "kn/m": ("stiffness", 1e3),
+}
+
+
 def _agree(a: Written, r: Written, scale: float = 1.0) -> bool:
-    """Equal to the precision of the coarser of the two (after rescaling r), in compatible
-    units (51 bar never equals 50.6 atm)."""
-    if not _units_compatible(a.unit, r.unit):
-        return False
-    if scale == 1 and a.unit and r.unit and a.unit != r.unit:
-        return False   # same base but different prefix (kPa vs Pa) needs the rescale
+    """Equal to the precision of the coarser of the two, in compatible units (51 bar never
+    equals 50.6 atm). Both units known: the factor they imply is used and `scale` is ignored.
+    Same unit written on both: no rescale. A unit on one side only: `scale` (a power of 1000,
+    allowed by _scales) applies."""
+    if a.unit and r.unit:
+        if a.unit == r.unit:
+            scale = 1.0
+        elif a.unit in _FACTORS and r.unit in _FACTORS and _FACTORS[a.unit][0] == _FACTORS[r.unit][0]:
+            scale = _FACTORS[r.unit][1] / _FACTORS[a.unit][1]
+        else:
+            return False
     target = r.value * scale
     tol = max(a.half_unit, r.half_unit * scale) + _FLOAT_EPS * max(abs(a.value), abs(target))
     return abs(a.value - target) <= tol
@@ -211,7 +265,8 @@ def number_check(answer: str, reference: str, rel_tol: float | None = None) -> d
             continue
         near = [a for i, a in enumerate(ans) if i not in accounted
                 and abs(a.value - r.value) <= _NEAR * abs(r.value)
-                and (money or (r.unit and _base(r.unit) == _base(a.unit)))]
+                and (money or (r.unit and (r.unit == a.unit or (r.unit in _FACTORS and a.unit in _FACTORS
+                                                               and _FACTORS[r.unit] == _FACTORS[a.unit]))))]
         if near:
             conflicts.append((r, min(near, key=lambda a: abs(a.value - r.value))))
     if conflicts:

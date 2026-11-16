@@ -1,0 +1,62 @@
+{
+  "fam_f0002": {
+    "task": "compute",
+    "deliverable": "book value of an asset after a number of years",
+    "method": "double-declining-balance depreciation",
+    "conditions": [
+      "asset is depreciated over a stated useful life",
+      "depreciation uses an accelerated balance method",
+      "a salvage value is subtracted from the asset cost"
+    ],
+    "inputs": [
+      {
+        "name": "asset cost",
+        "value": "$379,000",
+        "evidence": "an asset that cost $379,000"
+      },
+      {
+        "name": "useful life",
+        "value": "11 years",
+        "evidence": "has a 11-year life"
+      },
+      {
+        "name": "salvage value",
+        "value": "$41,000",
+        "evidence": "a $41,000 salvage value"
+      },
+      {
+        "name": "elapsed years",
+        "value": "8 years",
+        "evidence": "find the book value after 8 years"
+      }
+    ],
+    "output_form": "a monetary amount in dollars"
+  },
+  "fam_f0004": {
+    "task": "compute",
+    "deliverable": "pressure exerted by a gas",
+    "method": "perfect gas law",
+    "conditions": [
+      "gas confined in a fixed container",
+      "perfect-gas behaviour assumed"
+    ],
+    "inputs": [
+      {
+        "name": "container volume",
+        "value": "8.4 L",
+        "evidence": "A 8.4 L flask"
+      },
+      {
+        "name": "amount of gas",
+        "value": "2.69 mol",
+        "evidence": "holds 2.69 mol of nitrogen"
+      },
+      {
+        "name": "temperature",
+        "value": "260.15 K",
+        "evidence": "at 260.15 K"
+      }
+    ],
+    "output_form": "a number with a pressure unit"
+  }
+}

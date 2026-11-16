@@ -30,6 +30,8 @@ import re
 import unicodedata
 from decimal import Decimal, InvalidOperation
 
+from typing import Literal
+
 from pydantic import ConfigDict, create_model
 
 from . import config, llm
@@ -38,6 +40,21 @@ from .checks import numbers
 from .normalize import expand_shorthand
 
 CURRENCY = {"$", "£", "€", "¥", "₹", "US$", "USD", "EUR", "GBP"}
+
+ANSWER_RULES = """\
+Then, about the ANSWER the question asks for:
+- output_format: unit = the unit the question asks the answer to be given in, copied ("" if it \
+asks for none); rounding = how the question asks the answer to be rounded, written as "dp:N" (N \
+decimal places), "sf:N" (N significant figures), "nearest:X" (to the nearest X, e.g. nearest:1, \
+nearest:1000, nearest:0.01) or "" if it asks for no rounding; evidence = the exact words that ask \
+for the unit or the rounding ("" if none).
+- extras: every OTHER instruction about the answer itself, for example "explain your reasoning", \
+"show each step", "give the answer as a fraction", "answer in words", "also compare it with...". \
+Each item: kind ("explanation", "format" or "other"), text, and evidence (the exact words). The \
+problem's own setup, method and assumptions are NOT extras ("assuming ideal behaviour", \
+"compounded monthly", "using the perfect gas equation", "taking g = 9.81"): leave them out. Use \
+an empty list if there are none.
+"""
 
 PROMPT = """\
 Extract the following values from the input text. For each value fill four fields:
@@ -55,6 +72,7 @@ Never compute or convert a value.
 Values to extract:
 {lines}
 
+{answer_rules}
 Input text:
 {request}"""
 
@@ -76,6 +94,33 @@ def _decimal(text: str) -> Decimal | None:
         return Decimal(t)
     except InvalidOperation:
         return None
+
+
+_SCALE_WORDS = {"thousand": 3, "million": 6, "billion": 9, "trillion": 12}
+_SCALE_LETTERS = {"k": 3, "m": 6, "mm": 6, "mn": 6, "b": 9, "bn": 9, "t": 12, "tn": 12}
+_CURRENCY_RE = r"(?:[$£€¥₹]|US\$|USD|EUR|GBP)"
+
+
+def fold_scale(field: dict) -> dict:
+    """Move a scale word the model wrote into the unit back into the number: number "0.42"
+    with unit "$ million" becomes "420000" with unit "$". Words (thousand, million, ...) are
+    folded wherever they stand; single letters (k, M, bn) only right after a currency sign,
+    so real units (m, mm, km, K, kg) are never touched."""
+    num, unit = (field.get("number") or "").strip(), (field.get("unit") or "").strip()
+    d = _decimal(num)
+    if d is None or not unit:
+        return field
+    m = re.fullmatch(rf"(?P<cur>{_CURRENCY_RE})?\s*(?P<s>{'|'.join(_SCALE_WORDS)})\b\s*(?P<rest>.*)", unit, re.I)
+    if m:
+        exp, rest = _SCALE_WORDS[m["s"].lower()], ((m["cur"] or "") + " " + m["rest"]).strip()
+    else:
+        m = re.fullmatch(rf"(?P<cur>{_CURRENCY_RE})\s*(?P<s>{'|'.join(sorted(_SCALE_LETTERS, key=len, reverse=True))})",
+                         unit, re.I)
+        if not m:
+            return field
+        exp, rest = _SCALE_LETTERS[m["s"].lower()], m["cur"]
+    scaled = (d.scaleb(exp)).normalize()
+    return {**field, "number": format(scaled, "f"), "unit": rest}
 
 
 def check_value(field: dict, request: str, allow_implied: bool) -> str | None:
@@ -121,29 +166,136 @@ def render(field: dict, param: ParamSpec) -> str:
     return f"{sign}{digits} {unit}" if unit else f"{sign}{digits}"
 
 
+_ROUNDING = re.compile(r"^(dp:\d{1,2}|sf:\d{1,2}|nearest:\d+(?:\.\d+)?)?$")
+
+
+def check_answer_form(output_format: dict | None, extras: list | None, request: str) -> list[str]:
+    """Problems with what the question asks of the answer (empty list = fine to serve)."""
+    problems = []
+    fmt = output_format or {}
+    if (fmt.get("unit") or fmt.get("rounding")) and fmt.get("evidence") and _norm(fmt["evidence"]) not in _norm(request):
+        problems.append(f"output format evidence {fmt['evidence']!r} is not in the question")
+    if not _ROUNDING.match((fmt.get("rounding") or "").strip()):
+        problems.append(f"rounding {fmt.get('rounding')!r} is not one the formatter can apply")
+    for x in extras or []:   # any instruction the cache can't carry out: let the model answer
+        problems.append(f"the question also asks: {x.get('text') or x.get('evidence')!r} ({x.get('kind')})")
+    return problems
+
+
 def extract_number_unit(request: str, params: list[ParamSpec], tag: str | None = None,
                         allow_implied: bool = True, form_out: dict | None = None) -> dict[str, str]:
     from .serve import ExtractionError
     Value = create_model("ExtractedValue", __config__=ConfigDict(extra="forbid"),
                          evidence=(str, ...), number=(str, ...), unit=(str, ...), text=(str, ...))
+    OutputFormat = create_model("OutputFormat", __config__=ConfigDict(extra="forbid"),
+                                unit=(str, ...), rounding=(str, ...), evidence=(str, ...))
+    Extra = create_model("Extra", __config__=ConfigDict(extra="forbid"),
+                         kind=(Literal["explanation", "format", "other"], ...), text=(str, ...), evidence=(str, ...))
     Model = create_model("ExtractedValues", __config__=ConfigDict(extra="forbid"),
-                         **{f"p{i}": (Value, ...) for i in range(len(params))})
+                         **{f"p{i}": (Value, ...) for i in range(len(params))},
+                         output_format=(OutputFormat, ...), extras=(list[Extra], ...))
     lines = [f"p{i}: {p.description} (format examples: {', '.join(map(repr, p.format_examples)) or 'none'})"
              for i, p in enumerate(params)]
     prompt = PROMPT.format(implied=IMPLIED if allow_implied else NO_IMPLIED, lines="\n".join(lines),
-                           request=request)
+                           request=request, answer_rules=ANSWER_RULES)
     data = llm.call("extractor", prompt, model=config.TARGET_MODEL, schema=Model,
                     max_tokens=2048, tag=tag).parsed.model_dump()
     values, problems = {}, []
+    output_format, extras = data.get("output_format") or {}, data.get("extras") or []
+    problems += check_answer_form(output_format, extras, request)
     for i, p in enumerate(params):
-        field = data[f"p{i}"]
+        field = fold_scale(data[f"p{i}"])
         why = check_value(field, request, allow_implied)
         if why:
             problems.append(f"{p.description}: {why}")
         else:
             values[p.description] = render(field, p)
     if form_out is not None:
-        form_out.update(fields=data, values=values, problems=problems)
+        form_out.update(fields=data, values=values, problems=problems, output_format=output_format, extras=extras)
+    if problems:
+        raise ExtractionError("extraction failed its checks: " + "; ".join(problems))
+    return values
+
+
+
+# ----------------------------------------------------------------------------- text form
+
+TEXT_PROMPT = """\
+Extract the following values from the input text. Copy each value exactly as it appears in \
+the text, with its unit and any shorthand ("$150k", "2.0 million", "4.860 dm3", "27°C", \
+"ten moles"). Do not convert, expand or compute anything.{implied}
+
+Values to extract:
+{lines}
+
+{answer_rules}
+Input text:
+{request}"""
+
+TEXT_IMPLIED = (" If a value is implied rather than stated, write it in the style of the format "
+                "examples.")
+TEXT_NO_IMPLIED = " Never assume a value that is not stated."
+
+
+def _squash(s: str) -> str:
+    return re.sub(r"\s+", "", unicodedata.normalize("NFKC", s or "").lower())
+
+
+_DIGITS_RE = re.compile(r"\d[\d,]*(?:\.\d+)?")
+
+
+def _digit_tokens(text: str) -> set[Decimal]:
+    """Every number written in the text, as a value: "4.860" and "4.86" are the same number."""
+    out = set()
+    for m in _DIGITS_RE.finditer(unicodedata.normalize("NFKC", text or "")):
+        d = _decimal(m.group())
+        if d is not None:
+            out.add(d.normalize())
+    return out
+
+
+def check_text_value(value: str, request: str) -> str | None:
+    """Every number a value states must appear in the question (catches made-up numbers such
+    as an assumed "300 K"). Wording may differ: "10 years" for "a 10-year loan" is fine.
+    Implied values without digits ("monthly") pass."""
+    if not (value or "").strip():
+        return "no value extracted"
+    missing = sorted(_digit_tokens(value) - _digit_tokens(request))
+    if missing:
+        return f"value {value!r} states {', '.join(format(m, 'f') for m in missing)}, which is not in the question"
+    return None
+
+
+def extract_text(request: str, params: list[ParamSpec], tag: str | None = None,
+                 allow_implied: bool = True, form_out: dict | None = None) -> dict[str, str]:
+    """config.EXTRACT_FORM == "text" (default, user decision 2026-11-15): each value copied
+    exactly as written, unit and shorthand included, in one field; the Sonnet-built code reads
+    it. Plus output_format and extras (what the question asks of the answer)."""
+    from .serve import ExtractionError
+    OutputFormat = create_model("OutputFormat", __config__=ConfigDict(extra="forbid"),
+                                unit=(str, ...), rounding=(str, ...), evidence=(str, ...))
+    Extra = create_model("Extra", __config__=ConfigDict(extra="forbid"),
+                         kind=(Literal["explanation", "format", "other"], ...), text=(str, ...), evidence=(str, ...))
+    Model = create_model("ExtractedText", __config__=ConfigDict(extra="forbid"),
+                         **{f"p{i}": (str, ...) for i in range(len(params))},
+                         output_format=(OutputFormat, ...), extras=(list[Extra], ...))
+    lines = [f"p{i}: {p.description} (format examples: {', '.join(map(repr, p.format_examples)) or 'none'})"
+             for i, p in enumerate(params)]
+    prompt = TEXT_PROMPT.format(implied=TEXT_IMPLIED if allow_implied else TEXT_NO_IMPLIED,
+                                lines="\n".join(lines), answer_rules=ANSWER_RULES, request=request)
+    data = llm.call("extractor", prompt, model=config.TARGET_MODEL, schema=Model,
+                    max_tokens=2048, tag=tag).parsed.model_dump()
+    output_format, extras = data.get("output_format") or {}, data.get("extras") or []
+    problems = check_answer_form(output_format, extras, request)
+    values = {}
+    for i, p in enumerate(params):
+        value = data.get(f"p{i}") or ""
+        why = check_text_value(value, request)
+        if why:
+            problems.append(f"{p.description}: {why}")
+        values[p.description] = value
+    if form_out is not None:
+        form_out.update(fields=data, values=values, problems=problems, output_format=output_format, extras=extras)
     if problems:
         raise ExtractionError("extraction failed its checks: " + "; ".join(problems))
     return values

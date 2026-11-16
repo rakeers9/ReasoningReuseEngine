@@ -19,6 +19,9 @@ def isolated(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "WORK_DIR", tmp_path)
     monkeypatch.setattr(config, "FAMILY_SIMILARITY", 0.75)
     monkeypatch.setattr(config, "FAMILY_CHECK", "embed")   # Clef-mode tests set "clef" themselves
+    monkeypatch.setattr(config, "FAMILY_BUILD_CHECK", "off")   # build-check tests turn it on
+    monkeypatch.setattr(config, "BUILD_COST_DEFAULT", 0.034)   # mechanics tests: a fixed, small threshold
+    monkeypatch.setattr(config, "BUILD_COST_MIN_BUILDS", 3)    # formula tests use a few logged builds
     monkeypatch.setattr(config, "FAMILY_HALF_LIFE_DAYS", 30.0)
     monkeypatch.setattr(config, "FAMILY_MIN_SIGHTINGS", 3.0)
     monkeypatch.setattr(config, "CACHE_ANSWER_COST", 0.0001)
@@ -384,12 +387,14 @@ def test_build_ready_applies_each_result_and_logs_cost(tmp_path):
     by_word = {f.label.split()[0]: f for f in tr.families.values()}
     assert by_word["mortgage"].status == "built" and by_word["mortgage"].built_entry == "mortgage_entry"
     assert by_word["mortgage"].serve_rate == 0.8
-    assert by_word["dosage"].status == "rejected" and "disagreed" in by_word["dosage"].note
-    assert by_word["seating"].status == "rejected" and "crashed" in by_word["seating"].note
+    assert by_word["dosage"].status == "watching" and "disagreed" in by_word["dosage"].note   # 1st failed build waits
+    assert by_word["dosage"].failed_builds == 1 and "build 1 of 3 failed" in by_word["dosage"].note
+    assert by_word["seating"].status == "watching" and "crashed" in by_word["seating"].note   # a crash waits
+    assert by_word["seating"].tried_record == "seating2" and "waiting" in by_word["seating"].note
     logged = [json.loads(l) for l in (tmp_path / "build_costs.jsonl").read_text().splitlines()]
     assert [(r["problem"], r["accepted"]) for r in logged] == [("mortgage_entry", True), (by_word["dosage"].id, False)]
     reloaded = tracker(tmp_path)                                      # saved after each build
-    assert {f.status for f in reloaded.families.values()} >= {"built", "rejected"}
+    assert {f.status for f in reloaded.families.values()} >= {"built", "watching"}
     assert families.build_ready(reloaded, stub, path=path) == []      # nothing left to build
 
 
@@ -421,7 +426,8 @@ def test_explicit_status_wins_over_accepted_flag(tmp_path):
     r = _Result(True, "fam_x")
     r.status = "rejected"
     families.build_ready(tr, lambda fid, recs: r, max_builds=1, path=path)
-    assert sum(f.status == "rejected" for f in tr.families.values()) == 1
+    assert sum(f.status == "built" for f in tr.families.values()) == 0            # status "rejected" wins
+    assert sum(f.failed_builds == 1 for f in tr.families.values()) == 1
 
 
 def test_pending_spend_counts_as_cost_but_not_as_an_attempt():
@@ -664,3 +670,238 @@ def test_defaults_are_the_tuned_values():
                  'os.environ.get("ARC_FAMILY_CLEF_THRESHOLD", 0.5)', 'os.environ.get("ARC_FAMILY_CLEF_ANCHORS", 3)',
                  'os.environ.get("ARC_FAMILY_CLEF_SIMILARITY", 0.65)'):
         assert line in src, line
+
+
+
+# ---- build-ready check: the NEWEST question must pass the serving gate's test ----
+
+@pytest.fixture
+def build_check(monkeypatch):
+    """Stand-in Clef for the build check: P comes from a table keyed by the question's first word."""
+    from arc import llm
+    monkeypatch.setattr(config, "FAMILY_BUILD_CHECK", "clef")
+    monkeypatch.setattr(config, "CLEF_THRESHOLD", 0.8)
+    monkeypatch.setattr(config, "CLEF_PROMPT", "v6")
+    state = {"p": {}, "calls": [], "error": None}
+
+    def decide(question, questions, *, model=None, tag=None):
+        state["calls"].append({"question": question, "questions": questions, "tag": tag})
+        if state["error"]:
+            raise llm.LLMError(state["error"])
+        return {k: state["p"].get(question, 0.95) for k in questions}
+    monkeypatch.setattr(llm, "decide", decide)
+    return state
+
+
+def _family_backlog(tmp_path, n=3, word="mortgage"):
+    path = tmp_path / "backlog.jsonl"
+    for i in range(n):
+        backlog.log_interaction(f"{word} {i}", f"a{i}", "claude-opus-5-5", path=path, input_tokens=200,
+                                output_tokens=1500, timestamp=float(i), id=f"{word}{i}")
+    tr = tracker(tmp_path)
+    tr.ingest(path)
+    return tr, path
+
+
+def test_a_build_ready_newest_question_is_built_from(tmp_path, build_check):
+    tr, path = _family_backlog(tmp_path)
+    got = []
+    families.build_ready(tr, lambda fid, recs: got.append(recs[-1]["id"]) or _Result(True, "e1"), path=path)
+    assert got == ["mortgage2"] and tr.families["f0001"].status == "built"
+    [call] = build_check["calls"]
+    assert call["question"] == "mortgage 2" and "<<<mortgage 0>>>" in call["questions"]["ref"]   # vs the anchor
+    assert "Judge the task, not the wording" in call["questions"]["ref"]                          # gate prompt v6
+    assert tr.families["f0001"].build_checks[-1] == {"record_id": "mortgage2", "p": 0.95, "passed": True}
+
+
+def test_a_newest_question_below_the_bar_is_not_built_and_the_family_waits(tmp_path, build_check):
+    tr, path = _family_backlog(tmp_path)
+    build_check["p"]["mortgage 2"] = 0.62
+    got = []
+    done = families.build_ready(tr, lambda fid, recs: got.append(1) or _Result(True, "e1"), path=path)
+    assert got == [] and done[0][1].status == "not_ready"
+    fam = tr.families["f0001"]
+    assert fam.status == "watching" and fam.tried_record == "mortgage2" and "P 0.62" in fam.note
+    assert next(r for r in tr.readiness() if r.family == "f0001").verdict == "wait"
+    families.build_ready(tr, lambda fid, recs: got.append(1) or _Result(True, "e1"), path=path)
+    assert got == [] and len(build_check["calls"]) == 1                          # no recheck without new data
+    backlog.log_interaction("mortgage 9", "a9", "claude-opus-5-5", path=path, input_tokens=200,
+                            output_tokens=1500, timestamp=9.0, id="mortgage9")
+    tr.ingest(path)
+    families.build_ready(tr, lambda fid, recs: got.append(recs[-1]["id"]) or _Result(True, "e1"), path=path)
+    assert got == ["mortgage9"]                                                   # a newer question passes
+
+
+def test_threshold_is_the_serving_cutoff_inclusive(tmp_path, build_check):
+    tr, path = _family_backlog(tmp_path)
+    build_check["p"]["mortgage 2"] = 0.8
+    got = []
+    families.build_ready(tr, lambda fid, recs: got.append(1) or _Result(True, "e1"), path=path)
+    assert got == [1]
+
+
+def test_when_the_newest_question_is_the_anchor_it_is_compared_with_the_most_typical_other(tmp_path, build_check,
+                                                                                           monkeypatch):
+    # regression (chat run 2026-11-15): the newest long-form question was compared with the latest
+    # other member, a terse "Cost $..; salvage ..; method DDB" note, and scored 0.04
+    path = tmp_path / "backlog.jsonl"
+    qs = [("typical a", 0.0), ("typical b", 1.0), ("terse note", 2.0), ("typical c", 3.0)]
+    for i, (q, t) in enumerate(qs):
+        backlog.log_interaction(q, "a", "claude-opus-5-5", path=path, input_tokens=200, output_tokens=1500,
+                                timestamp=t, id=f"r{i}")
+    vec = {"typical": [1.0, 0.0], "terse": [0.6, 0.8]}
+    monkeypatch.setattr(config, "FAMILY_SIMILARITY", 0.0)
+    tr = families.FamilyTracker(path=tmp_path / "t.json",
+                                embed_fn=lambda ts: np.array([vec[t.split()[0]] for t in ts], np.float32))
+    tr.ingest(path)
+    fam = tr.families["f0001"]
+    fam.anchor_id, fam.anchor_text = "r3", "typical c"            # the newest question is the anchor
+    families.build_ready(tr, lambda fid, recs: _Result(True, "e1"), path=path)
+    ref = build_check["calls"][0]["questions"]["ref"]
+    assert "<<<terse note>>>" not in ref and "<<<typical c>>>" not in ref      # not the odd one, never itself
+    assert "<<<typical a>>>" in ref or "<<<typical b>>>" in ref
+
+
+def test_a_clef_error_means_wait_not_build(tmp_path, build_check):
+    tr, path = _family_backlog(tmp_path)
+    build_check["error"] = "Cloudflare HTTP 503"
+    got = []
+    families.build_ready(tr, lambda fid, recs: got.append(1) or _Result(True, "e1"), path=path)
+    assert got == [] and "could not run" in tr.families["f0001"].note
+
+
+def test_check_off_builds_without_asking_clef(tmp_path, build_check, monkeypatch):
+    monkeypatch.setattr(config, "FAMILY_BUILD_CHECK", "off")
+    tr, path = _family_backlog(tmp_path)
+    got = []
+    families.build_ready(tr, lambda fid, recs: got.append(1) or _Result(True, "e1"), path=path)
+    assert got == [1] and build_check["calls"] == []
+
+
+def test_build_check_default_is_on():
+    assert 'FAMILY_BUILD_CHECK = os.environ.get("ARC_FAMILY_BUILD_CHECK", "clef")' in (ROOT_DIR / "arc/config.py").read_text()
+
+
+
+def test_a_build_crash_waits_and_retries_on_a_newer_question(tmp_path):
+    path = tmp_path / "backlog.jsonl"
+    for i in range(3):
+        backlog.log_interaction(f"ddb {i}", "a", "claude-opus-5-5", path=path, input_tokens=200,
+                                output_tokens=1500, timestamp=float(i), id=f"d{i}")
+    tr = tracker(tmp_path)
+    tr.ingest(path)
+    calls = []
+
+    def flaky(fid, recs):
+        calls.append(recs[-1]["id"])
+        if len(calls) == 1:
+            raise ValueError("Invalid JSON: EOF while parsing a string")   # cut-off model reply
+        return _Result(True, "fam_x")
+    families.build_ready(tr, flaky, path=path)
+    fam = tr.families["f0001"]
+    assert fam.status == "watching" and "Invalid JSON" in fam.note and fam.record_notes["d2"].startswith("build error")
+    families.build_ready(tr, flaky, path=path)
+    assert calls == ["d2"]                                     # no retry without a newer question
+    backlog.log_interaction("ddb 9", "a", "claude-opus-5-5", path=path, input_tokens=200, output_tokens=1500,
+                            timestamp=9.0, id="d9")
+    tr.ingest(path)
+    families.build_ready(tr, flaky, path=path)
+    assert calls == ["d2", "d9"] and tr.families["f0001"].status == "built"
+
+
+
+def test_re_solve_mismatches_are_spend_but_not_build_attempts():
+    # regression (chat run 2026-11-15): 4 cheap re-solve mismatches made "1 accepted of 7" and
+    # raised the bar for every family to $0.80
+    families.record_build_cost("g", 0.30, True, {"resolve": 0.01, "build": 0.29})
+    for i in range(4):
+        families.record_build_cost(f"m{i}", 0.01, False, {"resolve": 0.01})
+    families.record_build_cost("h", 0.05, False, {"resolve": 0.01, "build": 0.04})
+    families.record_build_cost("k", 0.04, True, {"resolve": 0.01, "build": 0.03})
+    e = families.effective_build_cost()
+    assert e["accept_rate"] == pytest.approx(2 / 3)                  # 3 real build attempts, 2 accepted
+    assert e["effective"] == pytest.approx((0.30 + 0.04 + 0.05 + 0.04) / 2)   # every dollar still counts
+
+
+def test_the_estimate_is_kept_until_enough_real_builds(monkeypatch):
+    monkeypatch.setattr(config, "BUILD_COST_MIN_BUILDS", 10)
+    for i in range(9):
+        families.record_build_cost(f"b{i}", 0.05, i % 2 == 0, {"build": 0.05})
+    assert "defaults" in families.effective_build_cost()["source"]
+    families.record_build_cost("b9", 0.05, True, {"build": 0.05})
+    assert "measured over 10" in families.effective_build_cost()["source"]
+
+
+def test_min_builds_default():
+    assert 'BUILD_COST_MIN_BUILDS = int(os.environ.get("ARC_BUILD_COST_MIN_BUILDS", 10))' in \
+        (ROOT_DIR / "arc/config.py").read_text()
+
+
+
+def test_a_failed_build_waits_and_is_rejected_for_good_after_the_cap(tmp_path, monkeypatch):
+    # regression (chat run 2026-11-16): one failed mortgage build rejected the family for good
+    monkeypatch.setattr(config, "FAMILY_MAX_FAILED_BUILDS", 3)
+    path = tmp_path / "backlog.jsonl"
+    tr = tracker(tmp_path)
+
+    def add(i):
+        backlog.log_interaction(f"loan {i}", "a", "claude-opus-5-5", path=path, input_tokens=200,
+                                output_tokens=1500, timestamp=float(i), id=f"l{i}")
+        tr.ingest(path)
+    for i in range(3):
+        add(i)
+    fail = _Result(False, None, reason="build failed: function level_payment did not pass after 4 attempts")
+    fail.status = "rejected"
+    calls = []
+    build = lambda fid, recs: calls.append(recs[-1]["id"]) or fail
+    families.build_ready(tr, build, path=path)
+    fam = tr.families["f0001"]
+    assert fam.status == "watching" and fam.failed_builds == 1 and fam.tried_record == "l2"
+    families.build_ready(tr, build, path=path)
+    assert calls == ["l2"]                                         # waits for a newer question
+    add(3); families.build_ready(tr, build, path=path)
+    assert fam.status == "watching" and fam.failed_builds == 2
+    add(4); families.build_ready(tr, build, path=path)
+    assert fam.status == "rejected" and "3 failed builds" in fam.note and calls == ["l2", "l3", "l4"]
+
+
+def test_re_solve_mismatches_do_not_count_toward_the_cap(tmp_path):
+    tr, path = _ready_tracker(tmp_path)
+    r = _mismatch("mortgage2")
+    families.build_ready(tr, lambda fid, recs: r, max_builds=1, path=path)
+    assert all(f.failed_builds == 0 for f in tr.families.values())
+
+
+def test_failed_build_cap_default():
+    assert 'FAMILY_MAX_FAILED_BUILDS = int(os.environ.get("ARC_FAMILY_MAX_FAILED_BUILDS", 3))' in \
+        (ROOT_DIR / "arc/config.py").read_text()
+
+
+
+@pytest.mark.parametrize("failure, counted", [("code", 1), ("api", 0), ("cost_cap", 0), (None, 1)])
+def test_only_code_failures_count_toward_the_cap(tmp_path, failure, counted):
+    tr, path = _ready_tracker(tmp_path)
+    r = _Result(False, None, reason="build failed: x")
+    r.status, r.failure = "rejected", failure
+    families.build_ready(tr, lambda fid, recs: r, max_builds=1, path=path)
+    fam = next(f for f in tr.families.values() if f.tried_record)
+    assert fam.failed_builds == counted and fam.status == "watching"      # always waits, never rejected at once
+
+
+
+def test_code_failures_reported_as_mismatch_also_count(tmp_path, monkeypatch):
+    # the pre-publish check finding wrong cached answers is a "mismatch" with failure "code"
+    monkeypatch.setattr(config, "FAMILY_MAX_FAILED_BUILDS", 2)
+    tr, path = _ready_tracker(tmp_path)
+    fid = None
+    for i in range(2):
+        r = _mismatch(f"mortgage{2 + i}")
+        r.reason, r.failure = "cached code got a family question wrong: cache_wrong on record x", "code"
+        if i:
+            backlog.log_interaction("mortgage 7", "a", "claude-opus-5-5", path=path, input_tokens=200,
+                                    output_tokens=1500, timestamp=7.0, id="mortgage3")
+            tr.ingest(path)
+        families.build_ready(tr, lambda f, recs: r, path=path)
+        fid = fid or next(f.id for f in tr.families.values() if f.label.startswith("mortgage"))
+    fam = tr.families[fid]
+    assert fam.failed_builds == 2 and fam.status == "rejected"

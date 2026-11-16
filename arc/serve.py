@@ -61,6 +61,9 @@ def extract_parameters(request: str, params: list[ParamSpec], tag: str | None = 
 
     allow_implied=False (spec gate) drops the paper-style "implied value" rule, which is
     where made-up values such as "300 K" came from."""
+    if config.EXTRACT_FORM == "text":
+        from .extraction import extract_text
+        return extract_text(request, params, tag=tag, allow_implied=allow_implied, form_out=form_out)
     if config.EXTRACT_FORM == "number_unit":
         from .extraction import extract_number_unit
         return extract_number_unit(request, params, tag=tag, allow_implied=allow_implied, form_out=form_out)
@@ -247,6 +250,10 @@ def _use_clef(cache: Cache, request: str, tag: str | None, trace: dict, shadow: 
         if ep is None:
             trace["shadow_output"] = format_output(output)
             return None
+        from . import present   # DEVIATION: rounding and output units happen here, once (arc/present.py)
+        output = present.apply(output, (trace.get("extraction") or {}).get("output_format"),
+                               (getattr(cache, "outputs", None) or {}).get(best.problem_id))
+        trace["presented"] = output
     except CacheInvocationError:
         raise
     except Exception as e:  # any error inside cached code counts as a failed invocation

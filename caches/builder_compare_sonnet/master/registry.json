@@ -1,0 +1,423 @@
+{
+  "name": "master",
+  "functions": [
+    {
+      "id": "parse_the_amount_of_gas_given_as_raw_tex_ae559e",
+      "description": "Parse the amount of gas given as raw text (number, scale word, unit) and convert it to moles.",
+      "inputs": [
+        "the amount of gas with unit as raw text"
+      ],
+      "outputs": [
+        "amount of gas in mol"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "parse_the_gas_volume_given_as_raw_text_a_129681",
+      "description": "Parse the gas volume given as raw text and convert it to cubic metres, handling m3, dm3, L, mL and cm3.",
+      "inputs": [
+        "the gas volume with unit as raw text"
+      ],
+      "outputs": [
+        "volume in m3"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "parse_the_gas_temperature_given_as_raw_t_5459c9",
+      "description": "Parse the gas temperature given as raw text and convert it to kelvin, handling K, \u00b0C and \u00b0F.",
+      "inputs": [
+        "the gas temperature with unit as raw text"
+      ],
+      "outputs": [
+        "temperature in K"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "compute_pressure_in_pascals_as_nrt_v_fro_b36e63",
+      "description": "Compute pressure in pascals as nRT/V from moles, temperature in kelvin, volume in cubic metres and the gas constant R using Decimal arithmetic.",
+      "inputs": [
+        "amount of gas in mol",
+        "temperature in K",
+        "volume in m3",
+        "gas constant R in J/(mol K)"
+      ],
+      "outputs": [
+        "pressure in Pa"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "convert_a_pressure_in_pascals_to_atmosph_db62a0",
+      "description": "Convert a pressure in pascals to atmospheres by dividing by 101325 Pa per atm.",
+      "inputs": [
+        "pressure in Pa",
+        "pascals per atmosphere"
+      ],
+      "outputs": [
+        "pressure in atm"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "compute_the_pressure_of_an_ideal_gas_in_efe28b",
+      "description": "Compute the pressure of an ideal gas in pascals and atmospheres from the amount of gas, its volume and its temperature using pV = nRT.",
+      "inputs": [
+        "the amount of gas with unit",
+        "the chemical formula or name of the gas",
+        "the volume of the gas with unit",
+        "the temperature of the gas with unit"
+      ],
+      "outputs": [
+        "pressure in Pa",
+        "pressure in atm"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "Using pV = nRT, find the pressure of \u25cf1 of \u25cf2 occupying \u25cf3 at \u25cf4.",
+      "kind": "template",
+      "root_id": "compute_the_pressure_of_an_ideal_gas_in_efe28b",
+      "params": [
+        {
+          "description": "the amount of gas with unit",
+          "format_examples": [
+            "7.39 mol",
+            "0.25 mol",
+            "two moles"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Positive amount of substance, typically expressed in mol (or mmol/kmol); must be greater than zero."
+        },
+        {
+          "description": "the chemical formula or name of the gas",
+          "format_examples": [
+            "C2H6",
+            "N2",
+            "carbon dioxide"
+          ],
+          "original_value": "C2H6",
+          "validity_range": "Any gas that can reasonably be treated as ideal; the identity does not affect the calculation."
+        },
+        {
+          "description": "the volume of the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "4.860 dm3",
+            "250 mL"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Positive volume in m3, dm3, L, mL or cm3; must be greater than zero."
+        },
+        {
+          "description": "the temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "98.6\u00b0F"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Temperature above absolute zero (K > 0, \u00b0C > -273.15, \u00b0F > -459.67) in K, \u00b0C or \u00b0F."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "Using pV = nRT, find the pressure of 7.39 mol of C2H6 occupying 0.03256 m3 at 507.15 K.",
+      "kind": "original",
+      "root_id": "compute_the_pressure_of_an_ideal_gas_in_efe28b",
+      "params": [
+        {
+          "description": "the amount of gas with unit",
+          "format_examples": [
+            "7.39 mol",
+            "0.25 mol",
+            "two moles"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Positive amount of substance, typically expressed in mol (or mmol/kmol); must be greater than zero."
+        },
+        {
+          "description": "the chemical formula or name of the gas",
+          "format_examples": [
+            "C2H6",
+            "N2",
+            "carbon dioxide"
+          ],
+          "original_value": "C2H6",
+          "validity_range": "Any gas that can reasonably be treated as ideal; the identity does not affect the calculation."
+        },
+        {
+          "description": "the volume of the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "4.860 dm3",
+            "250 mL"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Positive volume in m3, dm3, L, mL or cm3; must be greater than zero."
+        },
+        {
+          "description": "the temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "98.6\u00b0F"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Temperature above absolute zero (K > 0, \u00b0C > -273.15, \u00b0F > -459.67) in K, \u00b0C or \u00b0F."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "What pressure is exerted by 14860 mmol of oxygen in a 0.010565 m3 container at 533.15 K, treating it as a perfect gas?",
+      "kind": "family",
+      "root_id": "compute_the_pressure_of_an_ideal_gas_in_efe28b",
+      "params": [
+        {
+          "description": "the amount of gas with unit",
+          "format_examples": [
+            "7.39 mol",
+            "0.25 mol",
+            "two moles"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Positive amount of substance, typically expressed in mol (or mmol/kmol); must be greater than zero."
+        },
+        {
+          "description": "the chemical formula or name of the gas",
+          "format_examples": [
+            "C2H6",
+            "N2",
+            "carbon dioxide"
+          ],
+          "original_value": "C2H6",
+          "validity_range": "Any gas that can reasonably be treated as ideal; the identity does not affect the calculation."
+        },
+        {
+          "description": "the volume of the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "4.860 dm3",
+            "250 mL"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Positive volume in m3, dm3, L, mL or cm3; must be greater than zero."
+        },
+        {
+          "description": "the temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "98.6\u00b0F"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Temperature above absolute zero (K > 0, \u00b0C > -273.15, \u00b0F > -459.67) in K, \u00b0C or \u00b0F."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "What pressure is exerted by 3420 mmol of ethane in a 0.021778 m3 container at 113\u00b0C, treating it as a perfect gas?",
+      "kind": "family",
+      "root_id": "compute_the_pressure_of_an_ideal_gas_in_efe28b",
+      "params": [
+        {
+          "description": "the amount of gas with unit",
+          "format_examples": [
+            "7.39 mol",
+            "0.25 mol",
+            "two moles"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Positive amount of substance, typically expressed in mol (or mmol/kmol); must be greater than zero."
+        },
+        {
+          "description": "the chemical formula or name of the gas",
+          "format_examples": [
+            "C2H6",
+            "N2",
+            "carbon dioxide"
+          ],
+          "original_value": "C2H6",
+          "validity_range": "Any gas that can reasonably be treated as ideal; the identity does not affect the calculation."
+        },
+        {
+          "description": "the volume of the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "4.860 dm3",
+            "250 mL"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Positive volume in m3, dm3, L, mL or cm3; must be greater than zero."
+        },
+        {
+          "description": "the temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "98.6\u00b0F"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Temperature above absolute zero (K > 0, \u00b0C > -273.15, \u00b0F > -459.67) in K, \u00b0C or \u00b0F."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "Using pV = nRT, find the pressure of 11200 mmol of O2 occupying 44.921 dm3 at 500.15 K.",
+      "kind": "family",
+      "root_id": "compute_the_pressure_of_an_ideal_gas_in_efe28b",
+      "params": [
+        {
+          "description": "the amount of gas with unit",
+          "format_examples": [
+            "7.39 mol",
+            "0.25 mol",
+            "two moles"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Positive amount of substance, typically expressed in mol (or mmol/kmol); must be greater than zero."
+        },
+        {
+          "description": "the chemical formula or name of the gas",
+          "format_examples": [
+            "C2H6",
+            "N2",
+            "carbon dioxide"
+          ],
+          "original_value": "C2H6",
+          "validity_range": "Any gas that can reasonably be treated as ideal; the identity does not affect the calculation."
+        },
+        {
+          "description": "the volume of the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "4.860 dm3",
+            "250 mL"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Positive volume in m3, dm3, L, mL or cm3; must be greater than zero."
+        },
+        {
+          "description": "the temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "98.6\u00b0F"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Temperature above absolute zero (K > 0, \u00b0C > -273.15, \u00b0F > -459.67) in K, \u00b0C or \u00b0F."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "Suppose that 15.67 mol C2H6(g) is confined to 31.739 L at 264.15 K. Predict the pressure exerted by the ethane from the perfect gas equation.",
+      "kind": "family",
+      "root_id": "compute_the_pressure_of_an_ideal_gas_in_efe28b",
+      "params": [
+        {
+          "description": "the amount of gas with unit",
+          "format_examples": [
+            "7.39 mol",
+            "0.25 mol",
+            "two moles"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Positive amount of substance, typically expressed in mol (or mmol/kmol); must be greater than zero."
+        },
+        {
+          "description": "the chemical formula or name of the gas",
+          "format_examples": [
+            "C2H6",
+            "N2",
+            "carbon dioxide"
+          ],
+          "original_value": "C2H6",
+          "validity_range": "Any gas that can reasonably be treated as ideal; the identity does not affect the calculation."
+        },
+        {
+          "description": "the volume of the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "4.860 dm3",
+            "250 mL"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Positive volume in m3, dm3, L, mL or cm3; must be greater than zero."
+        },
+        {
+          "description": "the temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "98.6\u00b0F"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Temperature above absolute zero (K > 0, \u00b0C > -273.15, \u00b0F > -459.67) in K, \u00b0C or \u00b0F."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "Using pV = nRT, find the pressure of 13.86 mol of Ar occupying 17692 mL at 545.15 K.",
+      "kind": "family",
+      "root_id": "compute_the_pressure_of_an_ideal_gas_in_efe28b",
+      "params": [
+        {
+          "description": "the amount of gas with unit",
+          "format_examples": [
+            "7.39 mol",
+            "0.25 mol",
+            "two moles"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Positive amount of substance, typically expressed in mol (or mmol/kmol); must be greater than zero."
+        },
+        {
+          "description": "the chemical formula or name of the gas",
+          "format_examples": [
+            "C2H6",
+            "N2",
+            "carbon dioxide"
+          ],
+          "original_value": "C2H6",
+          "validity_range": "Any gas that can reasonably be treated as ideal; the identity does not affect the calculation."
+        },
+        {
+          "description": "the volume of the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "4.860 dm3",
+            "250 mL"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Positive volume in m3, dm3, L, mL or cm3; must be greater than zero."
+        },
+        {
+          "description": "the temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "98.6\u00b0F"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Temperature above absolute zero (K > 0, \u00b0C > -273.15, \u00b0F > -459.67) in K, \u00b0C or \u00b0F."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    }
+  ]
+}

@@ -1,0 +1,418 @@
+{
+  "name": "fam_f0002",
+  "functions": [
+    {
+      "id": "parse_a_monetary_amount_text_with_curren_7889e6",
+      "description": "Parse a monetary amount text with currency symbol and scale word into an exact Decimal dollar amount",
+      "inputs": [
+        "monetary amount as text copied from the question with currency symbol and scale word"
+      ],
+      "outputs": [
+        "amount in dollars as an exact Decimal"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0002"
+    },
+    {
+      "id": "parse_a_count_of_years_written_as_digits_f55351",
+      "description": "Parse a count of years written as digits or English number words into an integer.",
+      "inputs": [
+        "number of years as text copied from the question"
+      ],
+      "outputs": [
+        "whole number of years as an integer"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0002"
+    },
+    {
+      "id": "compute_the_double_declining_balance_rat_e99bd7",
+      "description": "Compute the double-declining-balance rate as two divided by the useful life in years.",
+      "inputs": [
+        "useful life of the asset in years"
+      ],
+      "outputs": [
+        "double-declining-balance rate as an exact fraction"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0002"
+    },
+    {
+      "id": "cap_a_candidate_depreciation_charge_so_t_dcf8de",
+      "description": "Cap a candidate depreciation charge so the resulting book value does not fall below salvage value, parsing each dollar input robustly first.",
+      "inputs": [
+        "candidate depreciation charge in dollars",
+        "beginning book value for the year in dollars",
+        "salvage value in dollars"
+      ],
+      "outputs": [
+        "capped depreciation charge in dollars"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0002"
+    },
+    {
+      "id": "compute_the_straight_line_depreciation_c_e3ee52",
+      "description": "Compute the straight-line depreciation charge for the year on the remaining depreciable base over the remaining years",
+      "inputs": [
+        "beginning book value for the year in dollars",
+        "salvage value in dollars",
+        "remaining useful life in years including the current year"
+      ],
+      "outputs": [
+        "straight-line charge for the year in dollars"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0002"
+    },
+    {
+      "id": "compute_one_year_of_double_declining_bal_351e61",
+      "description": "Compute one year of double-declining-balance depreciation as the larger of the declining-balance and straight-line charges, capped so book value stays at or above salvage, and return the charge and year-end book value.",
+      "inputs": [
+        "beginning book value for the year in dollars",
+        "salvage value in dollars",
+        "double-declining-balance rate as an exact fraction",
+        "remaining useful life in years including the current year"
+      ],
+      "outputs": [
+        "depreciation charge for the year in dollars",
+        "book value at year end in dollars"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0002"
+    },
+    {
+      "id": "simulate_year_by_year_double_declining_b_ceb77a",
+      "description": "Simulate year-by-year double-declining-balance depreciation with salvage floor to find the book value after a number of years.",
+      "inputs": [
+        "asset cost in dollars",
+        "salvage value in dollars",
+        "useful life in years",
+        "number of elapsed years",
+        "double-declining-balance rate as an exact fraction"
+      ],
+      "outputs": [
+        "book value after the elapsed years in dollars"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0002"
+    },
+    {
+      "id": "format_a_dollar_book_value_rounded_half_2410fe",
+      "description": "Format a dollar book value rounded half-up to cents for the final answer.",
+      "inputs": [
+        "book value after the elapsed years in dollars"
+      ],
+      "outputs": [
+        "formatted book value in dollars to two decimal places"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0002"
+    },
+    {
+      "id": "compute_the_book_value_after_a_given_num_9b0b19",
+      "description": "Compute the book value after a given number of years under double-declining-balance depreciation with a salvage floor by parsing the inputs and simulating year by year.",
+      "inputs": [
+        "the original cost of the asset in dollars, as text copied from the question including currency symbol and any scale word",
+        "the useful life of the asset in years, as text copied from the question",
+        "the salvage (residual) value of the asset at the end of its useful life in dollars, as text copied from the question",
+        "the number of years elapsed since acquisition at which the book value is required, as text copied from the question"
+      ],
+      "outputs": [
+        "final book value after the elapsed years, formatted in dollars to two decimal places"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0002"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "Using the double-declining-balance method, find the book value after \u25cf4 of an asset that cost \u25cf1, has a \u25cf2 and a \u25cf3 salvage value.",
+      "kind": "template",
+      "root_id": "compute_the_book_value_after_a_given_num_9b0b19",
+      "params": [
+        {
+          "description": "the original cost of the asset in dollars, as text copied from the question including currency symbol and any scale word",
+          "format_examples": [
+            "$379,000",
+            "$0.42 million",
+            "$250k"
+          ],
+          "original_value": "$379,000",
+          "validity_range": "Must be a positive monetary amount, strictly greater than the salvage value (\u25cf3); if cost equals salvage there is no depreciable base and the book value is constant. Scale words k, thousand, million, billion multiply by 10^3, 10^3, 10^6, 10^9 respectively."
+        },
+        {
+          "description": "the useful life of the asset in years, as text copied from the question",
+          "format_examples": [
+            "11-year life",
+            "5 years",
+            "twenty-year life"
+          ],
+          "original_value": "11-year life",
+          "validity_range": "Must be a positive integer number of years (at least 1). The DDB rate 2/life is defined only for life \u2265 1; the life also sets the number of remaining years used in the straight-line switch test."
+        },
+        {
+          "description": "the salvage (residual) value of the asset at the end of its useful life in dollars, as text copied from the question",
+          "format_examples": [
+            "$41,000",
+            "$5k",
+            "$0.5 million"
+          ],
+          "original_value": "$41,000",
+          "validity_range": "Must be a non-negative monetary amount, less than the cost (\u25cf1). A salvage of zero is valid and means depreciation continues down to zero book value."
+        },
+        {
+          "description": "the number of years elapsed since acquisition at which the book value is required, as text copied from the question",
+          "format_examples": [
+            "8 years",
+            "3 years",
+            "ten years"
+          ],
+          "original_value": "8 years",
+          "validity_range": "Must be a non-negative whole number of years. Values from 0 up to the useful life (\u25cf2) are standard; beyond the useful life the book value is held at the salvage floor and the result is salvage value."
+        }
+      ],
+      "problem_id": "fam_f0002"
+    },
+    {
+      "text": "Using the double-declining-balance method, find the book value after 8 years of an asset that cost $379,000, has a 11-year life and a $41,000 salvage value.",
+      "kind": "original",
+      "root_id": "compute_the_book_value_after_a_given_num_9b0b19",
+      "params": [
+        {
+          "description": "the original cost of the asset in dollars, as text copied from the question including currency symbol and any scale word",
+          "format_examples": [
+            "$379,000",
+            "$0.42 million",
+            "$250k"
+          ],
+          "original_value": "$379,000",
+          "validity_range": "Must be a positive monetary amount, strictly greater than the salvage value (\u25cf3); if cost equals salvage there is no depreciable base and the book value is constant. Scale words k, thousand, million, billion multiply by 10^3, 10^3, 10^6, 10^9 respectively."
+        },
+        {
+          "description": "the useful life of the asset in years, as text copied from the question",
+          "format_examples": [
+            "11-year life",
+            "5 years",
+            "twenty-year life"
+          ],
+          "original_value": "11-year life",
+          "validity_range": "Must be a positive integer number of years (at least 1). The DDB rate 2/life is defined only for life \u2265 1; the life also sets the number of remaining years used in the straight-line switch test."
+        },
+        {
+          "description": "the salvage (residual) value of the asset at the end of its useful life in dollars, as text copied from the question",
+          "format_examples": [
+            "$41,000",
+            "$5k",
+            "$0.5 million"
+          ],
+          "original_value": "$41,000",
+          "validity_range": "Must be a non-negative monetary amount, less than the cost (\u25cf1). A salvage of zero is valid and means depreciation continues down to zero book value."
+        },
+        {
+          "description": "the number of years elapsed since acquisition at which the book value is required, as text copied from the question",
+          "format_examples": [
+            "8 years",
+            "3 years",
+            "ten years"
+          ],
+          "original_value": "8 years",
+          "validity_range": "Must be a non-negative whole number of years. Values from 0 up to the useful life (\u25cf2) are standard; beyond the useful life the book value is held at the salvage floor and the result is salvage value."
+        }
+      ],
+      "problem_id": "fam_f0002"
+    },
+    {
+      "text": "Cost $51,000; salvage $3,200; life 5 years; method DDB. What is the net book value at the close of year 3?",
+      "kind": "family",
+      "root_id": "compute_the_book_value_after_a_given_num_9b0b19",
+      "params": [
+        {
+          "description": "the original cost of the asset in dollars, as text copied from the question including currency symbol and any scale word",
+          "format_examples": [
+            "$379,000",
+            "$0.42 million",
+            "$250k"
+          ],
+          "original_value": "$379,000",
+          "validity_range": "Must be a positive monetary amount, strictly greater than the salvage value (\u25cf3); if cost equals salvage there is no depreciable base and the book value is constant. Scale words k, thousand, million, billion multiply by 10^3, 10^3, 10^6, 10^9 respectively."
+        },
+        {
+          "description": "the useful life of the asset in years, as text copied from the question",
+          "format_examples": [
+            "11-year life",
+            "5 years",
+            "twenty-year life"
+          ],
+          "original_value": "11-year life",
+          "validity_range": "Must be a positive integer number of years (at least 1). The DDB rate 2/life is defined only for life \u2265 1; the life also sets the number of remaining years used in the straight-line switch test."
+        },
+        {
+          "description": "the salvage (residual) value of the asset at the end of its useful life in dollars, as text copied from the question",
+          "format_examples": [
+            "$41,000",
+            "$5k",
+            "$0.5 million"
+          ],
+          "original_value": "$41,000",
+          "validity_range": "Must be a non-negative monetary amount, less than the cost (\u25cf1). A salvage of zero is valid and means depreciation continues down to zero book value."
+        },
+        {
+          "description": "the number of years elapsed since acquisition at which the book value is required, as text copied from the question",
+          "format_examples": [
+            "8 years",
+            "3 years",
+            "ten years"
+          ],
+          "original_value": "8 years",
+          "validity_range": "Must be a non-negative whole number of years. Values from 0 up to the useful life (\u25cf2) are standard; beyond the useful life the book value is held at the salvage floor and the result is salvage value."
+        }
+      ],
+      "problem_id": "fam_f0002"
+    },
+    {
+      "text": "Using the double-declining-balance method, find the book value after 2 years of an asset that cost $332,000, has a 9-year life and a $43,300 salvage value.",
+      "kind": "family",
+      "root_id": "compute_the_book_value_after_a_given_num_9b0b19",
+      "params": [
+        {
+          "description": "the original cost of the asset in dollars, as text copied from the question including currency symbol and any scale word",
+          "format_examples": [
+            "$379,000",
+            "$0.42 million",
+            "$250k"
+          ],
+          "original_value": "$379,000",
+          "validity_range": "Must be a positive monetary amount, strictly greater than the salvage value (\u25cf3); if cost equals salvage there is no depreciable base and the book value is constant. Scale words k, thousand, million, billion multiply by 10^3, 10^3, 10^6, 10^9 respectively."
+        },
+        {
+          "description": "the useful life of the asset in years, as text copied from the question",
+          "format_examples": [
+            "11-year life",
+            "5 years",
+            "twenty-year life"
+          ],
+          "original_value": "11-year life",
+          "validity_range": "Must be a positive integer number of years (at least 1). The DDB rate 2/life is defined only for life \u2265 1; the life also sets the number of remaining years used in the straight-line switch test."
+        },
+        {
+          "description": "the salvage (residual) value of the asset at the end of its useful life in dollars, as text copied from the question",
+          "format_examples": [
+            "$41,000",
+            "$5k",
+            "$0.5 million"
+          ],
+          "original_value": "$41,000",
+          "validity_range": "Must be a non-negative monetary amount, less than the cost (\u25cf1). A salvage of zero is valid and means depreciation continues down to zero book value."
+        },
+        {
+          "description": "the number of years elapsed since acquisition at which the book value is required, as text copied from the question",
+          "format_examples": [
+            "8 years",
+            "3 years",
+            "ten years"
+          ],
+          "original_value": "8 years",
+          "validity_range": "Must be a non-negative whole number of years. Values from 0 up to the useful life (\u25cf2) are standard; beyond the useful life the book value is held at the salvage floor and the result is salvage value."
+        }
+      ],
+      "problem_id": "fam_f0002"
+    },
+    {
+      "text": "Using the double-declining-balance method, find the book value after 9 years of an asset that cost $149,000, has a 12-year life and a $24,900 salvage value.",
+      "kind": "family",
+      "root_id": "compute_the_book_value_after_a_given_num_9b0b19",
+      "params": [
+        {
+          "description": "the original cost of the asset in dollars, as text copied from the question including currency symbol and any scale word",
+          "format_examples": [
+            "$379,000",
+            "$0.42 million",
+            "$250k"
+          ],
+          "original_value": "$379,000",
+          "validity_range": "Must be a positive monetary amount, strictly greater than the salvage value (\u25cf3); if cost equals salvage there is no depreciable base and the book value is constant. Scale words k, thousand, million, billion multiply by 10^3, 10^3, 10^6, 10^9 respectively."
+        },
+        {
+          "description": "the useful life of the asset in years, as text copied from the question",
+          "format_examples": [
+            "11-year life",
+            "5 years",
+            "twenty-year life"
+          ],
+          "original_value": "11-year life",
+          "validity_range": "Must be a positive integer number of years (at least 1). The DDB rate 2/life is defined only for life \u2265 1; the life also sets the number of remaining years used in the straight-line switch test."
+        },
+        {
+          "description": "the salvage (residual) value of the asset at the end of its useful life in dollars, as text copied from the question",
+          "format_examples": [
+            "$41,000",
+            "$5k",
+            "$0.5 million"
+          ],
+          "original_value": "$41,000",
+          "validity_range": "Must be a non-negative monetary amount, less than the cost (\u25cf1). A salvage of zero is valid and means depreciation continues down to zero book value."
+        },
+        {
+          "description": "the number of years elapsed since acquisition at which the book value is required, as text copied from the question",
+          "format_examples": [
+            "8 years",
+            "3 years",
+            "ten years"
+          ],
+          "original_value": "8 years",
+          "validity_range": "Must be a non-negative whole number of years. Values from 0 up to the useful life (\u25cf2) are standard; beyond the useful life the book value is held at the salvage floor and the result is salvage value."
+        }
+      ],
+      "problem_id": "fam_f0002"
+    },
+    {
+      "text": "Using the double-declining-balance method, find the book value after 1 years of an asset that cost $396,000, has a 4-year life and a $47,800 salvage value.",
+      "kind": "family",
+      "root_id": "compute_the_book_value_after_a_given_num_9b0b19",
+      "params": [
+        {
+          "description": "the original cost of the asset in dollars, as text copied from the question including currency symbol and any scale word",
+          "format_examples": [
+            "$379,000",
+            "$0.42 million",
+            "$250k"
+          ],
+          "original_value": "$379,000",
+          "validity_range": "Must be a positive monetary amount, strictly greater than the salvage value (\u25cf3); if cost equals salvage there is no depreciable base and the book value is constant. Scale words k, thousand, million, billion multiply by 10^3, 10^3, 10^6, 10^9 respectively."
+        },
+        {
+          "description": "the useful life of the asset in years, as text copied from the question",
+          "format_examples": [
+            "11-year life",
+            "5 years",
+            "twenty-year life"
+          ],
+          "original_value": "11-year life",
+          "validity_range": "Must be a positive integer number of years (at least 1). The DDB rate 2/life is defined only for life \u2265 1; the life also sets the number of remaining years used in the straight-line switch test."
+        },
+        {
+          "description": "the salvage (residual) value of the asset at the end of its useful life in dollars, as text copied from the question",
+          "format_examples": [
+            "$41,000",
+            "$5k",
+            "$0.5 million"
+          ],
+          "original_value": "$41,000",
+          "validity_range": "Must be a non-negative monetary amount, less than the cost (\u25cf1). A salvage of zero is valid and means depreciation continues down to zero book value."
+        },
+        {
+          "description": "the number of years elapsed since acquisition at which the book value is required, as text copied from the question",
+          "format_examples": [
+            "8 years",
+            "3 years",
+            "ten years"
+          ],
+          "original_value": "8 years",
+          "validity_range": "Must be a non-negative whole number of years. Values from 0 up to the useful life (\u25cf2) are standard; beyond the useful life the book value is held at the salvage floor and the result is salvage value."
+        }
+      ],
+      "problem_id": "fam_f0002"
+    }
+  ]
+}

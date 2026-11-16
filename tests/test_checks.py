@@ -209,3 +209,28 @@ def test_units_must_be_compatible():
     assert number_check("50.6 atm", "51 bar")["status"] == "mismatch"
     assert number_check("pressure in atm: 50.68", "50.7 atm")["status"] == "match"   # unit only on one side
     assert number_check("317.46 mm", "0.317 m (about 318 mm, i.e. 317.5 mm)")["status"] == "match"
+
+
+def test_units_with_digits_are_read():
+    from arc.checks import written_numbers
+    assert [w.unit for w in written_numbers("4.860 dm3, 250 cm3, 1.2 m3, 3 m2")] == ["dm3", "cm3", "m3", ""]
+
+
+# Regression (2026-11-15): with both units written, the rescale factor was not tied to the
+# units, so 5.13 MPa "matched" 5130000 kPa (1000x off), and 4860 cm3 vs 4.860 dm3 (equal) failed.
+@pytest.mark.parametrize("answer,reference,status", [
+    ("4860 cm3", "4.860 dm3", "match"),
+    ("4.860 L", "4.860 dm3", "match"),
+    ("250 mL", "0.25 L", "match"),
+    ("250 mL", "250 cm3", "match"),
+    ("5130 kPa", "5.13 MPa", "match"),
+    ("5130000 kPa", "5.13 MPa", "mismatch"),       # wrong factor for these units
+    ("5.13 kPa", "5.13 MPa", "mismatch"),
+    ("4860000 cm3", "4.860 dm3", "mismatch"),
+    ("12.66 mm", "0.01266 m", "match"),
+    ("12.66 m", "12.66 mm", "mismatch"),
+    ("1.2 kg", "1200 g", "match"),
+    ("37.6 mL/min", "37.6 mL/min", "match"),
+])
+def test_rescaling_uses_the_factor_the_units_imply(answer, reference, status):
+    assert number_check(answer, reference)["status"] == status

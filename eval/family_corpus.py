@@ -86,6 +86,10 @@ def main() -> None:
                               "how": tr.assignments.get(r["id"], {})}
                              for e, c in by_true.items() for r in hits
                              if r["expected_entry"] == e and group_of[r["id"]] != c.most_common(1)[0][0]],
+               "assignments": {r["id"]: {**tr.assignments.get(r["id"], {}), "should_hit": r["should_hit"],
+                                          "expected_entry": r["expected_entry"], "seed_entry": r["seed_entry"],
+                                          "category": r["near_miss_category"], "either": r["acceptable_either"],
+                                          "q": r["question"][:160]} for r in rows},
                "absorbed": [{"id": r["id"], "seed": r["seed_entry"], "category": r["near_miss_category"],
                              "q": r["question"][:120], "how": tr.assignments.get(r["id"], {})} for r in absorbed]}
         results.append(res)

@@ -1,0 +1,21 @@
+{
+  "fam_perfect_gas_pressure": {
+    "pressure of the gas in atm": {
+      "kind": "measure",
+      "unit": "atm",
+      "decimals": null
+    },
+    "SI cross-check pressure in atm": {
+      "kind": "measure",
+      "unit": "atm",
+      "decimals": null
+    }
+  },
+  "fam_ddb_book_value": {
+    "book value at the end of the target year in dollars rounded to the cent": {
+      "kind": "money",
+      "unit": "USD",
+      "decimals": 2
+    }
+  }
+}

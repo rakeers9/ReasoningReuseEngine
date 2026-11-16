@@ -1,0 +1,363 @@
+{
+  "name": "fam_perfect_gas_pressure",
+  "functions": [
+    {
+      "id": "parse_the_amount_of_substance_in_moles_f_fd7533",
+      "description": "Parse the amount of substance in moles from raw question text, handling scale words and units with exact factors.",
+      "inputs": [
+        "raw text giving the amount of substance with unit, e.g. 7.39 mol"
+      ],
+      "outputs": [
+        "amount of substance n in mol"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "parse_the_gas_volume_from_raw_text_inclu_db3bd8",
+      "description": "Parse the gas volume from raw text including its unit and convert it exactly to litres.",
+      "inputs": [
+        "raw text giving the volume with unit, e.g. 0.03256 m3"
+      ],
+      "outputs": [
+        "volume in litres"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "parse_the_absolute_temperature_from_raw_335970",
+      "description": "Parse the absolute temperature from raw text and convert it exactly to kelvin, applying the Celsius, Fahrenheit and Rankine offsets and scales.",
+      "inputs": [
+        "raw text giving the temperature with unit, e.g. 507.15 K"
+      ],
+      "outputs": [
+        "temperature in kelvin"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "provide_the_molar_gas_constant_r_express_44caf7",
+      "description": "Provide the molar gas constant R expressed in L\u00b7atm/(mol\u00b7K) for use with volume in litres and pressure in atm.",
+      "inputs": [],
+      "outputs": [
+        "gas constant R in L\u00b7atm/(mol\u00b7K)"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "compute_the_ideal_gas_pressure_p_nrt_v_f_4a753d",
+      "description": "Compute the ideal gas pressure p = nRT/V from amount, gas constant, temperature and volume using exact decimal arithmetic.",
+      "inputs": [
+        "amount of substance n in mol",
+        "gas constant R in L\u00b7atm/(mol\u00b7K)",
+        "temperature in kelvin",
+        "volume in litres"
+      ],
+      "outputs": [
+        "pressure in atm"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "cross_check_an_ideal_gas_pressure_by_rec_7d2496",
+      "description": "Cross-check an ideal gas pressure by recomputing nRT/V in SI units and comparing it with the primary pressure.",
+      "inputs": [
+        "amount of substance n in mol",
+        "temperature in kelvin",
+        "volume in litres",
+        "pressure in atm"
+      ],
+      "outputs": [
+        "SI cross-check pressure in atm"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "solve_the_ideal_gas_law_pv_nrt_for_the_p_9a4914",
+      "description": "Solve the ideal gas law pV = nRT for the pressure of a gas given its amount, volume and absolute temperature.",
+      "inputs": [
+        "the amount of substance n of the gas with unit (moles)",
+        "the volume occupied by the gas with unit",
+        "the absolute temperature of the gas with unit"
+      ],
+      "outputs": [
+        "pressure of the gas in atm"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "Using pV = nRT, find the pressure of \u25cf1 of C2H6 occupying \u25cf2 at \u25cf3.",
+      "kind": "template",
+      "root_id": "solve_the_ideal_gas_law_pv_nrt_for_the_p_9a4914",
+      "params": [
+        {
+          "description": "the amount of substance n of the gas with unit (moles)",
+          "format_examples": [
+            "7.39 mol",
+            "0.250 mol",
+            "12 mol"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Must be a positive finite number of moles (n > 0). Zero or negative amounts are physically meaningless. Parse scale words such as millimol or kmol with exact factors."
+        },
+        {
+          "description": "the volume occupied by the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "250 mL",
+            "1.5 dm3"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Must be a positive finite volume (V > 0). Units such as m3, dm3, L, mL and cm3 must be converted with exact factors (1 m3 = 1000 L, 1 dm3 = 1 L, 1 L = 1000 mL = 1000 cm3). Unhandled units must raise an error."
+        },
+        {
+          "description": "the absolute temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "300 K"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Must be an absolute temperature above 0 K (T > 0). Kelvin values must be positive. Celsius values must be above -273.15 \u00b0C and are converted by adding 273.15. Fahrenheit values must be converted with the appropriate offset and scale. The ideal gas law is only approximate near condensation or at very high pressure."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "Using pV = nRT, find the pressure of 7.39 mol of C2H6 occupying 0.03256 m3 at 507.15 K.",
+      "kind": "original",
+      "root_id": "solve_the_ideal_gas_law_pv_nrt_for_the_p_9a4914",
+      "params": [
+        {
+          "description": "the amount of substance n of the gas with unit (moles)",
+          "format_examples": [
+            "7.39 mol",
+            "0.250 mol",
+            "12 mol"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Must be a positive finite number of moles (n > 0). Zero or negative amounts are physically meaningless. Parse scale words such as millimol or kmol with exact factors."
+        },
+        {
+          "description": "the volume occupied by the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "250 mL",
+            "1.5 dm3"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Must be a positive finite volume (V > 0). Units such as m3, dm3, L, mL and cm3 must be converted with exact factors (1 m3 = 1000 L, 1 dm3 = 1 L, 1 L = 1000 mL = 1000 cm3). Unhandled units must raise an error."
+        },
+        {
+          "description": "the absolute temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "300 K"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Must be an absolute temperature above 0 K (T > 0). Kelvin values must be positive. Celsius values must be above -273.15 \u00b0C and are converted by adding 273.15. Fahrenheit values must be converted with the appropriate offset and scale. The ideal gas law is only approximate near condensation or at very high pressure."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "What pressure is exerted by 14860 mmol of oxygen in a 0.010565 m3 container at 533.15 K, treating it as a perfect gas?",
+      "kind": "family",
+      "root_id": "solve_the_ideal_gas_law_pv_nrt_for_the_p_9a4914",
+      "params": [
+        {
+          "description": "the amount of substance n of the gas with unit (moles)",
+          "format_examples": [
+            "7.39 mol",
+            "0.250 mol",
+            "12 mol"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Must be a positive finite number of moles (n > 0). Zero or negative amounts are physically meaningless. Parse scale words such as millimol or kmol with exact factors."
+        },
+        {
+          "description": "the volume occupied by the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "250 mL",
+            "1.5 dm3"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Must be a positive finite volume (V > 0). Units such as m3, dm3, L, mL and cm3 must be converted with exact factors (1 m3 = 1000 L, 1 dm3 = 1 L, 1 L = 1000 mL = 1000 cm3). Unhandled units must raise an error."
+        },
+        {
+          "description": "the absolute temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "300 K"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Must be an absolute temperature above 0 K (T > 0). Kelvin values must be positive. Celsius values must be above -273.15 \u00b0C and are converted by adding 273.15. Fahrenheit values must be converted with the appropriate offset and scale. The ideal gas law is only approximate near condensation or at very high pressure."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "What pressure is exerted by 3420 mmol of ethane in a 0.021778 m3 container at 113\u00b0C, treating it as a perfect gas?",
+      "kind": "family",
+      "root_id": "solve_the_ideal_gas_law_pv_nrt_for_the_p_9a4914",
+      "params": [
+        {
+          "description": "the amount of substance n of the gas with unit (moles)",
+          "format_examples": [
+            "7.39 mol",
+            "0.250 mol",
+            "12 mol"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Must be a positive finite number of moles (n > 0). Zero or negative amounts are physically meaningless. Parse scale words such as millimol or kmol with exact factors."
+        },
+        {
+          "description": "the volume occupied by the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "250 mL",
+            "1.5 dm3"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Must be a positive finite volume (V > 0). Units such as m3, dm3, L, mL and cm3 must be converted with exact factors (1 m3 = 1000 L, 1 dm3 = 1 L, 1 L = 1000 mL = 1000 cm3). Unhandled units must raise an error."
+        },
+        {
+          "description": "the absolute temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "300 K"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Must be an absolute temperature above 0 K (T > 0). Kelvin values must be positive. Celsius values must be above -273.15 \u00b0C and are converted by adding 273.15. Fahrenheit values must be converted with the appropriate offset and scale. The ideal gas law is only approximate near condensation or at very high pressure."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "Using pV = nRT, find the pressure of 11200 mmol of O2 occupying 44.921 dm3 at 500.15 K.",
+      "kind": "family",
+      "root_id": "solve_the_ideal_gas_law_pv_nrt_for_the_p_9a4914",
+      "params": [
+        {
+          "description": "the amount of substance n of the gas with unit (moles)",
+          "format_examples": [
+            "7.39 mol",
+            "0.250 mol",
+            "12 mol"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Must be a positive finite number of moles (n > 0). Zero or negative amounts are physically meaningless. Parse scale words such as millimol or kmol with exact factors."
+        },
+        {
+          "description": "the volume occupied by the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "250 mL",
+            "1.5 dm3"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Must be a positive finite volume (V > 0). Units such as m3, dm3, L, mL and cm3 must be converted with exact factors (1 m3 = 1000 L, 1 dm3 = 1 L, 1 L = 1000 mL = 1000 cm3). Unhandled units must raise an error."
+        },
+        {
+          "description": "the absolute temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "300 K"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Must be an absolute temperature above 0 K (T > 0). Kelvin values must be positive. Celsius values must be above -273.15 \u00b0C and are converted by adding 273.15. Fahrenheit values must be converted with the appropriate offset and scale. The ideal gas law is only approximate near condensation or at very high pressure."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "Suppose that 15.67 mol C2H6(g) is confined to 31.739 L at 264.15 K. Predict the pressure exerted by the ethane from the perfect gas equation.",
+      "kind": "family",
+      "root_id": "solve_the_ideal_gas_law_pv_nrt_for_the_p_9a4914",
+      "params": [
+        {
+          "description": "the amount of substance n of the gas with unit (moles)",
+          "format_examples": [
+            "7.39 mol",
+            "0.250 mol",
+            "12 mol"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Must be a positive finite number of moles (n > 0). Zero or negative amounts are physically meaningless. Parse scale words such as millimol or kmol with exact factors."
+        },
+        {
+          "description": "the volume occupied by the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "250 mL",
+            "1.5 dm3"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Must be a positive finite volume (V > 0). Units such as m3, dm3, L, mL and cm3 must be converted with exact factors (1 m3 = 1000 L, 1 dm3 = 1 L, 1 L = 1000 mL = 1000 cm3). Unhandled units must raise an error."
+        },
+        {
+          "description": "the absolute temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "300 K"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Must be an absolute temperature above 0 K (T > 0). Kelvin values must be positive. Celsius values must be above -273.15 \u00b0C and are converted by adding 273.15. Fahrenheit values must be converted with the appropriate offset and scale. The ideal gas law is only approximate near condensation or at very high pressure."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "Using pV = nRT, find the pressure of 13.86 mol of Ar occupying 17692 mL at 545.15 K.",
+      "kind": "family",
+      "root_id": "solve_the_ideal_gas_law_pv_nrt_for_the_p_9a4914",
+      "params": [
+        {
+          "description": "the amount of substance n of the gas with unit (moles)",
+          "format_examples": [
+            "7.39 mol",
+            "0.250 mol",
+            "12 mol"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Must be a positive finite number of moles (n > 0). Zero or negative amounts are physically meaningless. Parse scale words such as millimol or kmol with exact factors."
+        },
+        {
+          "description": "the volume occupied by the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "250 mL",
+            "1.5 dm3"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Must be a positive finite volume (V > 0). Units such as m3, dm3, L, mL and cm3 must be converted with exact factors (1 m3 = 1000 L, 1 dm3 = 1 L, 1 L = 1000 mL = 1000 cm3). Unhandled units must raise an error."
+        },
+        {
+          "description": "the absolute temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "300 K"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Must be an absolute temperature above 0 K (T > 0). Kelvin values must be positive. Celsius values must be above -273.15 \u00b0C and are converted by adding 273.15. Fahrenheit values must be converted with the appropriate offset and scale. The ideal gas law is only approximate near condensation or at very high pressure."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    }
+  ]
+}

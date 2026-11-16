@@ -176,12 +176,17 @@ def score_message(m: dict, text: str):
     for unit, factor in UNIT_FORMS.get(m.get("answer_unit"), {}).items():
         if factor == 1.0:
             continue
-        # only numbers actually written in that unit, e.g. "526 kPa" (not "18.8 atm" read as bar)
-        for hit in re.finditer(rf"([-+]?\d[\d,]*(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*{re.escape(unit)}(?![A-Za-z])", text):
-            pre = text[max(0, hit.start(1) - 1):hit.start(1)]
-            for x, _, h in _numbers_with_precision(hit.group(1)):
-                if _agrees(x, h, m["answer_value"] * factor, False) and not pre.isalpha():
-                    return True, f"number in {unit}"
+        # only numbers actually written in that unit: "526 kPa", or a label before the number
+        # such as "pressure in bar: 7.7589" (never "18.8 atm" read as bar)
+        num = r"([-+]?\d[\d,]*(?:\.\d+)?(?:[eE][-+]?\d+)?)"
+        u = re.escape(unit)
+        patterns = [rf"{num}\s*{u}(?![A-Za-z])", rf"(?<![A-Za-z]){u}\)?\s*[:=]\s*{num}"]
+        for pat in patterns:
+            for hit in re.finditer(pat, text):
+                pre = text[max(0, hit.start(1) - 1):hit.start(1)]
+                for x, _, h in _numbers_with_precision(hit.group(1)):
+                    if _agrees(x, h, m["answer_value"] * factor, False) and not pre.isalpha():
+                        return True, f"number in {unit}"
     return ok, how
 
 
@@ -268,10 +273,10 @@ def main() -> None:
             # builds as the remaining budget can cover in the worst case
             room = int(max(0.0, args.max_cost - before) // max(config.LABELFREE_MAX_COST, 1e-9)) \
                 if not args.dry_run else None
-            if room == 0:
-                print(f"    skipping learning: ${before:.3f} spent leaves no room for a "
-                      f"${config.LABELFREE_MAX_COST:.2f} build under --max-cost {args.max_cost}")
-                continue
+            if room == 0:   # still group questions into families; only builds wait for budget
+                print(f"    no builds this step: ${before:.3f} spent leaves no room for a "
+                      f"${config.LABELFREE_MAX_COST:.2f} worst-case build under --max-cost {args.max_cost}",
+                      flush=True)
             for fid, res in bot.learn(build_fn=build_fn, max_builds=room):
                 row = {"after_message": i, "family": fid,
                        "label": bot.tracker.families[fid].label[:80],
@@ -281,7 +286,7 @@ def main() -> None:
                        "cost": round(getattr(res, "cost", 0.0) or 0.0, 5) if res else 0.0}
                 builds.append(row)
                 if row["status"] != "need_more_data" or row["cost"]:
-                    print(f"    build {fid}: {row['status']} {row['entry'] or ''} ${row['cost']:.4f}  {row['reason'][:70]}")
+                    print(f"    build {fid}: {row['status']} {row['entry'] or ''} ${row['cost']:.4f}  {row['reason'][:70]}", flush=True)
             spent_learning = llm.LEDGER.cost() - before
             if spent_learning:
                 print(f"    learning step cost ${spent_learning:.4f}; live entries: "
@@ -321,7 +326,7 @@ def summarize(log, builds, bot, cost, seconds) -> dict:
         "first_cache_hit_at_message": first_hit,
         "model_answers_right": count(from_cache=False, correct=True),
         "model_answers_scored": sum(not r["from_cache"] and r["correct"] is not None for r in log),
-        "builds": {s: sum(b["status"] == s for b in builds) for s in ("accepted", "rejected", "need_more_data", "error")},
+        "builds": {s: sum(b["status"] == s for b in builds) for s in ("accepted", "mismatch", "not_ready", "rejected", "need_more_data", "error")},
         "build_spend": round(sum(b["cost"] for b in builds), 4),
         "chitchat_skipped_by_families": bot.tracker.skipped,
         "families_seen": len(bot.tracker.families),

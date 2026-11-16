@@ -1,0 +1,743 @@
+{
+  "name": "master",
+  "functions": [
+    {
+      "id": "parse_the_amount_of_substance_in_moles_f_fd7533",
+      "description": "Parse the amount of substance in moles from raw question text, handling scale words and units with exact factors.",
+      "inputs": [
+        "raw text giving the amount of substance with unit, e.g. 7.39 mol"
+      ],
+      "outputs": [
+        "amount of substance n in mol"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "parse_the_gas_volume_from_raw_text_inclu_db3bd8",
+      "description": "Parse the gas volume from raw text including its unit and convert it exactly to litres.",
+      "inputs": [
+        "raw text giving the volume with unit, e.g. 0.03256 m3"
+      ],
+      "outputs": [
+        "volume in litres"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "parse_the_absolute_temperature_from_raw_335970",
+      "description": "Parse the absolute temperature from raw text and convert it exactly to kelvin, applying the Celsius, Fahrenheit and Rankine offsets and scales.",
+      "inputs": [
+        "raw text giving the temperature with unit, e.g. 507.15 K"
+      ],
+      "outputs": [
+        "temperature in kelvin"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "provide_the_molar_gas_constant_r_express_44caf7",
+      "description": "Provide the molar gas constant R expressed in L\u00b7atm/(mol\u00b7K) for use with volume in litres and pressure in atm.",
+      "inputs": [],
+      "outputs": [
+        "gas constant R in L\u00b7atm/(mol\u00b7K)"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "compute_the_ideal_gas_pressure_p_nrt_v_f_4a753d",
+      "description": "Compute the ideal gas pressure p = nRT/V from amount, gas constant, temperature and volume using exact decimal arithmetic.",
+      "inputs": [
+        "amount of substance n in mol",
+        "gas constant R in L\u00b7atm/(mol\u00b7K)",
+        "temperature in kelvin",
+        "volume in litres"
+      ],
+      "outputs": [
+        "pressure in atm"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "cross_check_an_ideal_gas_pressure_by_rec_7d2496",
+      "description": "Cross-check an ideal gas pressure by recomputing nRT/V in SI units and comparing it with the primary pressure.",
+      "inputs": [
+        "amount of substance n in mol",
+        "temperature in kelvin",
+        "volume in litres",
+        "pressure in atm"
+      ],
+      "outputs": [
+        "SI cross-check pressure in atm"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "solve_the_ideal_gas_law_pv_nrt_for_the_p_9a4914",
+      "description": "Solve the ideal gas law pV = nRT for the pressure of a gas given its amount, volume and absolute temperature.",
+      "inputs": [
+        "the amount of substance n of the gas with unit (moles)",
+        "the volume occupied by the gas with unit",
+        "the absolute temperature of the gas with unit"
+      ],
+      "outputs": [
+        "pressure of the gas in atm"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_perfect_gas_pressure"
+    },
+    {
+      "id": "parse_a_money_amount_text_with_an_option_007c40",
+      "description": "Parse a money amount text with an optional scale word into an exact decimal number of dollars.",
+      "inputs": [
+        "raw money text with optional scale word such as million or k"
+      ],
+      "outputs": [
+        "money amount in dollars as an exact decimal"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_ddb_book_value"
+    },
+    {
+      "id": "parse_a_text_giving_a_count_of_years_int_b444a9",
+      "description": "Parse a text giving a count of years into a non-negative whole number of years.",
+      "inputs": [
+        "raw text giving a count of years"
+      ],
+      "outputs": [
+        "count of years as an integer"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_ddb_book_value"
+    },
+    {
+      "id": "compute_the_double_declining_balance_dep_1a8add",
+      "description": "Compute the double-declining-balance depreciation rate as two divided by the useful life in years.",
+      "inputs": [
+        "useful life in years as an integer"
+      ],
+      "outputs": [
+        "double-declining-balance rate as an exact fraction"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_ddb_book_value"
+    },
+    {
+      "id": "compute_one_year_of_double_declining_bal_a6fdaf",
+      "description": "Compute one year of double-declining-balance depreciation as the rate times the opening book value, capped so the closing book value does not fall below the salvage value.",
+      "inputs": [
+        "opening book value in dollars as an exact decimal",
+        "double-declining-balance rate as an exact fraction",
+        "salvage value in dollars as an exact decimal"
+      ],
+      "outputs": [
+        "depreciation for the year in dollars"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_ddb_book_value"
+    },
+    {
+      "id": "simulate_year_by_year_double_declining_b_08f8f1",
+      "description": "Simulate year-by-year double-declining-balance depreciation from cost up to a target year while keeping book value at or above salvage.",
+      "inputs": [
+        "cost in dollars as an exact decimal",
+        "salvage value in dollars as an exact decimal",
+        "double-declining-balance rate as an exact fraction",
+        "target year as an integer"
+      ],
+      "outputs": [
+        "book value at the end of the target year in dollars"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_ddb_book_value"
+    },
+    {
+      "id": "round_a_dollar_amount_to_the_nearest_cen_2df83b",
+      "description": "Round a dollar amount to the nearest cent using half-up rounding.",
+      "inputs": [
+        "dollar amount at full precision"
+      ],
+      "outputs": [
+        "dollar amount rounded to the cent"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_ddb_book_value"
+    },
+    {
+      "id": "compute_the_book_value_at_the_end_of_a_g_16a0ac",
+      "description": "Compute the book value at the end of a given year for a machine under double-declining-balance depreciation with a salvage floor.",
+      "inputs": [
+        "the purchase cost of the machine in dollars, as written with its scale word or suffix (e.g. million or k)",
+        "the salvage value of the machine in dollars, the residual book value at the end of its useful life",
+        "the useful life of the machine in years",
+        "the target year at whose end the book value is requested, as a count of years since acquisition"
+      ],
+      "outputs": [
+        "book value at the end of the target year in dollars rounded to the cent"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_ddb_book_value"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "Using pV = nRT, find the pressure of \u25cf1 of C2H6 occupying \u25cf2 at \u25cf3.",
+      "kind": "template",
+      "root_id": "solve_the_ideal_gas_law_pv_nrt_for_the_p_9a4914",
+      "params": [
+        {
+          "description": "the amount of substance n of the gas with unit (moles)",
+          "format_examples": [
+            "7.39 mol",
+            "0.250 mol",
+            "12 mol"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Must be a positive finite number of moles (n > 0). Zero or negative amounts are physically meaningless. Parse scale words such as millimol or kmol with exact factors."
+        },
+        {
+          "description": "the volume occupied by the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "250 mL",
+            "1.5 dm3"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Must be a positive finite volume (V > 0). Units such as m3, dm3, L, mL and cm3 must be converted with exact factors (1 m3 = 1000 L, 1 dm3 = 1 L, 1 L = 1000 mL = 1000 cm3). Unhandled units must raise an error."
+        },
+        {
+          "description": "the absolute temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "300 K"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Must be an absolute temperature above 0 K (T > 0). Kelvin values must be positive. Celsius values must be above -273.15 \u00b0C and are converted by adding 273.15. Fahrenheit values must be converted with the appropriate offset and scale. The ideal gas law is only approximate near condensation or at very high pressure."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "Using pV = nRT, find the pressure of 7.39 mol of C2H6 occupying 0.03256 m3 at 507.15 K.",
+      "kind": "original",
+      "root_id": "solve_the_ideal_gas_law_pv_nrt_for_the_p_9a4914",
+      "params": [
+        {
+          "description": "the amount of substance n of the gas with unit (moles)",
+          "format_examples": [
+            "7.39 mol",
+            "0.250 mol",
+            "12 mol"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Must be a positive finite number of moles (n > 0). Zero or negative amounts are physically meaningless. Parse scale words such as millimol or kmol with exact factors."
+        },
+        {
+          "description": "the volume occupied by the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "250 mL",
+            "1.5 dm3"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Must be a positive finite volume (V > 0). Units such as m3, dm3, L, mL and cm3 must be converted with exact factors (1 m3 = 1000 L, 1 dm3 = 1 L, 1 L = 1000 mL = 1000 cm3). Unhandled units must raise an error."
+        },
+        {
+          "description": "the absolute temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "300 K"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Must be an absolute temperature above 0 K (T > 0). Kelvin values must be positive. Celsius values must be above -273.15 \u00b0C and are converted by adding 273.15. Fahrenheit values must be converted with the appropriate offset and scale. The ideal gas law is only approximate near condensation or at very high pressure."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "What pressure is exerted by 14860 mmol of oxygen in a 0.010565 m3 container at 533.15 K, treating it as a perfect gas?",
+      "kind": "family",
+      "root_id": "solve_the_ideal_gas_law_pv_nrt_for_the_p_9a4914",
+      "params": [
+        {
+          "description": "the amount of substance n of the gas with unit (moles)",
+          "format_examples": [
+            "7.39 mol",
+            "0.250 mol",
+            "12 mol"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Must be a positive finite number of moles (n > 0). Zero or negative amounts are physically meaningless. Parse scale words such as millimol or kmol with exact factors."
+        },
+        {
+          "description": "the volume occupied by the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "250 mL",
+            "1.5 dm3"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Must be a positive finite volume (V > 0). Units such as m3, dm3, L, mL and cm3 must be converted with exact factors (1 m3 = 1000 L, 1 dm3 = 1 L, 1 L = 1000 mL = 1000 cm3). Unhandled units must raise an error."
+        },
+        {
+          "description": "the absolute temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "300 K"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Must be an absolute temperature above 0 K (T > 0). Kelvin values must be positive. Celsius values must be above -273.15 \u00b0C and are converted by adding 273.15. Fahrenheit values must be converted with the appropriate offset and scale. The ideal gas law is only approximate near condensation or at very high pressure."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "What pressure is exerted by 3420 mmol of ethane in a 0.021778 m3 container at 113\u00b0C, treating it as a perfect gas?",
+      "kind": "family",
+      "root_id": "solve_the_ideal_gas_law_pv_nrt_for_the_p_9a4914",
+      "params": [
+        {
+          "description": "the amount of substance n of the gas with unit (moles)",
+          "format_examples": [
+            "7.39 mol",
+            "0.250 mol",
+            "12 mol"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Must be a positive finite number of moles (n > 0). Zero or negative amounts are physically meaningless. Parse scale words such as millimol or kmol with exact factors."
+        },
+        {
+          "description": "the volume occupied by the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "250 mL",
+            "1.5 dm3"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Must be a positive finite volume (V > 0). Units such as m3, dm3, L, mL and cm3 must be converted with exact factors (1 m3 = 1000 L, 1 dm3 = 1 L, 1 L = 1000 mL = 1000 cm3). Unhandled units must raise an error."
+        },
+        {
+          "description": "the absolute temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "300 K"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Must be an absolute temperature above 0 K (T > 0). Kelvin values must be positive. Celsius values must be above -273.15 \u00b0C and are converted by adding 273.15. Fahrenheit values must be converted with the appropriate offset and scale. The ideal gas law is only approximate near condensation or at very high pressure."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "Using pV = nRT, find the pressure of 11200 mmol of O2 occupying 44.921 dm3 at 500.15 K.",
+      "kind": "family",
+      "root_id": "solve_the_ideal_gas_law_pv_nrt_for_the_p_9a4914",
+      "params": [
+        {
+          "description": "the amount of substance n of the gas with unit (moles)",
+          "format_examples": [
+            "7.39 mol",
+            "0.250 mol",
+            "12 mol"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Must be a positive finite number of moles (n > 0). Zero or negative amounts are physically meaningless. Parse scale words such as millimol or kmol with exact factors."
+        },
+        {
+          "description": "the volume occupied by the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "250 mL",
+            "1.5 dm3"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Must be a positive finite volume (V > 0). Units such as m3, dm3, L, mL and cm3 must be converted with exact factors (1 m3 = 1000 L, 1 dm3 = 1 L, 1 L = 1000 mL = 1000 cm3). Unhandled units must raise an error."
+        },
+        {
+          "description": "the absolute temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "300 K"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Must be an absolute temperature above 0 K (T > 0). Kelvin values must be positive. Celsius values must be above -273.15 \u00b0C and are converted by adding 273.15. Fahrenheit values must be converted with the appropriate offset and scale. The ideal gas law is only approximate near condensation or at very high pressure."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "Suppose that 15.67 mol C2H6(g) is confined to 31.739 L at 264.15 K. Predict the pressure exerted by the ethane from the perfect gas equation.",
+      "kind": "family",
+      "root_id": "solve_the_ideal_gas_law_pv_nrt_for_the_p_9a4914",
+      "params": [
+        {
+          "description": "the amount of substance n of the gas with unit (moles)",
+          "format_examples": [
+            "7.39 mol",
+            "0.250 mol",
+            "12 mol"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Must be a positive finite number of moles (n > 0). Zero or negative amounts are physically meaningless. Parse scale words such as millimol or kmol with exact factors."
+        },
+        {
+          "description": "the volume occupied by the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "250 mL",
+            "1.5 dm3"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Must be a positive finite volume (V > 0). Units such as m3, dm3, L, mL and cm3 must be converted with exact factors (1 m3 = 1000 L, 1 dm3 = 1 L, 1 L = 1000 mL = 1000 cm3). Unhandled units must raise an error."
+        },
+        {
+          "description": "the absolute temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "300 K"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Must be an absolute temperature above 0 K (T > 0). Kelvin values must be positive. Celsius values must be above -273.15 \u00b0C and are converted by adding 273.15. Fahrenheit values must be converted with the appropriate offset and scale. The ideal gas law is only approximate near condensation or at very high pressure."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "Using pV = nRT, find the pressure of 13.86 mol of Ar occupying 17692 mL at 545.15 K.",
+      "kind": "family",
+      "root_id": "solve_the_ideal_gas_law_pv_nrt_for_the_p_9a4914",
+      "params": [
+        {
+          "description": "the amount of substance n of the gas with unit (moles)",
+          "format_examples": [
+            "7.39 mol",
+            "0.250 mol",
+            "12 mol"
+          ],
+          "original_value": "7.39 mol",
+          "validity_range": "Must be a positive finite number of moles (n > 0). Zero or negative amounts are physically meaningless. Parse scale words such as millimol or kmol with exact factors."
+        },
+        {
+          "description": "the volume occupied by the gas with unit",
+          "format_examples": [
+            "0.03256 m3",
+            "250 mL",
+            "1.5 dm3"
+          ],
+          "original_value": "0.03256 m3",
+          "validity_range": "Must be a positive finite volume (V > 0). Units such as m3, dm3, L, mL and cm3 must be converted with exact factors (1 m3 = 1000 L, 1 dm3 = 1 L, 1 L = 1000 mL = 1000 cm3). Unhandled units must raise an error."
+        },
+        {
+          "description": "the absolute temperature of the gas with unit",
+          "format_examples": [
+            "507.15 K",
+            "27\u00b0C",
+            "300 K"
+          ],
+          "original_value": "507.15 K",
+          "validity_range": "Must be an absolute temperature above 0 K (T > 0). Kelvin values must be positive. Celsius values must be above -273.15 \u00b0C and are converted by adding 273.15. Fahrenheit values must be converted with the appropriate offset and scale. The ideal gas law is only approximate near condensation or at very high pressure."
+        }
+      ],
+      "problem_id": "fam_perfect_gas_pressure"
+    },
+    {
+      "text": "A machine costs \u25cf1, has a salvage value of \u25cf2, and a useful life of \u25cf3. Using double-declining-balance depreciation, what is its book value at the end of year \u25cf4?",
+      "kind": "template",
+      "root_id": "compute_the_book_value_at_the_end_of_a_g_16a0ac",
+      "params": [
+        {
+          "description": "the purchase cost of the machine in dollars, as written with its scale word or suffix (e.g. million or k)",
+          "format_examples": [
+            "$0.42 million",
+            "$150k",
+            "1.2 billion dollars"
+          ],
+          "original_value": "$0.42 million",
+          "validity_range": "A positive money amount. Must be strictly greater than the salvage value \u25cf2, since otherwise there is no depreciable base. Scale words (thousand, k, million, bn, billion) must be converted to a full dollar amount before use."
+        },
+        {
+          "description": "the salvage value of the machine in dollars, the residual book value at the end of its useful life",
+          "format_examples": [
+            "$59,600",
+            "$5k",
+            "12 thousand dollars"
+          ],
+          "original_value": "$59,600",
+          "validity_range": "A non-negative money amount that is strictly less than the cost \u25cf1. A salvage value of zero is valid and means full cost is depreciable. Book value is floored at this amount, so a salvage value equal to or above the cost makes depreciation meaningless."
+        },
+        {
+          "description": "the useful life of the machine in years",
+          "format_examples": [
+            "10 years",
+            "5-year",
+            "eight years"
+          ],
+          "original_value": "10 years",
+          "validity_range": "A positive whole number of years. The DDB rate is 2 divided by this life, so it must be at least 2 to give a rate of 100 percent or less; a life of 1 gives a rate of 200 percent, which is not meaningful. Practically the life should be 2 or more years."
+        },
+        {
+          "description": "the target year at whose end the book value is requested, as a count of years since acquisition",
+          "format_examples": [
+            "year 8",
+            "the end of year 3",
+            "year eight"
+          ],
+          "original_value": "8",
+          "validity_range": "A non-negative whole number. Year 0 returns the cost itself. Values up to the useful life \u25cf3 are normally asked; values beyond the useful life are not defined by the schedule and the book value would stay at salvage value after the asset is fully depreciated."
+        }
+      ],
+      "problem_id": "fam_ddb_book_value"
+    },
+    {
+      "text": "A machine costs $0.42 million, has a salvage value of $59,600, and a useful life of 10 years. Using double-declining-balance depreciation, what is its book value at the end of year 8?",
+      "kind": "original",
+      "root_id": "compute_the_book_value_at_the_end_of_a_g_16a0ac",
+      "params": [
+        {
+          "description": "the purchase cost of the machine in dollars, as written with its scale word or suffix (e.g. million or k)",
+          "format_examples": [
+            "$0.42 million",
+            "$150k",
+            "1.2 billion dollars"
+          ],
+          "original_value": "$0.42 million",
+          "validity_range": "A positive money amount. Must be strictly greater than the salvage value \u25cf2, since otherwise there is no depreciable base. Scale words (thousand, k, million, bn, billion) must be converted to a full dollar amount before use."
+        },
+        {
+          "description": "the salvage value of the machine in dollars, the residual book value at the end of its useful life",
+          "format_examples": [
+            "$59,600",
+            "$5k",
+            "12 thousand dollars"
+          ],
+          "original_value": "$59,600",
+          "validity_range": "A non-negative money amount that is strictly less than the cost \u25cf1. A salvage value of zero is valid and means full cost is depreciable. Book value is floored at this amount, so a salvage value equal to or above the cost makes depreciation meaningless."
+        },
+        {
+          "description": "the useful life of the machine in years",
+          "format_examples": [
+            "10 years",
+            "5-year",
+            "eight years"
+          ],
+          "original_value": "10 years",
+          "validity_range": "A positive whole number of years. The DDB rate is 2 divided by this life, so it must be at least 2 to give a rate of 100 percent or less; a life of 1 gives a rate of 200 percent, which is not meaningful. Practically the life should be 2 or more years."
+        },
+        {
+          "description": "the target year at whose end the book value is requested, as a count of years since acquisition",
+          "format_examples": [
+            "year 8",
+            "the end of year 3",
+            "year eight"
+          ],
+          "original_value": "8",
+          "validity_range": "A non-negative whole number. Year 0 returns the cost itself. Values up to the useful life \u25cf3 are normally asked; values beyond the useful life are not defined by the schedule and the book value would stay at salvage value after the asset is fully depreciated."
+        }
+      ],
+      "problem_id": "fam_ddb_book_value"
+    },
+    {
+      "text": "Using the 200% declining-balance method, find the book value after 1 years of an asset costing $75k with a 6-year life and $13,400 salvage value.",
+      "kind": "family",
+      "root_id": "compute_the_book_value_at_the_end_of_a_g_16a0ac",
+      "params": [
+        {
+          "description": "the purchase cost of the machine in dollars, as written with its scale word or suffix (e.g. million or k)",
+          "format_examples": [
+            "$0.42 million",
+            "$150k",
+            "1.2 billion dollars"
+          ],
+          "original_value": "$0.42 million",
+          "validity_range": "A positive money amount. Must be strictly greater than the salvage value \u25cf2, since otherwise there is no depreciable base. Scale words (thousand, k, million, bn, billion) must be converted to a full dollar amount before use."
+        },
+        {
+          "description": "the salvage value of the machine in dollars, the residual book value at the end of its useful life",
+          "format_examples": [
+            "$59,600",
+            "$5k",
+            "12 thousand dollars"
+          ],
+          "original_value": "$59,600",
+          "validity_range": "A non-negative money amount that is strictly less than the cost \u25cf1. A salvage value of zero is valid and means full cost is depreciable. Book value is floored at this amount, so a salvage value equal to or above the cost makes depreciation meaningless."
+        },
+        {
+          "description": "the useful life of the machine in years",
+          "format_examples": [
+            "10 years",
+            "5-year",
+            "eight years"
+          ],
+          "original_value": "10 years",
+          "validity_range": "A positive whole number of years. The DDB rate is 2 divided by this life, so it must be at least 2 to give a rate of 100 percent or less; a life of 1 gives a rate of 200 percent, which is not meaningful. Practically the life should be 2 or more years."
+        },
+        {
+          "description": "the target year at whose end the book value is requested, as a count of years since acquisition",
+          "format_examples": [
+            "year 8",
+            "the end of year 3",
+            "year eight"
+          ],
+          "original_value": "8",
+          "validity_range": "A non-negative whole number. Year 0 returns the cost itself. Values up to the useful life \u25cf3 are normally asked; values beyond the useful life are not defined by the schedule and the book value would stay at salvage value after the asset is fully depreciated."
+        }
+      ],
+      "problem_id": "fam_ddb_book_value"
+    },
+    {
+      "text": "Using the 200% declining-balance method, find the book value after 4 years of an asset costing $0.41 million with a 8-year life and $73,100 salvage value.",
+      "kind": "family",
+      "root_id": "compute_the_book_value_at_the_end_of_a_g_16a0ac",
+      "params": [
+        {
+          "description": "the purchase cost of the machine in dollars, as written with its scale word or suffix (e.g. million or k)",
+          "format_examples": [
+            "$0.42 million",
+            "$150k",
+            "1.2 billion dollars"
+          ],
+          "original_value": "$0.42 million",
+          "validity_range": "A positive money amount. Must be strictly greater than the salvage value \u25cf2, since otherwise there is no depreciable base. Scale words (thousand, k, million, bn, billion) must be converted to a full dollar amount before use."
+        },
+        {
+          "description": "the salvage value of the machine in dollars, the residual book value at the end of its useful life",
+          "format_examples": [
+            "$59,600",
+            "$5k",
+            "12 thousand dollars"
+          ],
+          "original_value": "$59,600",
+          "validity_range": "A non-negative money amount that is strictly less than the cost \u25cf1. A salvage value of zero is valid and means full cost is depreciable. Book value is floored at this amount, so a salvage value equal to or above the cost makes depreciation meaningless."
+        },
+        {
+          "description": "the useful life of the machine in years",
+          "format_examples": [
+            "10 years",
+            "5-year",
+            "eight years"
+          ],
+          "original_value": "10 years",
+          "validity_range": "A positive whole number of years. The DDB rate is 2 divided by this life, so it must be at least 2 to give a rate of 100 percent or less; a life of 1 gives a rate of 200 percent, which is not meaningful. Practically the life should be 2 or more years."
+        },
+        {
+          "description": "the target year at whose end the book value is requested, as a count of years since acquisition",
+          "format_examples": [
+            "year 8",
+            "the end of year 3",
+            "year eight"
+          ],
+          "original_value": "8",
+          "validity_range": "A non-negative whole number. Year 0 returns the cost itself. Values up to the useful life \u25cf3 are normally asked; values beyond the useful life are not defined by the schedule and the book value would stay at salvage value after the asset is fully depreciated."
+        }
+      ],
+      "problem_id": "fam_ddb_book_value"
+    },
+    {
+      "text": "A delivery van costs $215,000, has a salvage value of $24,700, and a useful life of 4 years. Using double-declining-balance depreciation, what is its book value at the end of year 2?",
+      "kind": "family",
+      "root_id": "compute_the_book_value_at_the_end_of_a_g_16a0ac",
+      "params": [
+        {
+          "description": "the purchase cost of the machine in dollars, as written with its scale word or suffix (e.g. million or k)",
+          "format_examples": [
+            "$0.42 million",
+            "$150k",
+            "1.2 billion dollars"
+          ],
+          "original_value": "$0.42 million",
+          "validity_range": "A positive money amount. Must be strictly greater than the salvage value \u25cf2, since otherwise there is no depreciable base. Scale words (thousand, k, million, bn, billion) must be converted to a full dollar amount before use."
+        },
+        {
+          "description": "the salvage value of the machine in dollars, the residual book value at the end of its useful life",
+          "format_examples": [
+            "$59,600",
+            "$5k",
+            "12 thousand dollars"
+          ],
+          "original_value": "$59,600",
+          "validity_range": "A non-negative money amount that is strictly less than the cost \u25cf1. A salvage value of zero is valid and means full cost is depreciable. Book value is floored at this amount, so a salvage value equal to or above the cost makes depreciation meaningless."
+        },
+        {
+          "description": "the useful life of the machine in years",
+          "format_examples": [
+            "10 years",
+            "5-year",
+            "eight years"
+          ],
+          "original_value": "10 years",
+          "validity_range": "A positive whole number of years. The DDB rate is 2 divided by this life, so it must be at least 2 to give a rate of 100 percent or less; a life of 1 gives a rate of 200 percent, which is not meaningful. Practically the life should be 2 or more years."
+        },
+        {
+          "description": "the target year at whose end the book value is requested, as a count of years since acquisition",
+          "format_examples": [
+            "year 8",
+            "the end of year 3",
+            "year eight"
+          ],
+          "original_value": "8",
+          "validity_range": "A non-negative whole number. Year 0 returns the cost itself. Values up to the useful life \u25cf3 are normally asked; values beyond the useful life are not defined by the schedule and the book value would stay at salvage value after the asset is fully depreciated."
+        }
+      ],
+      "problem_id": "fam_ddb_book_value"
+    },
+    {
+      "text": "A machine costs $0.34 million, has a salvage value of $25,700, and a useful life of 6 years. Using double-declining-balance depreciation, what is its book value at the end of year 3?",
+      "kind": "family",
+      "root_id": "compute_the_book_value_at_the_end_of_a_g_16a0ac",
+      "params": [
+        {
+          "description": "the purchase cost of the machine in dollars, as written with its scale word or suffix (e.g. million or k)",
+          "format_examples": [
+            "$0.42 million",
+            "$150k",
+            "1.2 billion dollars"
+          ],
+          "original_value": "$0.42 million",
+          "validity_range": "A positive money amount. Must be strictly greater than the salvage value \u25cf2, since otherwise there is no depreciable base. Scale words (thousand, k, million, bn, billion) must be converted to a full dollar amount before use."
+        },
+        {
+          "description": "the salvage value of the machine in dollars, the residual book value at the end of its useful life",
+          "format_examples": [
+            "$59,600",
+            "$5k",
+            "12 thousand dollars"
+          ],
+          "original_value": "$59,600",
+          "validity_range": "A non-negative money amount that is strictly less than the cost \u25cf1. A salvage value of zero is valid and means full cost is depreciable. Book value is floored at this amount, so a salvage value equal to or above the cost makes depreciation meaningless."
+        },
+        {
+          "description": "the useful life of the machine in years",
+          "format_examples": [
+            "10 years",
+            "5-year",
+            "eight years"
+          ],
+          "original_value": "10 years",
+          "validity_range": "A positive whole number of years. The DDB rate is 2 divided by this life, so it must be at least 2 to give a rate of 100 percent or less; a life of 1 gives a rate of 200 percent, which is not meaningful. Practically the life should be 2 or more years."
+        },
+        {
+          "description": "the target year at whose end the book value is requested, as a count of years since acquisition",
+          "format_examples": [
+            "year 8",
+            "the end of year 3",
+            "year eight"
+          ],
+          "original_value": "8",
+          "validity_range": "A non-negative whole number. Year 0 returns the cost itself. Values up to the useful life \u25cf3 are normally asked; values beyond the useful life are not defined by the schedule and the book value would stay at salvage value after the asset is fully depreciated."
+        }
+      ],
+      "problem_id": "fam_ddb_book_value"
+    }
+  ]
+}

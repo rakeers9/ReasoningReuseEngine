@@ -1,0 +1,16 @@
+{
+  "fam_f0002": {
+    "final book value after the elapsed years, formatted in dollars to two decimal places": {
+      "kind": "money",
+      "unit": "USD",
+      "decimals": 2
+    }
+  },
+  "fam_f0004": {
+    "pressure of the gas in bar": {
+      "kind": "measure",
+      "unit": "bar",
+      "decimals": null
+    }
+  }
+}

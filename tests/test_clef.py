@@ -97,10 +97,10 @@ def test_v3_is_v2_plus_the_careful_reading_rule():
     assert "{" not in clef.CAREFUL_READING        # no stray format fields
 
 
-def test_default_is_v3_and_v2_text_is_unchanged():
+def test_default_is_v6_and_v2_text_is_unchanged():
     import hashlib
     src = (ROOT / "arc/config.py").read_text()      # the fixture above pins v1, so read the source
-    assert 'CLEF_PROMPT = os.environ.get("ARC_CLEF_PROMPT", "v3")' in src   # user decision 2026-11-15
+    assert 'CLEF_PROMPT = os.environ.get("ARC_CLEF_PROMPT", "v6")' in src   # best on dev, 2026-11-15
     assert hashlib.sha256(clef.PROMPT_V2.encode()).hexdigest() == "465b86c6f2665903d69da874f6d4122925b918add0e09c1b5e1f893061cf358e"
 
 
@@ -339,7 +339,7 @@ def test_no_independent_seed_means_no_serve(monkeypatch, fake_llm):
 
 
 def test_default_seed_count():
-    assert 'CLEF_SEEDS = int(os.environ.get("ARC_CLEF_SEEDS", 3))' in (ROOT / "arc/config.py").read_text()
+    assert 'CLEF_SEEDS = int(os.environ.get("ARC_CLEF_SEEDS", 1))' in (ROOT / "arc/config.py").read_text()   # extra seeds hurt on dev
 
 
 def test_v4_keeps_every_no_rule_and_lists_what_does_not_change_the_task():
@@ -364,3 +364,61 @@ def test_v5_is_v4_with_the_unit_conversion_rule():
     assert "converts it itself" in v5 and "umol/L or mg/dL" in v5 and '"$1.2M"' in v5
     assert v5.replace(clef.PROMPT_V5.split("- different numbers")[1].split("- a different style")[0], "") \
         == clef.PROMPT_V4.replace(clef.PROMPT_V4.split("- different numbers")[1].split("- a different style")[0], "")
+
+
+def test_v6_adds_the_labelled_seats_example_and_the_limit_rule():
+    v6 = clef.PROMPT_V6
+    assert "numbered seats around a table make every rotation a different seating" in v6
+    assert "6. The values given push the problem past a limit" in v6
+    assert v6.startswith(clef.PROMPT_V5.split("5. A small wording change")[0])
+
+
+def test_family_checks_use_their_own_measured_prompt(monkeypatch):
+    from arc import llm
+    seen = {}
+    monkeypatch.setattr(llm, "decide", lambda state, qs, **k: seen.update(qs) or {q: 0.9 for q in qs})
+    monkeypatch.setattr(config, "CLEF_PROMPT", "v6")
+    monkeypatch.setattr(config, "FAMILY_CLEF_PROMPT", "v3")
+    clef.fits("q", {"f#0": "anchor"})
+    assert seen["f#0"] == clef.PROMPT_V3.format(seed="anchor", profile="")
+    assert 'FAMILY_CLEF_PROMPT = os.environ.get("ARC_FAMILY_CLEF_PROMPT", "v3")' in (ROOT / "arc/config.py").read_text()
+
+
+def test_served_answers_go_through_the_formatter(monkeypatch, fake_llm):
+    stub_decide(monkeypatch, {"loan": 0.95})
+
+    def extract(req, params, tag=None, form_out=None, **k):
+        if form_out is not None:
+            form_out["output_format"] = {"unit": "", "rounding": "", "evidence": ""}
+        return {"principal": "$200,000"}
+    monkeypatch.setattr(serve, "extract_parameters", extract)
+
+    class Ctx:
+        lookups = []
+
+        def narration(self):
+            return ""
+    monkeypatch.setattr(serve, "dispatch_root", lambda c, root, values: ({"monthly payment": 1199.101006}, Ctx()))
+    c = cache()
+    c.outputs = {"loan": {"monthly payment": {"kind": "money", "unit": "$"}}}
+    trace = {}
+    r = serve.use(c, "A $200,000 loan ...", trace=trace)
+    assert r.output == {"monthly payment": "1199.10"} and trace["presented"] == r.output
+
+
+def test_an_answer_that_cannot_be_presented_falls_back(monkeypatch, fake_llm):
+    stub_decide(monkeypatch, {"loan": 0.95})
+
+    def extract(req, params, tag=None, form_out=None, **k):
+        form_out["output_format"] = {"unit": "yen", "rounding": "", "evidence": "in yen"}
+        return {"principal": "$200,000"}
+    monkeypatch.setattr(serve, "extract_parameters", extract)
+
+    class Ctx:
+        lookups = []
+
+        def narration(self):
+            return ""
+    monkeypatch.setattr(serve, "dispatch_root", lambda c, root, values: ({"monthly payment": 1199.1}, Ctx()))
+    with pytest.raises(serve.CacheInvocationError):          # chat.py turns this into a model answer
+        serve.use(cache(), "A $200,000 loan ... in yen?")

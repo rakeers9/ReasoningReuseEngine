@@ -58,3 +58,11 @@ def test_measurements_match_to_their_own_last_digit():
 def test_a_value_1000x_off_is_wrong_even_if_the_digits_match():
     m = {"kind": "variant", "answer_value": 921.13, "answer_unit": "$", "answer": "$921.13", "should_hit": True}
     assert cl.score_message(m, "the fixed monthly payment in dollars: 0.92") == (False, "scaled_without_unit")
+
+
+def test_a_unit_label_before_the_number_counts():
+    # regression (chat run 2026-11-15): "pressure of the gas in bar: 7.7589..." is 7.6575 atm, scored wrong
+    m = {"kind": "variant", "answer_value": 7.657472305757299, "answer_unit": "atm", "answer": "7.657 atm",
+         "should_hit": True}
+    assert cl.score_message(m, "pressure of the gas in bar: 7.758933821320725274725274725")[0] is True
+    assert cl.score_message(m, "pressure of the gas in atm: 7.758933821320725")[0] is False   # labelled atm: wrong

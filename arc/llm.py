@@ -23,15 +23,24 @@ from . import config
 _client: anthropic.Anthropic | None = None
 
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
-OPUS_LIKE = {"claude-opus-5-5"}
+OPUS_LIKE = {"claude-opus-5-5", "claude-sonnet-5-5"}   # models that get the server-side refusal fallback
 SMALL_ROLES = {"target", "extractor", "converter"}   # the target model T at invocation time
 # Roles that run the customer's own production model (which may be Opus). Only these may
 # call Opus without ARC_ALLOW_OPUS=1; every other role stays Haiku-only.
 CUSTOMER_MODEL_ROLES = {"resolve"}
+# The builder cascade's last step may be Opus (user decision 2026-11-16: Haiku, then Sonnet,
+# then Opus, for a family neither cheaper model can build). Only the builder role.
+OPUS_BUILDER_ROLES = {"builder"}
 
 
 class LLMError(RuntimeError):
     pass
+
+
+class OutputError(LLMError):
+    """The model answered but its output can't be used: refused, cut off at max_tokens, or
+    not parseable into the schema. A stronger model may succeed where this one failed (the
+    label-free builder cascade retries on it); API and network errors are plain LLMError."""
 
 
 def client() -> anthropic.Anthropic:
@@ -168,7 +177,8 @@ def call(
     tag: str | None = None,
 ) -> LLMResult:
     """Make one model call, record its cost, and return text (and parsed JSON)."""
-    if "opus" in model.lower() and os.environ.get("ARC_ALLOW_OPUS") != "1" and role not in CUSTOMER_MODEL_ROLES:
+    if "opus" in model.lower() and os.environ.get("ARC_ALLOW_OPUS") != "1" \
+            and role not in CUSTOMER_MODEL_ROLES | OPUS_BUILDER_ROLES:
         # Project rule: Haiku only, in every role. Opus must be an explicit opt-in. One exception
         # (user decision 2026-11-15): "resolve" re-solves a backlog record with the CUSTOMER'S
         # own production model, whatever it is, so the answers can be compared like for like.
@@ -191,7 +201,7 @@ def call(
         if effort:
             kwargs["output_config"] = {"effort": effort}
         if model in OPUS_LIKE:
-            # Server-side refusal fallback (on by default for Opus; Haiku 5.5 has none).
+            # Server-side refusal fallback (on by default for Opus and Sonnet 5.5; Haiku 5.5 has none).
             kwargs["betas"] = [FALLBACK_BETA]
             kwargs["fallbacks"] = "default"
             api = client().beta.messages
@@ -223,7 +233,7 @@ def call(
               "cost": _price(getattr(response, "model", model) or model, response.usage),
               **_usage_fields(response.usage),
               "refusal_category": category, "refusal_explanation": explanation})
-        raise LLMError(f"{role} call was refused by the model "
+        raise OutputError(f"{role} call was refused by the model "
                        f"(category: {category}; {explanation or 'no explanation'})")
     if response.stop_reason == "max_tokens":
         _log({"time": started, "seconds": round(time.time() - started, 2), "role": role,
@@ -231,7 +241,7 @@ def call(
               "system": system, "response": "".join(b.text for b in response.content if b.type == "text"),
               "cost": _price(getattr(response, "model", model) or model, response.usage),
               **_usage_fields(response.usage), "error": f"hit max_tokens={max_tokens}"})
-        raise LLMError(f"{role} call hit max_tokens={max_tokens}")
+        raise OutputError(f"{role} call hit max_tokens={max_tokens}")
 
     text = "".join(b.text for b in response.content if b.type == "text")
     thinking = "".join(getattr(b, "thinking", "") or "" for b in response.content if b.type == "thinking")
@@ -254,7 +264,7 @@ def call(
     })
     parsed = getattr(response, "parsed_output", None) if schema is not None else None
     if schema is not None and parsed is None:
-        raise LLMError(f"{role} call returned no parseable output")
+        raise OutputError(f"{role} call returned no parseable output")
     return LLMResult(text=text, parsed=parsed, thinking=thinking, model=served_model, cost=cost,
                      input_tokens=usage.input_tokens, output_tokens=usage.output_tokens)
 

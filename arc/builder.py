@@ -118,6 +118,36 @@ BUILDER_SYSTEM = (
 )
 
 
+# DEVIATION (label-free builds, units="strict"): input, money and precision rules added to
+# the builder's instructions. The paper prompt above is unchanged when units="paper".
+# Owner decision 2026-11-15: no unit library or table; the builder model writes its own
+# conversions. The hand-typed-factor scan (arc/factorscan.py) stays available behind
+# config.BUILDER_FACTOR_SCAN, off by default.
+from .factorscan import typed_factors  # noqa: E402
+
+STRICT_UNITS_RULES = '''
+## Inputs, units, money and precision (these rules override the style example)
+
+- Every input arrives as the raw text copied from the question, e.g. "$150k", "$0.42 million",
+  "4.860 dm3", "27°C", "ten moles", "1 in 200". Load it as a string and parse it yourself:
+  the number (digits or number words, thousands separators, a sign), any scale word or suffix
+  ("k", "thousand", "million", "bn", "billion"; multiply by 10**3, 10**6, 10**9) and the unit.
+  Never assume a value is already a bare number, and raise an error for text you can't parse.
+- Convert units yourself in plain Python with exact factors. Check every prefix (mL vs L,
+  cm3 vs dm3 vs m3, kPa vs Pa) and every temperature offset, and handle each unit the
+  question family could use, not only the one in this example. Raise an error for a unit
+  you don't handle rather than guessing.
+- Do money arithmetic with decimal.Decimal (Decimal(str(x))), never with float.
+- Return full precision. Never round until the end: do not round any intermediate value or
+  any result (a monthly payment used in a total stays unrounded), unless the question itself
+  states a rounding rule. Rounding for display happens once, later, outside your code.
+- Name each output with its unit or currency, e.g. "monthly payment in dollars",
+  "pressure in kPa", and return the value in exactly that unit.
+'''
+
+BUILDER_SYSTEM_STRICT = BUILDER_SYSTEM + STRICT_UNITS_RULES
+
+
 # ----------------------------------------------------------------------------
 # Structured outputs for each phase
 # ----------------------------------------------------------------------------
@@ -227,13 +257,47 @@ class BuildReport:
     cost_by_role: dict = field(default_factory=dict)
 
 
+# DEVIATION (label-free builds, Builder(reference="executed")): the transcript's numbers come
+# from a program that was run, so a judge that redoes the arithmetic by hand can only add errors
+# (fam_f0003, 2026-11-15: a hand slip made the judges reject correct code 8 times).
+EXECUTED_STEP_RULE = (
+    "The transcript's numbers come from an executed program (its source and printed output are in "
+    "the transcript), so they are exact. Do not recompute any arithmetic by hand. Pass only if the "
+    "output agrees with the executed values for this step (equal to their printed precision, or "
+    "more precise) and the code uses its inputs rather than hard-coding the original values. If the "
+    "builder's expected result disagrees with the executed values, the executed values win. Fail "
+    "only for a real disagreement with an executed value, or for hard-coding. If no printed value "
+    "covers this step, check that the code does what the program does for it; never fail it on a "
+    "number you worked out yourself.")
+EXECUTED_FINAL_RULE = (
+    " The transcript's values come from an executed program, so they are exact. Do not recompute "
+    "them by hand. Pass only if the cache output agrees with the executed final answer (equal to "
+    "its printed precision, or more precise).")
+
+
 class BuildError(RuntimeError):
     pass
 
 
 class Builder:
     def __init__(self, problem: dict, transcript: Transcript, use_golden: bool = True,
-                 granularity: str = config.GRANULARITY):
+                 granularity: str = config.GRANULARITY, units: str = "paper", model: str | None = None,
+                 reference: str = "transcript"):
+        """units="paper": the paper's builder, unchanged. units="strict" (label-free builds,
+        DEVIATION): raw-text inputs parsed by the code, Decimal money, full precision, output
+        names with units; with config.BUILDER_FACTOR_SCAN on, a scan also sends hand-typed
+        conversion factors back to the builder. model: the builder model (default
+        config.BUILDER_MODEL; the label-free cascade passes each of LABELFREE_BUILDERS).
+        reference="transcript": the paper's build judges, unchanged. reference="executed"
+        (label-free builds, DEVIATION): the transcript's values come from an executed program,
+        so the judges compare with those values and never redo the arithmetic by hand."""
+        if units not in ("paper", "strict"):
+            raise ValueError(f"units must be 'paper' or 'strict', not {units!r}")
+        if reference not in ("transcript", "executed"):
+            raise ValueError(f"reference must be 'transcript' or 'executed', not {reference!r}")
+        self.units = units
+        self.reference = reference
+        self.model = model or config.BUILDER_MODEL
         self.problem = problem
         self.t = transcript
         self.use_golden = use_golden
@@ -248,13 +312,14 @@ class Builder:
                      f"## Source model transcript S(q(o))\n\n{transcript.solution}{golden}"),
             "cache_control": {"type": "ephemeral"},
         }
-        self._system = [{"type": "text", "text": BUILDER_SYSTEM, "cache_control": {"type": "ephemeral"}}]
+        system = BUILDER_SYSTEM_STRICT if units == "strict" else BUILDER_SYSTEM
+        self._system = [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}]
 
     # -- helpers -------------------------------------------------------------
 
     def _ask(self, instructions: str, schema: type[BaseModel], tag: str):
         prompt = [self._context_block, {"type": "text", "text": instructions}]
-        return llm.call("builder", prompt, model=config.BUILDER_MODEL, system=self._system,
+        return llm.call("builder", prompt, model=self.model, system=self._system,
                         schema=schema, effort=config.BUILDER_EFFORT, max_tokens=16000,
                         tag=f"{self.problem['id']}:{tag}").parsed
 
@@ -417,6 +482,10 @@ class Builder:
             if is_root:
                 payloads = {p.description: p.original_value for p in params.parameters}
             problem = self._static_checks(cand.code)
+            if problem is None and self.units == "strict" and config.BUILDER_FACTOR_SCAN:
+                factors = typed_factors(cand.code)
+                if factors:
+                    problem = "Hand-typed unit conversion found:\n" + "\n".join(factors)
             failed_at = "static" if problem else None
             output, narration, verdict = None, "", None
             if problem is None:
@@ -431,8 +500,9 @@ class Builder:
                     f"Transcript fragment: {spec.transcript_fragment}\nExpected result (builder's "
                     f"claim): {cand.expected_result}\n\n## Inputs given\n{payloads}\n\n## Output\n"
                     f"{output}\n\n## Narration\n{narration}\n\n## Code\n{cand.code}\n\n"
-                    "Pass only if the output matches what the transcript computes for this step "
-                    "and the code uses its inputs rather than hard-coding the original values.",
+                    + (EXECUTED_STEP_RULE if self.reference == "executed" else
+                       "Pass only if the output matches what the transcript computes for this step "
+                       "and the code uses its inputs rather than hard-coding the original values."),
                     role="build_judge", tag=f"{self.problem['id']}:judge:{spec.id}")
                 if not verdict.passed:
                     problem = f"The judge rejected the output: {verdict.critique}"
@@ -464,7 +534,8 @@ class Builder:
             f"## Problem\n{self.t.question}\n\n## Transcript answer\n{self.t.solution}\n{golden}\n\n"
             f"## Cache output\n{format_output(output)}\n\n## Narration\n{narration}\n\n"
             "Does the cache output give the correct final answer to the problem (agreeing with "
-            "the transcript" + (" and the golden label" if self.use_golden else "") + ")?",
+            "the transcript" + (" and the golden label" if self.use_golden else "") + ")?"
+            + (EXECUTED_FINAL_RULE if self.reference == "executed" else ""),
             role="build_judge", tag=f"{self.problem['id']}:judge:{stage}")
 
     def end_to_end(self, root_id: str, params: ParameterRecognition) -> tuple[bool, str]:

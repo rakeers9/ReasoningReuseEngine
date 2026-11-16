@@ -1,0 +1,17 @@
+{
+  "fam_f0004": [
+    "No rounding is applied anywhere in the code: the returned pressure in bar is the full-precision Decimal quotient, not rounded to any number of decimal places or significant figures.",
+    "Each intermediate (volume in m3, moles, kelvin, pascals) is passed along as its full-precision Decimal string with no rounding.",
+    "The ideal gas pressure is p = (n x R x T) / V, computed as n x R x T first and then divided by V, in the default Decimal context of 28 significant digits.",
+    "R is the literal value 8.314462618 J/(K mol), used exactly as written with no truncation or rounding.",
+    "Pascals are converted to bar by dividing by exactly 100000 at 60-digit precision, so the bar result is not rounded.",
+    "Kelvin input is used as given; Celsius adds exactly 273.15; Fahrenheit computes (F - 32) x 5 / 9 and then adds 273.15, all at 60-digit precision.",
+    "A temperature is rejected unless the converted kelvin value is strictly greater than 0.",
+    "Volume unit factors to m3: m3 = 1; dm3, l, litre(s), liter(s) = 1E-3; cm3, cc, ml, millilitre(s), milliliter(s) = 1E-6; mm3 = 1E-9; unit text is matched after removing whitespace and '^', lowercased.",
+    "A volume is rejected unless it is strictly greater than 0.",
+    "Amount factors to mol: mol, mole, moles = 1; mmol = 1E-3; kmol = 1E3; an amount of zero is accepted (only negative amounts are rejected).",
+    "A trailing 'k' not followed by a letter multiplies the number by 1000; the words thousand, million, billion and bn multiply by 10^3, 10^6, 10^9 respectively.",
+    "Comma-separated digit groups in a quantity are read as thousands separators and the commas are removed before conversion.",
+    "The pressure in pascals must be finite and non-negative before conversion to bar."
+  ]
+}

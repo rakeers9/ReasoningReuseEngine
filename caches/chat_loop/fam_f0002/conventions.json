@@ -1,0 +1,15 @@
+{
+  "fam_f0002": [
+    "No intermediate amount is rounded: each year's depreciation charge and year-end book value are carried forward at full Decimal precision (50 significant digits), not to cents.",
+    "The DDB rate is the exact fraction 2/useful life (for example 2/11), never a rounded decimal.",
+    "Each year's declining-balance charge is beginning book value x 2/useful life, computed at 50 significant digits without rounding.",
+    "Each year's straight-line charge is (beginning book value - salvage) / remaining years, computed at 50 significant digits without rounding; if book value is below salvage the base is zero.",
+    "Remaining years for year y (1-based) equals useful life - y + 1, so year 1 uses the full useful life and the current year is included in the count.",
+    "Each year the depreciation charge is the larger of the declining-balance charge and the straight-line charge, so the switch is tested every year rather than made once.",
+    "Each year's charge is capped at (beginning book value - salvage), with that headroom floored at zero, so year-end book value never falls below salvage.",
+    "The simulation runs years 1 through min(elapsed years, useful life) inclusive, and the elapsed-year book value is the year-end book value of the last simulated year.",
+    "If elapsed years exceed the useful life, the book value is set to salvage value.",
+    "The only rounding in the program is the final step: the unrounded book value is quantized to two decimal places (cents) using round-half-up.",
+    "The final output is the rounded dollar amount in cents followed by the text ' $' (for example '76109.31 $'), with no thousands separator."
+  ]
+}

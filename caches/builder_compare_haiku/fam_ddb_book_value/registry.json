@@ -1,0 +1,387 @@
+{
+  "name": "fam_ddb_book_value",
+  "functions": [
+    {
+      "id": "parse_a_money_amount_text_with_an_option_007c40",
+      "description": "Parse a money amount text with an optional scale word into an exact decimal number of dollars.",
+      "inputs": [
+        "raw money text with optional scale word such as million or k"
+      ],
+      "outputs": [
+        "money amount in dollars as an exact decimal"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_ddb_book_value"
+    },
+    {
+      "id": "parse_a_text_giving_a_count_of_years_int_b444a9",
+      "description": "Parse a text giving a count of years into a non-negative whole number of years.",
+      "inputs": [
+        "raw text giving a count of years"
+      ],
+      "outputs": [
+        "count of years as an integer"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_ddb_book_value"
+    },
+    {
+      "id": "compute_the_double_declining_balance_dep_1a8add",
+      "description": "Compute the double-declining-balance depreciation rate as two divided by the useful life in years.",
+      "inputs": [
+        "useful life in years as an integer"
+      ],
+      "outputs": [
+        "double-declining-balance rate as an exact fraction"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_ddb_book_value"
+    },
+    {
+      "id": "compute_one_year_of_double_declining_bal_a6fdaf",
+      "description": "Compute one year of double-declining-balance depreciation as the rate times the opening book value, capped so the closing book value does not fall below the salvage value.",
+      "inputs": [
+        "opening book value in dollars as an exact decimal",
+        "double-declining-balance rate as an exact fraction",
+        "salvage value in dollars as an exact decimal"
+      ],
+      "outputs": [
+        "depreciation for the year in dollars"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_ddb_book_value"
+    },
+    {
+      "id": "simulate_year_by_year_double_declining_b_08f8f1",
+      "description": "Simulate year-by-year double-declining-balance depreciation from cost up to a target year while keeping book value at or above salvage.",
+      "inputs": [
+        "cost in dollars as an exact decimal",
+        "salvage value in dollars as an exact decimal",
+        "double-declining-balance rate as an exact fraction",
+        "target year as an integer"
+      ],
+      "outputs": [
+        "book value at the end of the target year in dollars"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_ddb_book_value"
+    },
+    {
+      "id": "round_a_dollar_amount_to_the_nearest_cen_2df83b",
+      "description": "Round a dollar amount to the nearest cent using half-up rounding.",
+      "inputs": [
+        "dollar amount at full precision"
+      ],
+      "outputs": [
+        "dollar amount rounded to the cent"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_ddb_book_value"
+    },
+    {
+      "id": "compute_the_book_value_at_the_end_of_a_g_16a0ac",
+      "description": "Compute the book value at the end of a given year for a machine under double-declining-balance depreciation with a salvage floor.",
+      "inputs": [
+        "the purchase cost of the machine in dollars, as written with its scale word or suffix (e.g. million or k)",
+        "the salvage value of the machine in dollars, the residual book value at the end of its useful life",
+        "the useful life of the machine in years",
+        "the target year at whose end the book value is requested, as a count of years since acquisition"
+      ],
+      "outputs": [
+        "book value at the end of the target year in dollars rounded to the cent"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_ddb_book_value"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "A machine costs \u25cf1, has a salvage value of \u25cf2, and a useful life of \u25cf3. Using double-declining-balance depreciation, what is its book value at the end of year \u25cf4?",
+      "kind": "template",
+      "root_id": "compute_the_book_value_at_the_end_of_a_g_16a0ac",
+      "params": [
+        {
+          "description": "the purchase cost of the machine in dollars, as written with its scale word or suffix (e.g. million or k)",
+          "format_examples": [
+            "$0.42 million",
+            "$150k",
+            "1.2 billion dollars"
+          ],
+          "original_value": "$0.42 million",
+          "validity_range": "A positive money amount. Must be strictly greater than the salvage value \u25cf2, since otherwise there is no depreciable base. Scale words (thousand, k, million, bn, billion) must be converted to a full dollar amount before use."
+        },
+        {
+          "description": "the salvage value of the machine in dollars, the residual book value at the end of its useful life",
+          "format_examples": [
+            "$59,600",
+            "$5k",
+            "12 thousand dollars"
+          ],
+          "original_value": "$59,600",
+          "validity_range": "A non-negative money amount that is strictly less than the cost \u25cf1. A salvage value of zero is valid and means full cost is depreciable. Book value is floored at this amount, so a salvage value equal to or above the cost makes depreciation meaningless."
+        },
+        {
+          "description": "the useful life of the machine in years",
+          "format_examples": [
+            "10 years",
+            "5-year",
+            "eight years"
+          ],
+          "original_value": "10 years",
+          "validity_range": "A positive whole number of years. The DDB rate is 2 divided by this life, so it must be at least 2 to give a rate of 100 percent or less; a life of 1 gives a rate of 200 percent, which is not meaningful. Practically the life should be 2 or more years."
+        },
+        {
+          "description": "the target year at whose end the book value is requested, as a count of years since acquisition",
+          "format_examples": [
+            "year 8",
+            "the end of year 3",
+            "year eight"
+          ],
+          "original_value": "8",
+          "validity_range": "A non-negative whole number. Year 0 returns the cost itself. Values up to the useful life \u25cf3 are normally asked; values beyond the useful life are not defined by the schedule and the book value would stay at salvage value after the asset is fully depreciated."
+        }
+      ],
+      "problem_id": "fam_ddb_book_value"
+    },
+    {
+      "text": "A machine costs $0.42 million, has a salvage value of $59,600, and a useful life of 10 years. Using double-declining-balance depreciation, what is its book value at the end of year 8?",
+      "kind": "original",
+      "root_id": "compute_the_book_value_at_the_end_of_a_g_16a0ac",
+      "params": [
+        {
+          "description": "the purchase cost of the machine in dollars, as written with its scale word or suffix (e.g. million or k)",
+          "format_examples": [
+            "$0.42 million",
+            "$150k",
+            "1.2 billion dollars"
+          ],
+          "original_value": "$0.42 million",
+          "validity_range": "A positive money amount. Must be strictly greater than the salvage value \u25cf2, since otherwise there is no depreciable base. Scale words (thousand, k, million, bn, billion) must be converted to a full dollar amount before use."
+        },
+        {
+          "description": "the salvage value of the machine in dollars, the residual book value at the end of its useful life",
+          "format_examples": [
+            "$59,600",
+            "$5k",
+            "12 thousand dollars"
+          ],
+          "original_value": "$59,600",
+          "validity_range": "A non-negative money amount that is strictly less than the cost \u25cf1. A salvage value of zero is valid and means full cost is depreciable. Book value is floored at this amount, so a salvage value equal to or above the cost makes depreciation meaningless."
+        },
+        {
+          "description": "the useful life of the machine in years",
+          "format_examples": [
+            "10 years",
+            "5-year",
+            "eight years"
+          ],
+          "original_value": "10 years",
+          "validity_range": "A positive whole number of years. The DDB rate is 2 divided by this life, so it must be at least 2 to give a rate of 100 percent or less; a life of 1 gives a rate of 200 percent, which is not meaningful. Practically the life should be 2 or more years."
+        },
+        {
+          "description": "the target year at whose end the book value is requested, as a count of years since acquisition",
+          "format_examples": [
+            "year 8",
+            "the end of year 3",
+            "year eight"
+          ],
+          "original_value": "8",
+          "validity_range": "A non-negative whole number. Year 0 returns the cost itself. Values up to the useful life \u25cf3 are normally asked; values beyond the useful life are not defined by the schedule and the book value would stay at salvage value after the asset is fully depreciated."
+        }
+      ],
+      "problem_id": "fam_ddb_book_value"
+    },
+    {
+      "text": "Using the 200% declining-balance method, find the book value after 1 years of an asset costing $75k with a 6-year life and $13,400 salvage value.",
+      "kind": "family",
+      "root_id": "compute_the_book_value_at_the_end_of_a_g_16a0ac",
+      "params": [
+        {
+          "description": "the purchase cost of the machine in dollars, as written with its scale word or suffix (e.g. million or k)",
+          "format_examples": [
+            "$0.42 million",
+            "$150k",
+            "1.2 billion dollars"
+          ],
+          "original_value": "$0.42 million",
+          "validity_range": "A positive money amount. Must be strictly greater than the salvage value \u25cf2, since otherwise there is no depreciable base. Scale words (thousand, k, million, bn, billion) must be converted to a full dollar amount before use."
+        },
+        {
+          "description": "the salvage value of the machine in dollars, the residual book value at the end of its useful life",
+          "format_examples": [
+            "$59,600",
+            "$5k",
+            "12 thousand dollars"
+          ],
+          "original_value": "$59,600",
+          "validity_range": "A non-negative money amount that is strictly less than the cost \u25cf1. A salvage value of zero is valid and means full cost is depreciable. Book value is floored at this amount, so a salvage value equal to or above the cost makes depreciation meaningless."
+        },
+        {
+          "description": "the useful life of the machine in years",
+          "format_examples": [
+            "10 years",
+            "5-year",
+            "eight years"
+          ],
+          "original_value": "10 years",
+          "validity_range": "A positive whole number of years. The DDB rate is 2 divided by this life, so it must be at least 2 to give a rate of 100 percent or less; a life of 1 gives a rate of 200 percent, which is not meaningful. Practically the life should be 2 or more years."
+        },
+        {
+          "description": "the target year at whose end the book value is requested, as a count of years since acquisition",
+          "format_examples": [
+            "year 8",
+            "the end of year 3",
+            "year eight"
+          ],
+          "original_value": "8",
+          "validity_range": "A non-negative whole number. Year 0 returns the cost itself. Values up to the useful life \u25cf3 are normally asked; values beyond the useful life are not defined by the schedule and the book value would stay at salvage value after the asset is fully depreciated."
+        }
+      ],
+      "problem_id": "fam_ddb_book_value"
+    },
+    {
+      "text": "Using the 200% declining-balance method, find the book value after 4 years of an asset costing $0.41 million with a 8-year life and $73,100 salvage value.",
+      "kind": "family",
+      "root_id": "compute_the_book_value_at_the_end_of_a_g_16a0ac",
+      "params": [
+        {
+          "description": "the purchase cost of the machine in dollars, as written with its scale word or suffix (e.g. million or k)",
+          "format_examples": [
+            "$0.42 million",
+            "$150k",
+            "1.2 billion dollars"
+          ],
+          "original_value": "$0.42 million",
+          "validity_range": "A positive money amount. Must be strictly greater than the salvage value \u25cf2, since otherwise there is no depreciable base. Scale words (thousand, k, million, bn, billion) must be converted to a full dollar amount before use."
+        },
+        {
+          "description": "the salvage value of the machine in dollars, the residual book value at the end of its useful life",
+          "format_examples": [
+            "$59,600",
+            "$5k",
+            "12 thousand dollars"
+          ],
+          "original_value": "$59,600",
+          "validity_range": "A non-negative money amount that is strictly less than the cost \u25cf1. A salvage value of zero is valid and means full cost is depreciable. Book value is floored at this amount, so a salvage value equal to or above the cost makes depreciation meaningless."
+        },
+        {
+          "description": "the useful life of the machine in years",
+          "format_examples": [
+            "10 years",
+            "5-year",
+            "eight years"
+          ],
+          "original_value": "10 years",
+          "validity_range": "A positive whole number of years. The DDB rate is 2 divided by this life, so it must be at least 2 to give a rate of 100 percent or less; a life of 1 gives a rate of 200 percent, which is not meaningful. Practically the life should be 2 or more years."
+        },
+        {
+          "description": "the target year at whose end the book value is requested, as a count of years since acquisition",
+          "format_examples": [
+            "year 8",
+            "the end of year 3",
+            "year eight"
+          ],
+          "original_value": "8",
+          "validity_range": "A non-negative whole number. Year 0 returns the cost itself. Values up to the useful life \u25cf3 are normally asked; values beyond the useful life are not defined by the schedule and the book value would stay at salvage value after the asset is fully depreciated."
+        }
+      ],
+      "problem_id": "fam_ddb_book_value"
+    },
+    {
+      "text": "A delivery van costs $215,000, has a salvage value of $24,700, and a useful life of 4 years. Using double-declining-balance depreciation, what is its book value at the end of year 2?",
+      "kind": "family",
+      "root_id": "compute_the_book_value_at_the_end_of_a_g_16a0ac",
+      "params": [
+        {
+          "description": "the purchase cost of the machine in dollars, as written with its scale word or suffix (e.g. million or k)",
+          "format_examples": [
+            "$0.42 million",
+            "$150k",
+            "1.2 billion dollars"
+          ],
+          "original_value": "$0.42 million",
+          "validity_range": "A positive money amount. Must be strictly greater than the salvage value \u25cf2, since otherwise there is no depreciable base. Scale words (thousand, k, million, bn, billion) must be converted to a full dollar amount before use."
+        },
+        {
+          "description": "the salvage value of the machine in dollars, the residual book value at the end of its useful life",
+          "format_examples": [
+            "$59,600",
+            "$5k",
+            "12 thousand dollars"
+          ],
+          "original_value": "$59,600",
+          "validity_range": "A non-negative money amount that is strictly less than the cost \u25cf1. A salvage value of zero is valid and means full cost is depreciable. Book value is floored at this amount, so a salvage value equal to or above the cost makes depreciation meaningless."
+        },
+        {
+          "description": "the useful life of the machine in years",
+          "format_examples": [
+            "10 years",
+            "5-year",
+            "eight years"
+          ],
+          "original_value": "10 years",
+          "validity_range": "A positive whole number of years. The DDB rate is 2 divided by this life, so it must be at least 2 to give a rate of 100 percent or less; a life of 1 gives a rate of 200 percent, which is not meaningful. Practically the life should be 2 or more years."
+        },
+        {
+          "description": "the target year at whose end the book value is requested, as a count of years since acquisition",
+          "format_examples": [
+            "year 8",
+            "the end of year 3",
+            "year eight"
+          ],
+          "original_value": "8",
+          "validity_range": "A non-negative whole number. Year 0 returns the cost itself. Values up to the useful life \u25cf3 are normally asked; values beyond the useful life are not defined by the schedule and the book value would stay at salvage value after the asset is fully depreciated."
+        }
+      ],
+      "problem_id": "fam_ddb_book_value"
+    },
+    {
+      "text": "A machine costs $0.34 million, has a salvage value of $25,700, and a useful life of 6 years. Using double-declining-balance depreciation, what is its book value at the end of year 3?",
+      "kind": "family",
+      "root_id": "compute_the_book_value_at_the_end_of_a_g_16a0ac",
+      "params": [
+        {
+          "description": "the purchase cost of the machine in dollars, as written with its scale word or suffix (e.g. million or k)",
+          "format_examples": [
+            "$0.42 million",
+            "$150k",
+            "1.2 billion dollars"
+          ],
+          "original_value": "$0.42 million",
+          "validity_range": "A positive money amount. Must be strictly greater than the salvage value \u25cf2, since otherwise there is no depreciable base. Scale words (thousand, k, million, bn, billion) must be converted to a full dollar amount before use."
+        },
+        {
+          "description": "the salvage value of the machine in dollars, the residual book value at the end of its useful life",
+          "format_examples": [
+            "$59,600",
+            "$5k",
+            "12 thousand dollars"
+          ],
+          "original_value": "$59,600",
+          "validity_range": "A non-negative money amount that is strictly less than the cost \u25cf1. A salvage value of zero is valid and means full cost is depreciable. Book value is floored at this amount, so a salvage value equal to or above the cost makes depreciation meaningless."
+        },
+        {
+          "description": "the useful life of the machine in years",
+          "format_examples": [
+            "10 years",
+            "5-year",
+            "eight years"
+          ],
+          "original_value": "10 years",
+          "validity_range": "A positive whole number of years. The DDB rate is 2 divided by this life, so it must be at least 2 to give a rate of 100 percent or less; a life of 1 gives a rate of 200 percent, which is not meaningful. Practically the life should be 2 or more years."
+        },
+        {
+          "description": "the target year at whose end the book value is requested, as a count of years since acquisition",
+          "format_examples": [
+            "year 8",
+            "the end of year 3",
+            "year eight"
+          ],
+          "original_value": "8",
+          "validity_range": "A non-negative whole number. Year 0 returns the cost itself. Values up to the useful life \u25cf3 are normally asked; values beyond the useful life are not defined by the schedule and the book value would stay at salvage value after the asset is fully depreciated."
+        }
+      ],
+      "problem_id": "fam_ddb_book_value"
+    }
+  ]
+}

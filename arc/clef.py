@@ -124,6 +124,22 @@ PROMPT_V5 = PROMPT_V4.replace(
     "m, a load in N/mm or kN/m, a speed in km/h or m/s, a volume in L or dm3);\n")
 assert PROMPT_V5 != PROMPT_V4
 
+# v6 (2026-11-15): v5 let two near-misses through on dev. "8 numbered seats" around a table
+# (rotations become distinct) needed a concrete example of labelled positions, and a buffer
+# question worded identically but with more strong acid than the buffer's base needed a rule
+# about values crossing a limit the solver's method assumes.
+PROMPT_V6 = PROMPT_V5.replace(
+    "positions, \"and\" vs \"or\" where it changes which cases count, with or without replacement, "
+    "or a changed time, order or direction.\n",
+    "positions (numbered seats around a table make every rotation a different seating; unnumbered "
+    "seats do not), \"and\" vs \"or\" where it changes which cases count, with or without "
+    "replacement, or a changed time, order or direction.\n"
+    "6. The values given push the problem past a limit the solver's method assumes, even if the "
+    "wording is identical: for example more strong acid or base than a buffer can neutralise, a "
+    "quantity that becomes zero or negative partway through, or a time beyond the period the "
+    "method covers.\n")
+assert PROMPT_V6 != PROMPT_V5
+
 
 def _profile(spec: dict | None) -> str:
     if not spec:
@@ -141,10 +157,10 @@ def prompt_for(cache: Cache, ep: EntryPoint, version: str | None = None, seed: s
     seed = seed if seed is not None else original_question(cache, ep)
     if version == "v1":
         return PROMPT_V1.format(seed=seed)
-    if version in ("v2", "v3", "v4", "v5"):
-        template = {"v2": PROMPT_V2, "v3": PROMPT_V3, "v4": PROMPT_V4, "v5": PROMPT_V5}[version]
+    if version in ("v2", "v3", "v4", "v5", "v6"):
+        template = {"v2": PROMPT_V2, "v3": PROMPT_V3, "v4": PROMPT_V4, "v5": PROMPT_V5, "v6": PROMPT_V6}[version]
         return template.format(seed=seed, profile=_profile(cache.specs.get(ep.problem_id)))
-    raise ValueError(f"unknown ARC_CLEF_PROMPT {version!r} (v1, v2, v3, v4 or v5)")
+    raise ValueError(f"unknown ARC_CLEF_PROMPT {version!r} (v1-v6)")
 
 
 def original_question(cache: Cache, ep: EntryPoint) -> str:
@@ -256,7 +272,7 @@ def decide(cache: Cache, request: str, cands: list[tuple[EntryPoint, float]], ta
 
 # ----------------------------------------------------------------------------- families
 
-_PROMPTS = {"v1": PROMPT_V1, "v2": PROMPT_V2, "v3": PROMPT_V3, "v4": PROMPT_V4, "v5": PROMPT_V5}
+_PROMPTS = {"v1": PROMPT_V1, "v2": PROMPT_V2, "v3": PROMPT_V3, "v4": PROMPT_V4, "v5": PROMPT_V5, "v6": PROMPT_V6}
 
 
 def fits(question: str, anchors: dict[str, str], tag: str | None = None) -> dict[str, float]:
@@ -266,6 +282,15 @@ def fits(question: str, anchors: dict[str, str], tag: str | None = None) -> dict
     Raises llm.LLMError on a Clef failure."""
     if not anchors:
         return {}
-    template = _PROMPTS[config.CLEF_PROMPT]
+    template = _PROMPTS[config.FAMILY_CLEF_PROMPT]   # grouping was tuned with its own prompt
     questions = {k: template.format(seed=a, profile="") for k, a in anchors.items()}
     return llm.decide(question, questions, tag=tag)
+
+
+def build_check(question: str, reference: str, tag: str | None = None) -> float:
+    """P(the newest family question is the same task as its family's reference question),
+    asked the way the serving gate asks it: the gate's prompt (CLEF_PROMPT), one comparison,
+    in its own call (Clef's answers interact within a call). Used before building from the
+    newest question (families.build_ready). Raises llm.LLMError on a Clef failure."""
+    template = _PROMPTS[config.CLEF_PROMPT]
+    return llm.decide(question, {"ref": template.format(seed=reference, profile="")}, tag=tag)["ref"]

@@ -99,6 +99,8 @@ class Family:
     anchor_vec: list = field(default_factory=list)
     confirmed_ids: list = field(default_factory=list)  # members Clef (or the embed rule) confirmed
     recent_texts: list = field(default_factory=list)   # latest confirmed questions (extra comparisons)
+    build_checks: list = field(default_factory=list)   # last build-ready checks: record id, P, passed
+    failed_builds: int = 0                             # builds that failed their own tests (cap: FAMILY_MAX_FAILED_BUILDS)
     centroid: list = field(default_factory=list)
     members: int = 0                                   # vectors averaged into the centroid
 
@@ -416,10 +418,23 @@ def build_ready(tracker: FamilyTracker, build_fn: Callable | None = None, max_bu
     done = []
     for row in [r for r in tracker.readiness() if r.verdict == "build"][:max_builds]:
         records = tracker.members_of(row.family, path, served=False, confirmed=True)
+        if config.FAMILY_BUILD_CHECK == "clef" and records:
+            blocked = _build_check(tracker, row.family, records)
+            if blocked is not None:
+                done.append((row.family, blocked))
+                continue
         try:
             result = build_fn(row.family, records)
         except Exception as e:   # one broken family must not stop the batch
-            tracker.mark_rejected(row.family, f"build error: {type(e).__name__}: {e}")
+            # A crash is a failure of the build machinery (a cut-off model reply, a network
+            # error), not evidence the family is wrong: wait for a newer question and try again,
+            # never reject the family for good.
+            fam = tracker.families[row.family]
+            newest = max(records, key=lambda r: r.get("timestamp") or 0)["id"] if records else fam.last_source_id
+            why = f"build error: {type(e).__name__}: {str(e)[:120]}"
+            fam.tried_record, fam.note = newest, f"{why}; waiting for a newer question"[:200]
+            if newest:
+                fam.record_notes[newest] = why[:160]
             tracker.save()
             done.append((row.family, None))
             continue
@@ -430,14 +445,31 @@ def build_ready(tracker: FamilyTracker, build_fn: Callable | None = None, max_bu
         elif status == "mismatch":   # stays watching; tried again once a newer question arrives
             tried = getattr(result, "record_id", None) or fam.last_source_id
             why = (result.reason or MISMATCH_NOTE)[:160]   # e.g. a failed fit check says so
-            fam.tried_record = tried
-            fam.note = f"{why} (record {tried})"
-            if tried:
-                fam.record_notes[tried] = why
+            if getattr(result, "failure", None) == "code":   # the built code was wrong: counts toward the cap
+                fam.failed_builds += 1
+            if fam.failed_builds >= config.FAMILY_MAX_FAILED_BUILDS:
+                tracker.mark_rejected(row.family, f"{why} ({fam.failed_builds} failed builds)")
+            else:
+                fam.tried_record = tried
+                fam.note = f"{why} (record {tried})"
+                if tried:
+                    fam.record_notes[tried] = why
         elif status == "accepted" and result.accepted and result.entry_id:
             tracker.mark_built(row.family, result.entry_id)
-        else:
-            tracker.mark_rejected(row.family, result.reason or "not accepted")
+        else:   # a build that failed: wait and retry; only CODE failures count toward the cap
+            failure = getattr(result, "failure", None) or "code"   # unknown "rejected": treat as code
+            if failure == "code":
+                fam.failed_builds += 1
+            why = (result.reason or "not accepted")[:160]
+            if failure == "code" and fam.failed_builds >= config.FAMILY_MAX_FAILED_BUILDS:
+                tracker.mark_rejected(row.family, f"{why} ({fam.failed_builds} failed builds)")
+            else:
+                tried = getattr(result, "record_id", None) or fam.last_source_id
+                fam.tried_record = tried
+                fam.note = f"{why}; build {fam.failed_builds} of {config.FAMILY_MAX_FAILED_BUILDS} failed, " \
+                           "waiting for a newer question"[:200]
+                if tried:
+                    fam.record_notes[tried] = why
         if getattr(result, "serve_rate", None) is not None:
             tracker.set_serve_rate(row.family, result.serve_rate)
         if status != "need_more_data" or (result.cost or 0) > 0:
@@ -449,6 +481,53 @@ def build_ready(tracker: FamilyTracker, build_fn: Callable | None = None, max_bu
 
 
 MISMATCH_NOTE = "caching tried but answer didn't match"
+
+
+def _most_typical(tracker: FamilyTracker, fam: Family, records: list[dict]) -> dict:
+    """The record closest to the family's centroid (numbers masked), i.e. its usual wording.
+    The latest member can be an unusual wording (terse notes), which says little about whether
+    a question belongs; the most typical one is the fair comparison. Local embeddings, no cost."""
+    if len(records) == 1 or not fam.centroid:
+        return records[-1]
+    vecs = tracker._embed([mask_numbers(r["question"]) for r in records])
+    c = np.asarray(fam.centroid, dtype=np.float32)
+    return records[int(np.argmax(vecs @ c))]
+
+
+def _build_check(tracker: FamilyTracker, family_id: str, records: list[dict]):
+    """None if the newest question may be built from; otherwise a "not_ready" result, and
+    the family waits for a newer question (same rule as a mismatch)."""
+    from types import SimpleNamespace
+    from . import clef, llm
+    fam = tracker.families[family_id]
+    newest = max(records, key=lambda r: r.get("timestamp") or 0)
+    others = [r for r in records if r["id"] != newest["id"]]
+    if fam.anchor_id and fam.anchor_id != newest["id"] and fam.anchor_text:
+        reference, ref_name = fam.anchor_text, "its family's anchor"
+    elif others:   # the newest question is the anchor: compare it with the family's most typical
+        reference, ref_name = _most_typical(tracker, fam, others)["question"], "the family's most typical other question"
+    else:
+        reference = None
+    before = len(llm.LEDGER.records)
+    try:
+        if reference is None:
+            raise llm.LLMError("no other confirmed question to compare with")
+        p = clef.build_check(newest["question"], reference, tag=f"{family_id}:build_check")
+        why = None if p >= config.CLEF_THRESHOLD else \
+            f"newest question not build-ready (P {p:.2f} vs {ref_name}, need {config.CLEF_THRESHOLD:g})"
+    except llm.LLMError as e:
+        p, why = None, f"build check could not run ({str(e)[:80]}); waiting"
+    cost = llm.LEDGER.cost(since=before)
+    fam.build_checks = (fam.build_checks + [{"record_id": newest["id"], "p": p, "passed": why is None}])[-20:]
+    if why is None:
+        return None
+    fam.tried_record, fam.note = newest["id"], f"{why}; waiting for a newer question"[:200]
+    fam.record_notes[newest["id"]] = why
+    if cost:
+        record_build_cost(family_id, cost, False, {"build_check": cost}, pending=True)
+    tracker.save()
+    return SimpleNamespace(status="not_ready", accepted=False, entry_id=None, reason=why, cost=cost,
+                           parts={"build_check": cost}, serve_rate=None, record_id=newest["id"])
 
 
 # ---- build cost, measured ----
@@ -468,15 +547,25 @@ def record_build_cost(problem_id: str, cost: float, accepted: bool, parts: dict 
                             "accepted": bool(accepted), "pending": bool(pending), "parts": parts or {}}) + "\n")
 
 
-def effective_build_cost(min_builds: int = 3) -> dict:
+def _is_build_attempt(row: dict) -> bool:
+    """A logged attempt counts only if something was BUILT. A re-solve mismatch (parts has no
+    "build" step) is about the chatbot's answer, not the cost of building: its spend still
+    counts, but it is not an attempt. Rows without a parts breakdown count as attempts."""
+    parts = row.get("parts") or {}
+    return not parts or "build" in parts
+
+
+def effective_build_cost(min_builds: int | None = None) -> dict:
     """$ per entry that actually gets cached: all build spending / builds accepted.
 
     A rejected build is money spent with no entry to show for it, so the price of one
-    cached entry is the attempt cost divided by the accept rate. Until min_builds have
-    been logged, the measured defaults in config are used."""
+    cached entry is the attempt cost divided by the accept rate. Until BUILD_COST_MIN_BUILDS
+    real build attempts are logged, the configured estimate is used: a handful of early
+    failures (chat run 2026-11-15: 1 accepted of 7) otherwise sets the bar for every family."""
+    min_builds = config.BUILD_COST_MIN_BUILDS if min_builds is None else min_builds
     path = _build_log()
     every = [json.loads(l) for l in path.read_text().splitlines() if l.strip()] if path.exists() else []
-    rows = [r for r in every if not r.get("pending")]          # decided attempts
+    rows = [r for r in every if not r.get("pending") and _is_build_attempt(r)]   # decided build attempts
     if len(rows) >= min_builds and any(r["accepted"] for r in rows):
         per_attempt = sum(r["cost"] for r in every) / len(rows)   # pending spend is still spend
         rate = sum(r["accepted"] for r in rows) / len(rows)

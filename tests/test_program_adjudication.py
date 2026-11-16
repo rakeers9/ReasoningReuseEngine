@@ -208,7 +208,30 @@ def test_default_convention_applies_when_the_entry_states_none(fake_llm, judge_p
     _queue(fake_llm, ROUNDED_PROGRAM)
     labelfree.adjudicate(Q, PRODUCTION, "total_interest: 95368.40", "t", max_solves=1)
     assert labelfree.DEFAULT_CONVENTION in fake_llm.calls[0]["prompt"]
-    assert "rounded to the" in labelfree.DEFAULT_CONVENTION and "before any total" in labelfree.DEFAULT_CONVENTION
+    # owner decision 2026-11-15 (revised): "never round until the end", no payment-rounding exception
+    assert "no intermediate rounding" in labelfree.DEFAULT_CONVENTION
+    assert "round only the final answer" in labelfree.DEFAULT_CONVENTION
+
+
+def test_one_rounding_rule_everywhere():
+    """Builder rules, re-solve and tie-break programs all carry "never round until the end";
+    none of them still carries the old payment-rounding exception."""
+    from arc import builder
+    old = ("rounded to the cent before", "before any total", "money that is actually paid")
+    prompts = {"builder strict rules": builder.STRICT_UNITS_RULES,
+               "re-solve": labelfree.RESOLVE_RULES.format(default=labelfree.DEFAULT_CONVENTION),
+               "tie-break program": labelfree.PROGRAM_PROMPT.format(
+                   question="q", default=labelfree.DEFAULT_CONVENTION, and_rules="", rules="", print_as=""),
+               "conventions writer": labelfree.CONVENTIONS_PROMPT,
+               "default": labelfree.DEFAULT_CONVENTION}
+    for name, text in prompts.items():
+        assert not any(o in text for o in old), name
+    assert "Never round until the end" in builder.STRICT_UNITS_RULES
+    assert "unless the question itself" in builder.STRICT_UNITS_RULES          # the question still wins
+    for name in ("re-solve", "tie-break program"):
+        assert labelfree.DEFAULT_CONVENTION in prompts[name], name
+    assert "(1) anything the question itself says" in prompts["tie-break program"]
+    assert "follow anything the question says; otherwise" in prompts["re-solve"]
 
 
 def _mortgage_cache(interest: str):

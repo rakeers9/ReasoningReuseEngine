@@ -1,0 +1,9 @@
+{
+  "fam_ddb_book_value": {
+    "book value at the end of the target year in dollars rounded to the cent": {
+      "kind": "money",
+      "unit": "USD",
+      "decimals": 2
+    }
+  }
+}

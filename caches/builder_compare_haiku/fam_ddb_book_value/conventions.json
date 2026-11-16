@@ -1,0 +1,17 @@
+{
+  "fam_ddb_book_value": [
+    "Money text parsing strips the dollar sign, commas, and the words usd, dollar, and dollars, then multiplies the number exactly by its scale word: k or thousand = 1000; m, mn, or million = 1000000; b, bn, or billion = 1000000000; no word = 1.",
+    "Cost and salvage are kept as exact decimals at parse time with no rounding.",
+    "Year counts are read as whole numbers: the words years, yrs, and yr are dropped, hyphens become spaces, and number words are summed (for example twenty five = 25).",
+    "The code raises an error unless cost is strictly greater than salvage, useful life is at least 2 years, and target year is at least 0.",
+    "The DDB rate is 2 divided by useful life in years, held as an exact fraction (for example 2/10 = 20 percent, or 2/3 for a 3-year life) and not rounded to a percent.",
+    "Each year's depreciation is the exact rate times the opening book value, computed at 60 significant digits, with no rounding to cents or any other unit.",
+    "The salvage floor is a cap, not a switch: if rate times opening book would take closing book below salvage, depreciation is set to opening book minus salvage, so the book lands exactly on salvage.",
+    "Once opening book is at or below salvage, depreciation is zero for that year and every later year; the code never switches to straight-line.",
+    "Useful life does not stop depreciation: years beyond the useful life keep applying DDB, limited only by the salvage floor.",
+    "The year loop runs years 1 through the target year inclusive, so the target year's depreciation is included; a target year of 0 returns the cost unchanged.",
+    "Closing book value is opening book value minus that year's depreciation, carried at 60 significant digits with no intermediate rounding.",
+    "The only rounding step is the final one: the end-of-target-year book value is rounded to the nearest cent with ROUND_HALF_UP (ties away from zero).",
+    "The reported result is a plain decimal in dollars with exactly two decimal places, with no thousands separator, currency symbol, or unit suffix."
+  ]
+}

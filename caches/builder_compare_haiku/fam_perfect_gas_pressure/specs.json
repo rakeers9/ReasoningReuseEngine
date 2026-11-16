@@ -1,0 +1,29 @@
+{
+  "fam_perfect_gas_pressure": {
+    "task": "compute",
+    "deliverable": "pressure of a gas sample",
+    "method": "ideal gas law pV = nRT",
+    "conditions": [
+      "single gas",
+      "gas occupies a fixed volume at a fixed temperature"
+    ],
+    "inputs": [
+      {
+        "name": "amount of gas",
+        "value": "7.39 mol",
+        "evidence": "7.39 mol of C2H6"
+      },
+      {
+        "name": "volume of gas",
+        "value": "0.03256 m3",
+        "evidence": "occupying 0.03256 m3"
+      },
+      {
+        "name": "temperature",
+        "value": "507.15 K",
+        "evidence": "at 507.15 K"
+      }
+    ],
+    "output_form": "a number with a pressure unit"
+  }
+}

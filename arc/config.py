@@ -68,7 +68,12 @@ def cache_dir(name: str) -> Path:
 # --- Models (paper: Opus 4.5 for S/B/J, Haiku 4.5 then Llama 3.2 1B for T) ---
 _BIG = PROFILE_BIG_MODEL.get(PROFILE, "claude-haiku-5-5")
 SOURCE_MODEL = os.environ.get("ARC_SOURCE_MODEL", _BIG)        # S: solves the original problem
-BUILDER_MODEL = os.environ.get("ARC_BUILDER_MODEL", _BIG)      # B: turns the transcript into a cache entry
+# B: turns the transcript into a cache entry. Haiku in the haiku profile (user decision
+# 2026-11-15, "builder: Haiku first, Sonnet on code failure"): label-free builds use the
+# LABELFREE_BUILDERS cascade below; every other build path uses BUILDER_MODEL. Measured builder
+# use: ~36k in / 25k out tokens per build, so ~$0.016 on Haiku vs ~$0.32 on Sonnet.
+PROFILE_BUILDER_MODEL = {"paper": "claude-opus-5-5", "haiku": "claude-haiku-5-5"}
+BUILDER_MODEL = os.environ.get("ARC_BUILDER_MODEL", PROFILE_BUILDER_MODEL.get(PROFILE, _BIG))
 JUDGE_MODEL = os.environ.get("ARC_JUDGE_MODEL", _BIG)          # J: verifies outputs during build and eval
 GENERATOR_MODEL = os.environ.get("ARC_GENERATOR_MODEL", _BIG)  # G: writes perturbation variants (paper: G = S)
 TARGET_MODEL = os.environ.get("ARC_TARGET_MODEL", "claude-haiku-5-5")    # T: the small model used at invocation time
@@ -100,12 +105,15 @@ ENTRY_THRESHOLD = float(os.environ.get("ARC_ENTRY_THRESHOLD", 0.80))
 # --- Shorthand in extracted values (DEVIATION; arc/normalize.py) ---
 # "$150k" / "€2.0 million" are expanded to full digits after IS2, before cached code parses
 # them. Only unambiguous forms; anything else is untouched. Off = paper behaviour exactly.
-EXPAND_SHORTHAND = os.environ.get("ARC_EXPAND_SHORTHAND", "1") == "1"
-# IS2 output form (DEVIATION). "copy" = paper: values copied as written. "number_unit": Haiku
-# returns number (plain full digits) + unit + text + evidence per value; code checks the number
-# against the evidence and rebuilds the value (arc/extraction.py). Shorthand expansion above is
-# the check for "copy" mode and the cross-check for "number_unit".
-EXTRACT_FORM = os.environ.get("ARC_EXTRACT_FORM", "number_unit")
+# Copy mode only; off by default since values are kept exactly as written (user decision).
+EXPAND_SHORTHAND = os.environ.get("ARC_EXPAND_SHORTHAND", "0") == "1"
+# IS2 output form (DEVIATION). "copy" = the paper's prompt, values copied as written.
+# "text" (default, user decision 2026-11-15): each value copied exactly as written, unit and
+#   shorthand included ("$150k"), in one field, since the Sonnet builder writes code that reads
+#   it; plus output_format and extras (what the question asks of the answer), and a check that
+#   any value with digits is in the question as written.
+# "number_unit": number + unit + text + evidence per value, rebuilt by code (kept as an option).
+EXTRACT_FORM = os.environ.get("ARC_EXTRACT_FORM", "text")
 
 # --- Turn-away gate (DEVIATION from the paper; off = paper behaviour) ---
 # The paper serves any request whose embedding clears ENTRY_THRESHOLD. Near-misses
@@ -118,26 +126,37 @@ EXTRACT_FORM = os.environ.get("ARC_EXTRACT_FORM", "number_unit")
 #        Needs gate cards (arc/gatecard.py).
 GATE = {"on": "v1"}.get(os.environ.get("ARC_GATE", "off"), os.environ.get("ARC_GATE", "off"))
 GATE_CHECKS = os.environ.get("ARC_GATE_CHECKS", "all")   # v2: comma list of checks that can reject
-#   clef  Haiku writes the request's value-free structure; the top CLEF_TOP_K entries by
-#         structure cosine go to Clef 27B (Cloudflare Workers AI), which reads the RAW
-#         question against each candidate's original question and returns P(fits). Serve the
-#         best candidate if P >= CLEF_THRESHOLD, else hand the question to the model.
-#         Measured on dev (eval/decision, prompt v1, top-3): AUC 0.997; at 0.8 about 92% recall
-#         and 0.4% false hits. See arc/clef.py.
+#   clef  the top CLEF_TOP_K entries by raw-question cosine go to Clef 27B (Cloudflare Workers
+#         AI), which reads the RAW question against each candidate's original question and
+#         returns P(fits). Serve the best candidate if P >= CLEF_THRESHOLD, else hand the
+#         question to the model. See arc/clef.py and the measurements below.
 CLEF_MODEL = os.environ.get("ARC_CLEF_MODEL", "clef")
 CLEF_THRESHOLD = float(os.environ.get("ARC_CLEF_THRESHOLD", 0.8))
 CLEF_TOP_K = int(os.environ.get("ARC_CLEF_TOP_K", 3))
 # Seed questions per candidate entry: the original plus the most recent verified family
-# questions. P for the entry = its best seed. One wording made Clef reject true variants in
-# other wordings (stopped chat run: depreciation 0-1 of 5 fit); same fix as family grouping.
-CLEF_SEEDS = int(os.environ.get("ARC_CLEF_SEEDS", 3))
+# questions; P for the entry = its best seed. Measured on dev with prompt v6 (2026-11-15), extra
+# seeds HURT: Clef's answers interact within one call (the best of 3 batched seeds scored
+# lower than the single seed on 64 of 214 rows), and separate calls give near-misses three
+# chances (own: 118 right but 4 wrong). So 1 = the original only.
+#   seeds  own right/wrong @0.8   top-3 right/wrong @0.8
+#   1      117 / 0                115 / 0
+#   3 one call   113 / 0          114 / 3
+#   3 separate   118 / 4          (not run)
+CLEF_SEEDS = int(os.environ.get("ARC_CLEF_SEEDS", 1))
 # How the top-k candidates are found: "raw" = embed the raw question (no model call; what the
 # Clef dev numbers used), "structure" = one Haiku call per question writes its structure first.
 CLEF_RETRIEVAL = os.environ.get("ARC_CLEF_RETRIEVAL", "raw")
-# Measured on dev, top-3, at P >= 0.8, live pick-the-best rule (2026-11-15): v1 served 110/119
-# true matches right, 2/214 wrong; v2 113/119 right, the same 2 wrong; v3 (v2 + "read every
-# word" rule) 113/119 right, 0 wrong. v3 is the default (user decision); confirm on test split.
-CLEF_PROMPT = os.environ.get("ARC_CLEF_PROMPT", "v3")
+# Measured on dev, live pick-the-best rule at P >= 0.8, 119 true matches / 214 should-not
+# (eval/decision --prompt vN, 2026-11-15):
+#   prompt  top-3 right/wrong   own right/wrong   note
+#   v1      110 / 2             113 / 3
+#   v2      113 / 2             116 / 2           + entry profile, near-miss list
+#   v3      113 / 0             115 / 1           + read every word
+#   v4      113 / 0             116 / 0           + "judge the task, not the wording"
+#   v5      116 / 1             117 / 2           + the solver converts units itself
+#   v6      115 / 0             117 / 0           + numbered seats example, limit rule (default)
+# v4-v6 rules were written from dev errors: confirm on the test split once.
+CLEF_PROMPT = os.environ.get("ARC_CLEF_PROMPT", "v6")
 CLEF_PRICE_PER_MTOK = float(os.environ.get("ARC_CLEF_PRICE_PER_MTOK", 0.24))   # Cloudflare, input tokens
 # Which texts entry search embeds: "paper" = stored original question + template;
 # "cards" = the builder-written rewordings and intent line from each gate card;
@@ -159,7 +178,15 @@ LABELFREE_BUILD_TRIES = int(os.environ.get("ARC_LABELFREE_BUILD_TRIES", 3))     
 LABELFREE_RELATIONS = int(os.environ.get("ARC_LABELFREE_RELATIONS", 6))         # metamorphic checks per entry
 LABELFREE_FAIL_FAST = os.environ.get("ARC_LABELFREE_FAIL_FAST", "1") == "1"     # stop at the first failure
 LABELFREE_AUDIT_RATE = float(os.environ.get("ARC_LABELFREE_AUDIT_RATE", 0.02))  # share of hits re-checked after launch
-LABELFREE_MAX_COST = float(os.environ.get("ARC_LABELFREE_MAX_COST", 0.15))     # hard $ cap per build_family call
+# hard $ cap per build_family call. Raised from $0.15 to $0.60 (owner decision 2026-11-15):
+# a Sonnet build alone measured $0.21-0.26 (up to ~$0.33 with its checks). Raised to $1.20
+# (owner decision 2026-11-16) for the three-step cascade: Haiku ~$0.04 + Sonnet ~$0.33 + Opus
+# ~$0.65 (estimated, not yet measured: Opus is 2x Sonnet's per-token price, $4/$20 vs $2/$10
+# per M) is ~$1.02 worst case, plus the re-solve and checks.
+LABELFREE_MAX_COST = float(os.environ.get("ARC_LABELFREE_MAX_COST", 1.20))
+# Builder (units="strict"): scan generated code for hand-typed unit factors and send them back.
+# Off by default (owner decision 2026-11-15: no unit library; the builder writes its own conversions).
+BUILDER_FACTOR_SCAN = os.environ.get("ARC_BUILDER_FACTOR_SCAN", "0") == "1"
 # Family index (DEVIATION inside label-free builds): certify every held-out family question
 # against the entry directly (gate and code still run; IS1's cosine is recorded, not applied),
 # and on acceptance add the VERIFIED questions as extra entry points (kind "family") and card
@@ -190,6 +217,16 @@ LABELFREE_PROGRAM_SECONDS = float(os.environ.get("ARC_LABELFREE_PROGRAM_SECONDS"
 LABELFREE_CONVENTION_CHECK = os.environ.get("ARC_LABELFREE_CONVENTION_CHECK", "1") == "1"
 LABELFREE_FAMILY_INDEX = os.environ.get("ARC_LABELFREE_FAMILY_INDEX", "1") == "1"
 LABELFREE_INDEX_MAX = int(os.environ.get("ARC_LABELFREE_INDEX_MAX", 20))
+# DEVIATION (label-free builds, user decisions 2026-11-15 and 2026-11-16): builder cascade, in
+# order: Haiku, then Sonnet, then Opus. The simple flow builds with the first model; if that
+# build fails for a CODE reason (the builder's own tests, the conventions or output-spec step,
+# the convention check, a wrong / unresolved / crashed pre-publish answer, a violated rewrite
+# relation) it rebuilds with the next model from the same re-solve, within what is left of
+# LABELFREE_MAX_COST. A re-solve mismatch, a fit failure with no code errors, a cost cap or an
+# API error is not retried. Opus may run only here (arc/llm.py OPUS_BUILDER_ROLES): a family
+# neither cheaper model can build is still worth one costly build if it recurs often.
+LABELFREE_BUILDERS = [m.strip() for m in os.environ.get(
+    "ARC_LABELFREE_BUILDERS", "claude-haiku-5-5,claude-sonnet-5-5,claude-opus-5-5").split(",") if m.strip()]
 
 # --- Builder settings (paper gives no numbers for these) ---
 MAX_FUNCTION_ATTEMPTS = int(os.environ.get("ARC_MAX_FUNCTION_ATTEMPTS", 4))       # write/test/fix rounds per function
@@ -232,10 +269,30 @@ FAMILY_CLEF_SIMILARITY = float(os.environ.get("ARC_FAMILY_CLEF_SIMILARITY", 0.65
 # How many of a family's confirmed questions a new question is compared with: the anchor plus
 # the most recent others. Joins if ANY fits, so one unusual anchor wording does not split a task.
 FAMILY_CLEF_ANCHORS = int(os.environ.get("ARC_FAMILY_CLEF_ANCHORS", 3))
+# Prompt for family membership, separate from the serving gate's CLEF_PROMPT: the grouping
+# numbers above were measured with v3, so it stays v3 until grouping is re-measured.
+FAMILY_CLEF_PROMPT = os.environ.get("ARC_FAMILY_CLEF_PROMPT", "v3")
+# Build-ready check (user decision 2026-11-15). Counting a member needs only P >= 0.5 above,
+# but before building from the NEWEST member, that question must pass the serving gate's own
+# test against the family's anchor: CLEF_PROMPT, one comparison, its own call, P >=
+# CLEF_THRESHOLD. Otherwise the family waits for a newer question (no build spend). On dev,
+# joins >= 0.8 kept 90/114 true variants and 0 harmful near-misses (7 of 8 near-miss joins
+# scored 0.50-0.78). "off" = build from the newest confirmed member without this check.
+FAMILY_BUILD_CHECK = os.environ.get("ARC_FAMILY_BUILD_CHECK", "clef")
 FAMILY_HALF_LIFE_DAYS = float(os.environ.get("ARC_FAMILY_HALF_LIFE_DAYS", 30))   # older questions count half
 FAMILY_MIN_SIGHTINGS = float(os.environ.get("ARC_FAMILY_MIN_SIGHTINGS", 3))  # proof it recurs, whatever the money says
 CACHE_ANSWER_COST = float(os.environ.get("ARC_CACHE_ANSWER_COST", 0.0001))   # measured: one Haiku extraction call
-BUILD_COST_DEFAULT = float(os.environ.get("ARC_BUILD_COST_DEFAULT", 0.034))  # measured: explainer + build + certificate
+# Starting estimate until 3 builds are logged (families.effective_build_cost then measures it).
+# Builder cascade (Haiku first, Sonnet on a code failure): a passing Haiku build measured
+# ~$0.04 all in; a Sonnet fallback adds ~$0.33. With roughly 1 in 5 builds falling back,
+# about $0.04 + 0.2 x $0.33 = ~$0.10.
+BUILD_COST_DEFAULT = float(os.environ.get("ARC_BUILD_COST_DEFAULT", 0.10))
+# Real build attempts (not re-solve mismatches) logged before the measured cost replaces it.
+BUILD_COST_MIN_BUILDS = int(os.environ.get("ARC_BUILD_COST_MIN_BUILDS", 10))
+# A family whose build fails (the builder can't pass its own tests) waits for a newer question
+# and retries; after this many failed builds it is rejected for good, so a family that can't be
+# built stops costing money. Re-solve mismatches don't count (no build happened).
+FAMILY_MAX_FAILED_BUILDS = int(os.environ.get("ARC_FAMILY_MAX_FAILED_BUILDS", 3))
 BUILD_ACCEPT_RATE_DEFAULT = float(os.environ.get("ARC_BUILD_ACCEPT_RATE_DEFAULT", 10 / 17))  # measured: 17 seeds
 SERVE_RATE_DEFAULT = float(os.environ.get("ARC_SERVE_RATE_DEFAULT", 1.0))    # share of a family the gate serves
 
@@ -243,6 +300,7 @@ SERVE_RATE_DEFAULT = float(os.environ.get("ARC_SERVE_RATE_DEFAULT", 1.0))    # s
 PRICES = {
     "claude-opus-5-5": (4.00, 20.00, 5.00, 0.20),
     "claude-haiku-5-5": (0.10, 0.50, 0.125, 0.01),
+    "claude-sonnet-5-5": (2.00, 10.00, 2.50, 0.10),
 }
 DEFAULT_PRICE = PRICES["claude-opus-5-5"]
 
@@ -251,11 +309,11 @@ DEFAULT_PRICE = PRICES["claude-opus-5-5"]
 SETTING_NAMES = [
     "PROFILE", "SOURCE_MODEL", "EXPLAINER_MODEL", "BUILDER_MODEL", "JUDGE_MODEL", "GENERATOR_MODEL", "TARGET_MODEL",
     "SOURCE_EFFORT", "BUILDER_EFFORT", "JUDGE_EFFORT", "GENERATOR_EFFORT", "EMBED_MODEL",
-    "EXPAND_SHORTHAND", "EXTRACT_FORM", "LOAD_THRESHOLD", "DO_THRESHOLD", "ENTRY_THRESHOLD", "GATE", "GATE_CHECKS", "INDEX", "SPEC_DECIDER", "SPEC_THRESHOLD", "CLEF_MODEL", "CLEF_THRESHOLD", "CLEF_TOP_K", "CLEF_SEEDS", "CLEF_RETRIEVAL", "CLEF_PROMPT", "LABELFREE_MIN_CHECKED", "LABELFREE_MAX_CHECKED", "LABELFREE_BUILD_TRIES", "LABELFREE_RELATIONS", "LABELFREE_FAIL_FAST", "LABELFREE_AUDIT_RATE", "LABELFREE_MAX_COST", "LABELFREE_FAMILY_INDEX", "LABELFREE_INDEX_MAX", "LABELFREE_CERTIFY", "LABELFREE_RESOLVE_TRIES", "LABELFREE_FIT_CHECKS", "LABELFREE_FIT_MIN", "LABELFREE_ADJUDICATOR", "LABELFREE_PROGRAM_SECONDS", "LABELFREE_CONVENTION_CHECK",
+    "EXPAND_SHORTHAND", "EXTRACT_FORM", "LOAD_THRESHOLD", "DO_THRESHOLD", "ENTRY_THRESHOLD", "GATE", "GATE_CHECKS", "INDEX", "SPEC_DECIDER", "SPEC_THRESHOLD", "CLEF_MODEL", "CLEF_THRESHOLD", "CLEF_TOP_K", "CLEF_SEEDS", "CLEF_RETRIEVAL", "CLEF_PROMPT", "LABELFREE_MIN_CHECKED", "LABELFREE_MAX_CHECKED", "LABELFREE_BUILD_TRIES", "LABELFREE_RELATIONS", "LABELFREE_FAIL_FAST", "LABELFREE_AUDIT_RATE", "LABELFREE_MAX_COST", "BUILDER_FACTOR_SCAN", "LABELFREE_FAMILY_INDEX", "LABELFREE_INDEX_MAX", "LABELFREE_CERTIFY", "LABELFREE_RESOLVE_TRIES", "LABELFREE_FIT_CHECKS", "LABELFREE_FIT_MIN", "LABELFREE_ADJUDICATOR", "LABELFREE_PROGRAM_SECONDS", "LABELFREE_CONVENTION_CHECK", "LABELFREE_BUILDERS",
     "MAX_FUNCTION_ATTEMPTS", "MAX_ROOT_REPAIRS", "EXTRACTION_ROUNDS", "GRANULARITY",
     "FUNCTION_TIMEOUT_SECONDS", "VARIANTS_PER_MODE", "JUDGE_COMMITTEE_SIZE",
-    "FAMILY_SIMILARITY", "FAMILY_CHECK", "FAMILY_CLEF_TOP_K", "FAMILY_CLEF_THRESHOLD", "FAMILY_CLEF_SIMILARITY", "FAMILY_CLEF_ANCHORS", "FAMILY_HALF_LIFE_DAYS", "FAMILY_MIN_SIGHTINGS", "CACHE_ANSWER_COST",
-    "BUILD_COST_DEFAULT", "BUILD_ACCEPT_RATE_DEFAULT", "SERVE_RATE_DEFAULT",
+    "FAMILY_SIMILARITY", "FAMILY_CHECK", "FAMILY_CLEF_TOP_K", "FAMILY_CLEF_THRESHOLD", "FAMILY_CLEF_SIMILARITY", "FAMILY_CLEF_ANCHORS", "FAMILY_CLEF_PROMPT", "FAMILY_BUILD_CHECK", "FAMILY_HALF_LIFE_DAYS", "FAMILY_MIN_SIGHTINGS", "CACHE_ANSWER_COST",
+    "BUILD_COST_DEFAULT", "BUILD_COST_MIN_BUILDS", "FAMILY_MAX_FAILED_BUILDS", "BUILD_ACCEPT_RATE_DEFAULT", "SERVE_RATE_DEFAULT",
 ]
 
 

@@ -1,0 +1,17 @@
+{
+  "fam_perfect_gas_pressure": [
+    "The gas constant is the fixed value R = 0.0820573661 L·atm/(mol·K), used exactly as written with no further rounding.",
+    "Pressure is p = n x R x T / V computed as a single Decimal expression at 60 significant digits, with no intermediate rounding of nR or nRT.",
+    "The final pressure is returned at full working precision with no quantize step, so it is not rounded to 4 decimal places or any other place value.",
+    "Volume is converted exactly to litres before use: m3 x 1000, dm3 and litre x 1, mL, cm3 and cc x 0.001, microlitre x 0.000001.",
+    "Amount is converted exactly to mol: mol x 1, kmol x 1000, mmol x 0.001, umol x 0.000001, with number words read as integers.",
+    "Celsius converts to kelvin by adding exactly 273.15, not 273.",
+    "Fahrenheit converts to kelvin as (F + 459.67) x 5 / 9 and Rankine as R x 5 / 9, with the division carried at 60 significant digits.",
+    "A temperature given in kelvin is used unchanged.",
+    "Amount, volume and absolute temperature must be strictly greater than zero; a value equal to zero or below raises an error, so zero is excluded.",
+    "Numeric text goes straight into Decimal from the string with no float conversion, and comma digit-group separators are stripped before parsing.",
+    "The SI cross-check is a separate returned value that does not feed the primary answer: volume in m3 is litres / 1000, then p = n x 8.314 x T / V_m3 in Pa, then divided by 101325 Pa per atm.",
+    "The cross-check uses R = 8.314 J/(mol·K) and 101325 Pa per atm, not the L·atm gas constant used for the primary answer.",
+    "The relative difference returned by the cross-check is (cross-check pressure - primary pressure) / primary pressure, returned unrounded."
+  ]
+}

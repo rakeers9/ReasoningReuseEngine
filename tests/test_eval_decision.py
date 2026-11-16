@@ -54,3 +54,48 @@ def test_v4_pair_text_is_the_live_gate_v4_prompt():
     spec = rd.seed_specs()["perfect_gas_pressure"]
     assert text == clef.PROMPT_V4.format(seed=SEEDS["perfect_gas_pressure"], profile=clef._profile(spec))
     assert rd.run_path("clef", "dev", "top3", "raw", "v4").name == "dev-top3-pv4.jsonl"
+
+
+def test_family_seeds_never_include_the_test_split_or_originals():
+    import json
+    corpus = {json.loads(l)["id"]: json.loads(l) for l in (ROOT / "eval/corpus/cache_eval_corpus.jsonl").read_text().splitlines()}
+    extra = rd.family_seeds("dev")
+    for entry, items in extra.items():
+        for rid, q in items:
+            r = corpus[rid]
+            assert r["split"] in ("seed", "dev") and r["should_hit"] and r["expected_entry"] == entry
+            assert r["variant_type"] != "original"
+
+
+def test_multi_seed_rows_take_the_best_seed_and_skip_the_row_itself(monkeypatch):
+    calls = []
+
+    class B:
+        def decide(self, state, questions):
+            calls.append(questions)
+            return {k: (0.9 if k.endswith("#1") else 0.3) for k in questions}, {}
+    monkeypatch.setattr(rd, "N_SEEDS", 3)
+    extra = rd.family_seeds("dev")
+    entry = next(iter(extra))
+    first_id, first_q = extra[entry][0]
+    row = {"id": first_id, "question": first_q, "candidates": [{"entry": entry}]}
+    probs, _, _ = rd._decide_row(B(), False, "raw", row, {entry: "seed text"}, {}, None, "v6")
+    assert probs == {entry: 0.9}
+    assert len(calls[0]) == 3 and all(f"<<<{first_q}>>>" not in v for v in calls[0].values())   # never itself
+    assert rd.run_path("clef", "dev", "own", "raw", "v6", seeds=3).name == "dev-own-pv6-s3.jsonl"
+
+
+def test_separate_seeds_make_one_call_per_seed(monkeypatch):
+    calls = []
+
+    class B:
+        def decide(self, state, questions):
+            calls.append(list(questions))
+            return {k: 0.5 for k in questions}, {"input_tokens": 10}
+    monkeypatch.setattr(rd, "N_SEEDS", 3)
+    monkeypatch.setattr(rd, "SEPARATE", True)
+    entry = next(iter(rd.family_seeds("dev")))
+    probs, _, usage = rd._decide_row(B(), False, "raw", {"id": "x", "question": "q", "candidates": [{"entry": entry}]},
+                                     {entry: "seed"}, {}, None, "v6")
+    assert len(calls) == 3 and all(len(c) == 1 for c in calls) and usage["input_tokens"] == 30
+    assert rd.run_path("clef", "dev", "own", "raw", "v6", seeds=3).name == "dev-own-pv6-s3-sep.jsonl"

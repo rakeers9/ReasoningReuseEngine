@@ -228,8 +228,9 @@ def test_prior_checks_accumulate(world):
 class FakeBuilder:
     built = 0
 
-    def __init__(self, problem, transcript, use_golden=True):
+    def __init__(self, problem, transcript, use_golden=True, units="paper"):
         assert use_golden is False and problem["golden_label"] == ""
+        assert units == "strict"            # label-free builds always use the strict unit rules
         self.problem = problem
 
     def build(self):

@@ -133,18 +133,39 @@ def pair_text(seeds: dict, entry: str, raw: bool, prompt: str = "v1") -> str:
     with the entry's profile taken from its seed question's stored structure."""
     if raw:
         return seeds[entry]
-    if prompt in ("v2", "v3", "v4", "v5"):
+    if prompt in ("v2", "v3", "v4", "v5", "v6"):
         sys.path.insert(0, str(ROOT))
-        from arc.clef import PROMPT_V2, PROMPT_V3, PROMPT_V4, PROMPT_V5, _profile
-        template = {"v2": PROMPT_V2, "v3": PROMPT_V3, "v4": PROMPT_V4, "v5": PROMPT_V5}[prompt]
+        from arc import clef as _clef
+        template = {"v2": _clef.PROMPT_V2, "v3": _clef.PROMPT_V3, "v4": _clef.PROMPT_V4,
+                    "v5": _clef.PROMPT_V5, "v6": _clef.PROMPT_V6}[prompt]
+        _profile = _clef._profile
         return template.format(seed=seeds[entry], profile=_profile(seed_specs().get(entry)))
     return PROMPT.format(seed=seeds[entry])
 
 
 # ----------------------------------------------------------------------------- run
 
-def run_path(model: str, split: str, mode: str, input_kind: str, prompt: str = "v1") -> Path:
-    suffix = ("" if input_kind == "raw" else f"-{input_kind}") + ("" if prompt == "v1" else f"-p{prompt}")
+N_SEEDS = 1   # --seeds: questions per candidate entry (the live gate uses CLEF_SEEDS = 3)
+SEPARATE = False   # --separate-seeds: one Clef call per seed instead of all seeds in one call
+
+
+def family_seeds(split: str) -> dict[str, list[tuple[str, str]]]:
+    """Extra seed questions per entry, as the live gate would have them: other true variants
+    of that entry (should-hit rows) from the seed split and the split being scored, never the
+    held-out test split when tuning. The row being scored is excluded at use time."""
+    rows = load_corpus()
+    allowed = {"seed", split}
+    out: dict[str, list[tuple[str, str]]] = {}
+    for r in sorted(rows, key=lambda r: r["id"]):
+        if r["should_hit"] and r["split"] in allowed and r["variant_type"] != "original":
+            out.setdefault(r["expected_entry"], []).append((r["id"], r["question"]))
+    return out
+
+
+def run_path(model: str, split: str, mode: str, input_kind: str, prompt: str = "v1", seeds: int | None = None) -> Path:
+    seeds = N_SEEDS if seeds is None else seeds
+    suffix = ("" if input_kind == "raw" else f"-{input_kind}") + ("" if prompt == "v1" else f"-p{prompt}") \
+        + ("" if seeds == 1 else f"-s{seeds}") + ("-sep" if SEPARATE and seeds != 1 else "")
     return RUNS / model / f"{split}-{mode}{suffix}.jsonl"
 
 
@@ -153,6 +174,26 @@ def _decide_row(b, raw: bool, input_kind: str, r: dict, seeds: dict, seed_ids: d
     """One corpus row -> ({entry: P}, {entry: {field: P}}, usage). Raises on backend errors."""
     import structured as st
     entries = [c["entry"] for c in r["candidates"]]
+    if input_kind == "raw" and N_SEEDS > 1 and not raw:
+        extra = family_seeds(r.get("_split", "dev"))
+        questions = {}
+        for e in entries:
+            texts = [seeds[e]] + [q for rid, q in extra.get(e, []) if rid != r["id"]][:N_SEEDS - 1]
+            for k, t in enumerate(texts):
+                questions[f"{e}#{k}"] = pair_text({**seeds, e: t}, e, raw, prompt)
+        if SEPARATE:   # Clef's answers interact within a call, so each seed gets its own call
+            raw_p, usage = {}, {"input_tokens": 0}
+            for key, text in questions.items():
+                p1, u1 = b.decide(r["question"], {key: text})
+                raw_p.update(p1)
+                usage["input_tokens"] += (u1 or {}).get("input_tokens", 0) or (u1 or {}).get("prompt_tokens", 0)
+        else:
+            raw_p, usage = b.decide(r["question"], questions)
+        probs = {}
+        for key, p in raw_p.items():
+            e = key.split("#")[0]
+            probs[e] = max(probs.get(e, 0.0), p)
+        return probs, {}, usage
     if input_kind == "raw":
         probs, usage = b.decide(r["question"], {e: pair_text(seeds, e, raw, prompt) for e in entries})
         return probs, {}, usage
@@ -395,7 +436,9 @@ def main() -> None:
     ap.add_argument("--structures", help="structures file, e.g. eval/spec/specs.jsonl (needed unless --input raw)")
     ap.add_argument("--code-checks", action="store_true", help="also score with the code checks layered on")
     ap.add_argument("--score-only", action="store_true")
-    ap.add_argument("--prompt", default="v1", choices=["v1", "v2", "v3", "v4", "v5"],
+    ap.add_argument("--seeds", type=int, default=1, help="seed questions per candidate entry (live gate: 3)")
+    ap.add_argument("--separate-seeds", action="store_true", help="one Clef call per seed")
+    ap.add_argument("--prompt", default="v1", choices=["v1", "v2", "v3", "v4", "v5", "v6"],
                     help="v1 = the prompt below; v2 = the live gate's richer prompt; "
                          "v3 = v2 + read-every-word rule (arc/clef.py)")
     ap.add_argument("--compare", action="store_true")
@@ -410,8 +453,10 @@ def main() -> None:
         ap.error("--input struct/fields and --code-checks need --structures")
     import structured
     structs = structured.load(a.structures) if a.structures else None
-    if a.prompt in ("v2", "v3", "v4", "v5") and a.input != "raw":
+    if a.prompt in ("v2", "v3", "v4", "v5", "v6") and a.input != "raw":
         ap.error(f"--prompt {a.prompt} applies to --input raw only")
+    global N_SEEDS, SEPARATE
+    N_SEEDS, SEPARATE = a.seeds, a.separate_seeds
     path = run_path(a.model, a.split, a.mode, a.input, a.prompt)
     if not a.score_only:
         path = run(a.model, a.split, a.mode, a.limit, a.gpu, a.allow_remote_code, a.input, structs, a.prompt)

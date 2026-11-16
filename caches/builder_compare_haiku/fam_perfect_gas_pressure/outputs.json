@@ -1,0 +1,14 @@
+{
+  "fam_perfect_gas_pressure": {
+    "pressure of the gas in atm": {
+      "kind": "measure",
+      "unit": "atm",
+      "decimals": null
+    },
+    "SI cross-check pressure in atm": {
+      "kind": "measure",
+      "unit": "atm",
+      "decimals": null
+    }
+  }
+}

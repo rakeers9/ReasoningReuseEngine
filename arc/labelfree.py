@@ -55,21 +55,26 @@ import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 import numpy as np
-from pydantic import BaseModel, ConfigDict
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from . import config, embed, explain, llm
 from . import metamorphic as mm
 from .cache import Cache, EntryPoint
 from .certify import _compare
+from .checks import number_check, round_long_numbers
 from .runtime import CacheInvocationError
 from .source import Transcript
 
 STATUSES = ("accepted", "rejected", "need_more_data", "mismatch")
 MISMATCH_REASON = "caching tried but answer didn't match"
+PROGRAM_FAILED_REASON = "re-solve program failed"
 MISFIT_REASON = "built entry doesn't fit its family"
 CODE_WRONG_REASON = "cached code got a family question wrong"
 RELATION_REASON = "cached code changed its answer when an input was rewritten"
 CONVENTION_REASON = "entry's stated conventions don't match its code"
+OUTPUTS_REASON = "could not record the entry's output specs"
 RESOLVE_ROLE = "resolve"   # the only role that may run the customer's own model (see arc/llm.py)
 
 
@@ -85,6 +90,13 @@ class BuildResult:
     serve_rate: float | None = None
     status: str = "rejected"
     record_id: str | None = None     # simple flow: the record the build was attempted from
+    built_by: str | None = None      # simple flow: the builder model of the published entry
+    cascade: list = field(default_factory=list)   # simple flow: one row per builder tried
+    # simple flow: why the build (the cascade's last attempt) failed. "code": the built code
+    # failed its own tests or a code check; "api": a model/API error; "cost_cap": the cost cap
+    # stopped it. None: accepted, or a mismatch that is no failure (re-solve disagrees with
+    # production, questions don't fit the entry).
+    failure: str | None = None
 
 
 @dataclass
@@ -191,8 +203,12 @@ class Program(BaseModel):
     program: str
 
 
-DEFAULT_CONVENTION = ("money that is actually paid (each payment or installment) is rounded to the "
-                      "cent before any total is computed from it")
+# Owner decision 2026-11-15 (revised): one rule, "never round until the end". Replaces the old
+# default (payments rounded to the cent before totals). The question still wins if it states a
+# rounding rule. Used by the re-solve program and the tie-break programs; the builder's strict
+# rules (arc/builder.py STRICT_UNITS_RULES) say the same.
+DEFAULT_CONVENTION = ("no intermediate rounding: compute with full precision and round only the "
+                      "final answer")
 
 PROGRAM_PROMPT = """\
 Write a short, self-contained Python 3 program that computes the answer to the question below \
@@ -210,22 +226,28 @@ listed below; (3) by default, {default}.
 "area of the plot: 12.50 square metres".
 - Allowed imports: math, fractions, decimal, statistics, itertools, functools. No input, files \
 or network.
-{rules}
+{rules}{print_as}
 Question:
 {question}
 """
 
 
-def _program_solve(question: str, tag: str, conventions: list[str] | None = None) -> tuple[str | None, str]:
+def _program_solve(question: str, tag: str, conventions: list[str] | None = None,
+                   print_as: list[str] | None = None) -> tuple[str | None, str]:
     """One tie-break solve: Haiku writes a program from the question (and the entry's stated
     conventions, never its code or any answer), and it runs in a separate process.
+    print_as: quantities to print, each with its unit (names and units only, never values), so
+    the answer is in the same units as what it is compared with (the convention check).
     Returns (printed answer, "") or (None, why it failed)."""
     from . import sandbox
     rules = "".join(f"\n- {r}" for r in conventions or [])
+    wanted = "".join(f"\n- {q}" for q in print_as or [])
     prompt = PROGRAM_PROMPT.format(
         question=question, default=DEFAULT_CONVENTION,
         and_rules=" and the convention rules listed below" if conventions else "",
-        rules=f"\nConvention rules for this kind of question:{rules}\n" if conventions else "")
+        rules=f"\nConvention rules for this kind of question:{rules}\n" if conventions else "",
+        print_as=(f"\nPrint exactly these quantities, one line each, in these units (convert if you "
+                  f"compute in another unit):{wanted}\n") if print_as else "")
     try:
         prog = llm.call("adjudicator", prompt, model=config.EXPLAINER_MODEL, schema=Program,
                         effort=config.SOURCE_EFFORT, max_tokens=4000, tag=tag).parsed
@@ -404,7 +426,7 @@ def _explain_and_build(entry_id: str, candidates: list[dict], parts: dict) -> tu
         problem = {"id": entry_id, "question": t.question, "golden_label": ""}
         with llm.LEDGER.span() as sp:
             try:
-                b = Builder(problem, t, use_golden=False)
+                b = Builder(problem, t, use_golden=False, units="strict")
                 cache = b.build()
                 _add_gate_data(cache, problem, t)
             except BuildError as e:
@@ -525,12 +547,125 @@ def _build_certified(family_id: str, records: list[dict]) -> BuildResult:
 
 # ----------------------------------------------------------------------------- simple flow
 
-def _resolve(question: str, model: str, tag: str):
-    """Re-solve with the customer's production model, full working kept for the builder."""
-    prompt = explain.SOLVE_PROMPT.format(question=question) + (
-        "\n\nPut the full working in `working` and only the final answer, with units, in `final_answer`.")
-    return llm.call(RESOLVE_ROLE, prompt, model=model, schema=explain.Worked,
-                    effort=config.SOURCE_EFFORT, max_tokens=16000, tag=tag).parsed
+class ResolveOut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    working: str
+    program: str
+    final_answer: str
+
+
+RESOLVE_RULES = """
+
+Answer in three parts:
+- `working`: the method, step by step: the given values, the formulas and the order of the \
+steps. Do not do any arithmetic by hand and write no computed numbers: the program computes \
+every value.
+- `program`: a short, self-contained Python 3 program that computes the answer with exact \
+arithmetic (decimal.Decimal with a high precision for money). First print every intermediate \
+value at full precision, one per line, labelled with its name and unit (for example "monthly \
+rate: 0.004895833333333333333 per month"), including each final quantity unrounded. Then print a \
+line that says exactly FINAL ANSWER, and after it one line per quantity asked for, with its name \
+and unit, rounded only where a convention says to (round printed money to the cent). Allowed \
+imports: math, fractions, decimal, statistics, itertools, functools. No input, files or network.
+- `final_answer`: ONE answer per quantity, with units. Give a single value for each, never \
+alternatives or "about X (or Y)".
+Conventions: follow anything the question says; otherwise {default}."""
+
+
+class Resolved(explain.Worked):
+    """A re-solve. executed: the final answer is the program's printed output, and `working` is
+    the program plus that output (the builder's reference values). working_kept: the model's own
+    method text is included, because its final numbers agree with the program's."""
+    executed: bool = False
+    working_kept: bool = True
+    working_check: dict = Field(default_factory=dict)
+    error: str = ""                  # executed=False: why the program gave no answer
+
+
+_FINAL_MARK = re.compile(r"^\s*final answers?\s*:?\s*$", re.I)
+
+
+def _split_program_output(stdout: str) -> tuple[str, str]:
+    """(intermediate lines, answer lines) of a re-solve program's output, split at its last
+    FINAL ANSWER line. No such line: the whole output is the answer (older programs)."""
+    lines = (stdout or "").strip().splitlines()
+    marks = [i for i, ln in enumerate(lines) if _FINAL_MARK.match(ln)]
+    if not marks:
+        return "", "\n".join(lines).strip()
+    i = marks[-1]
+    return "\n".join(lines[:i]).strip(), "\n".join(lines[i + 1:]).strip()
+
+
+def _hand_agrees(stated: str, printed: str) -> dict:
+    """Do the model's own final numbers agree with what its program printed? The strict number
+    check both ways (so an extra wrong hand number is caught too); "unclear" counts as no."""
+    there, back = number_check(stated, printed), number_check(printed, stated)
+    agree = there["status"] == "match" and back["status"] == "match"
+    return {"agree": agree, "status": "match" if agree else "mismatch",
+            "detail": "" if agree else (there.get("detail") if there["status"] != "match" else back.get("detail"))}
+
+
+_CURRENCY = {"$": "$ (dollars)", "£": "£ (pounds)", "€": "€ (euros)", "¥": "¥ (yen)", "₹": "₹ (rupees)"}
+_CURRENCY_AT = re.compile(r"(?<![$\\])([$£€¥₹])\s?[-+]?\d")
+_UNIT_SHOWN = {"°c": "°C", "°f": "°F", "k": "K", "l": "L", "ml": "mL", "dl": "dL", "kpa": "kPa", "mpa": "MPa",
+               "gpa": "GPa", "hpa": "hPa", "pa": "Pa", "mmhg": "mmHg", "torr": "Torr", "kwh": "kWh", "kj": "kJ",
+               "mj": "MJ", "j": "J", "w": "W", "kw": "kW", "mw": "MW", "n": "N", "kn": "kN", "hz": "Hz",
+               "mol/l": "mol/L", "mmol/l": "mmol/L", "µmol/l": "µmol/L", "umol/l": "umol/L", "g/l": "g/L",
+               "mg/dl": "mg/dL", "kn/m": "kN/m", "n/m": "N/m", "ml/min": "mL/min"}
+
+
+def unit_hint(production: str) -> str | None:
+    """The unit(s) and currency the production answer's final line is stated in, read
+    deterministically (no model): "atm", "atm, MPa", "$ (dollars)". Never any of its values.
+    None when no unit can be read, so the re-solve gets no hint."""
+    from .checks import final_line, written_numbers
+    line = final_line(production or "")
+    found: list[str] = []
+    for m in _CURRENCY_AT.finditer(line):
+        found.append(_CURRENCY[m.group(1)])
+    for w in written_numbers(line):
+        if w.unit:
+            found.append(_UNIT_SHOWN.get(w.unit, w.unit))
+    out = list(dict.fromkeys(found))
+    return ", ".join(out) if out else None
+
+
+def _resolve(question: str, model: str, tag: str, unit_hint: str | None = None) -> Resolved:
+    """Re-solve with the customer's production model. It writes the method and a program that
+    computes every value exactly; the program's printed answer (the lines after FINAL ANSWER) is
+    compared with production, so the comparison never rests on hand arithmetic or an answer
+    hedged between two conventions.
+
+    The builder is handed the program and its executed output, never hand-computed numbers
+    (fam_f0003, 2026-11-15: a hand slip, 851.9375 for 851.875, made the build judges reject correct
+    code 8 times). The model's method text is kept only if its final numbers agree with the
+    program's under the strict number check; otherwise it is dropped and only the program and its
+    output are used. If the program crashes, times out or prints no answer, the result has
+    executed=False, no answer and no working (owner decision 2026-11-16: never fall back to hand
+    numbers); the build flow counts it as not agreeing and re-solves again."""
+    from . import sandbox
+    prompt = explain.SOLVE_PROMPT.format(question=question) + RESOLVE_RULES.format(default=DEFAULT_CONVENTION)
+    if unit_hint:   # the unit(s) production answered in, never its values (owner decision 2026-11-15)
+        prompt += (f"\nGive the final answer in {unit_hint}, the unit(s) the answer is expected in; "
+                   "the program must print it in that unit.")
+    out = llm.call(RESOLVE_ROLE, prompt, model=model, schema=ResolveOut,
+                   effort=config.SOURCE_EFFORT, max_tokens=16000, tag=tag).parsed
+    run = sandbox.run_program(out.program, seconds=config.LABELFREE_PROGRAM_SECONDS, max_output=12000)
+    steps, printed = _split_program_output(run.stdout) if run.ok else ("", "")
+    program = f"```python\n{out.program.strip()}\n```"
+    if not printed:
+        why = run.error or ("printed no answer after FINAL ANSWER" if run.stdout.strip() else "printed nothing")
+        # owner decision 2026-11-16: no fallback to the hand-written answer or working
+        return Resolved(working="", final_answer="", executed=False, working_kept=False, error=why[:300])
+    check = _hand_agrees(out.final_answer, printed)
+    method = (f"Method:\n{out.working}" if check["agree"] else
+              "(The model's own working is not shown: its final numbers disagree with the executed "
+              "program below, so only the program and its output are used.)")
+    executed = "\n".join(x for x in (steps, "FINAL ANSWER" if steps else "", printed) if x)
+    working = (f"{method}\n\nProgram that computes every value:\n{program}\n\n"
+               f"Executed output of this program (exact values, the reference for every step):\n{executed}")
+    return Resolved(working=working, final_answer=printed, executed=True, working_kept=check["agree"],
+                    working_check=check)
 
 
 # ----------------------------------------------------------------------------- conventions
@@ -544,8 +679,8 @@ CONVENTIONS_PROMPT = """\
 You built a cached solver from the worked example below. List every rounding or convention \
 choice the solver's CODE makes that changes the numeric answer, as plain one-line rules a person \
 could apply by hand. Describe exactly what the code does, not what it should do: if it totals \
-interest from the unrounded payment, say so. Cover each that applies: rounding of intermediate \
-amounts (for example "total interest = monthly payment rounded to the cent x number of payments - \
+interest from the unrounded payment, say so. Cover each that applies: whether any intermediate \
+amount is rounded (for example "total interest = unrounded monthly payment x number of payments - \
 principal"), compounding or day-count conventions, which formula variant or rate, inclusive or \
 exclusive bounds, how the final result is rounded and in what unit. Leave out anything that does \
 not change the answer. Return an empty list if there is nothing.
@@ -561,17 +696,102 @@ not change the answer. Return an empty list if there is nothing.
 """
 
 
-def write_conventions(cache: Cache, entry_id: str, transcript: Transcript) -> list[str]:
-    """One builder-model call: the entry's conventions, stored in cache.conventions."""
+def write_conventions(cache: Cache, entry_id: str, transcript: Transcript, model: str | None = None) -> list[str]:
+    """One builder-model call (model: the model that built the code; default
+    config.BUILDER_MODEL): the entry's conventions, stored in cache.conventions."""
     from .gatecard import _entry_code
     ep = next(e for e in cache.entry_points if e.problem_id == entry_id and e.kind == "original")
     prompt = CONVENTIONS_PROMPT.format(question=transcript.question, solution=transcript.solution,
                                        code=_entry_code(cache, ep.root_id))
-    rules = llm.call("builder", prompt, model=config.BUILDER_MODEL, schema=Conventions,
-                     effort=config.BUILDER_EFFORT, max_tokens=2000, tag=f"{entry_id}:conventions").parsed.rules
+    rules = llm.call("builder", prompt, model=model or config.BUILDER_MODEL, schema=Conventions,
+                     effort=config.BUILDER_EFFORT, max_tokens=16000, tag=f"{entry_id}:conventions").parsed.rules
     rules = [r.strip() for r in rules if r and r.strip()]
     cache.conventions[entry_id] = rules
     return rules
+
+
+class OutputItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str
+    kind: Literal["money", "count", "measure", "text"]
+    unit: str
+    decimals: int | None
+
+
+class OutputSpecs(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    outputs: list[OutputItem]
+
+
+OUTPUTS_PROMPT = """\
+A cached solver returns the outputs below. For EACH output name, exactly as written, say:
+- kind: "money" (an amount of currency), "count" (a whole number of things), "measure" (a \
+physical or other quantity with a unit, or a plain ratio) or "text" (a word, label or decision);
+- unit: the unit or currency the code returns it in ("USD", "kPa", "K", "people", "" if none);
+- decimals: how many decimals the answer should be shown with: 2 for money given to the cent, \
+0 for counts, the precision the question asks for if it asks for one, otherwise null.
+
+## Question
+{question}
+
+## Worked solution
+{solution}
+
+## Solver code (root function first)
+{code}
+
+## Outputs (name: value on the example question)
+{outputs}
+"""
+
+
+def write_outputs(cache: Cache, entry_id: str, transcript: Transcript, model: str | None = None) -> dict[str, dict]:
+    """One builder-model call: the spec of each root output, stored in cache.outputs, so the
+    presenter can round at the end (money to the cent, counts exact) and convert to the unit a
+    question asks for. Every real output key gets a spec; a key the model skipped is recorded
+    as a measure with no rounding (the safe default) and marked inferred."""
+    from .gatecard import _entry_code
+    from .serve import dispatch_root
+    ep = next(e for e in cache.entry_points if e.problem_id == entry_id and e.kind == "original")
+    try:
+        sample, _ = dispatch_root(cache, ep.root_id, {p.description: p.original_value for p in ep.params})
+    except Exception:  # noqa: BLE001  fall back to the declared output names
+        sample = {k: "?" for k in cache.functions[ep.root_id].outputs}
+    prompt = OUTPUTS_PROMPT.format(question=transcript.question, solution=transcript.solution,
+                                   code=_entry_code(cache, ep.root_id),
+                                   outputs="\n".join(f"- {k}: {v}" for k, v in sample.items()))
+    got = llm.call("builder", prompt, model=model or config.BUILDER_MODEL, schema=OutputSpecs,
+                   effort=config.BUILDER_EFFORT, max_tokens=16000, tag=f"{entry_id}:outputs").parsed
+    by_name = {o.name: o for o in got.outputs}
+    specs: dict[str, dict] = {}
+    for key in sample:
+        o = by_name.get(key)
+        if o is None:
+            specs[key] = {"kind": "measure", "unit": "", "decimals": None, "inferred": True}
+            continue
+        decimals = o.decimals
+        if o.kind == "money" and decimals is None:
+            decimals = 2
+        if o.kind == "count":
+            decimals = 0
+        specs[key] = {"kind": o.kind, "unit": o.unit.strip(), "decimals": decimals}
+    cache.outputs[entry_id] = specs
+    return specs
+
+
+def _output_quantities(cache: Cache, entry_id: str, output: dict) -> list[str]:
+    """The code's numeric outputs as "name (unit)", from the recorded output specs when there
+    are any, else the output names alone (the builder names each output with its unit).
+    Text outputs are left out: the program is not asked to reproduce a formatted report."""
+    specs = cache.outputs.get(entry_id) or {}
+    out = []
+    for name in output:
+        spec = specs.get(name) or {}
+        if spec.get("kind") == "text":
+            continue
+        unit = (spec.get("unit") or "").strip()
+        out.append(f"{name} ({unit})" if unit else name)
+    return out
 
 
 def _convention_check(cache: Cache, entry_id: str, rec: dict) -> dict | None:
@@ -590,15 +810,20 @@ def _convention_check(cache: Cache, entry_id: str, rec: dict) -> dict | None:
     except Exception as e:  # noqa: BLE001  (any failure of cached code)
         out["detail"] = f"code failed on its own build question: {type(e).__name__}: {e}"[:200]
         return out
-    ans, why = _program_solve(rec["question"], f"{entry_id}:conv", rules)
+    ans, why = _program_solve(rec["question"], f"{entry_id}:conv", rules, print_as=_output_quantities(cache, entry_id, output))
     if ans is None:
         out["detail"] = why
         return out
     out["program_answer"] = ans
-    cmp = _compare("conventions program vs cache", rec["question"], ans, out["cache_answer"], f"{entry_id}:conv:cmp")
+    # both sides are machine-computed at full precision: compare at 12 significant digits, so
+    # numerical noise in the 13th-80th digit can't fail the check (and the judge sees short
+    # numbers). Customer-facing comparisons are unchanged.
+    prog_short, code_short = round_long_numbers(ans), round_long_numbers(out["cache_answer"])
+    cmp = _compare("conventions program vs cache", rec["question"], prog_short, code_short, f"{entry_id}:conv:cmp")
+    out["compared"] = {"program": prog_short, "cache": code_short}
     out["passed"] = bool(cmp.agree)
     if not cmp.agree:
-        out["detail"] = f"program under the stated conventions said {ans[:100]!r}; the code said {out['cache_answer'][:100]!r}"
+        out["detail"] = f"program under the stated conventions said {prog_short[:100]!r}; the code said {code_short[:100]!r}"
     return out
 
 
@@ -713,9 +938,11 @@ def _prepublish_check(cache: Cache, entry_id: str, others: list[dict], budget: f
                   f"{violated['rewritten']!r} {violated['detail']}")[:300]
     else:
         reason = ""
+    code_error = bool(bad or violated or any(x["outcome"] == "crashed" for x in rows))
     return {"checked": len(rows), "fits": fits, "needed": need,
             "verified": sum(x["outcome"] in ("agree", "cache_right") for x in rows),
-            "passed": not reason, "reason": reason, "rows": rows}
+            "passed": not reason, "reason": reason, "rows": rows,
+            "code_error": code_error, "stopped": stopped}
 
 
 def _build_simple(family_id: str, records: list[dict]) -> BuildResult:
@@ -725,8 +952,12 @@ def _build_simple(family_id: str, records: list[dict]) -> BuildResult:
     more. Still no match -> status "mismatch", nothing published. After a build,
     _prepublish_check runs the newest other family questions through the entry (gate fit,
     the code's answer vs production under the strict comparison, metamorphic relations).
-    Any failure -> status "mismatch" with the reason, nothing published."""
-    from .builder import Builder, BuildError
+    Any failure -> status "mismatch" with the reason, nothing published.
+
+    Builder cascade (LABELFREE_BUILDERS, DEVIATION): the build and its checks run with the
+    first builder; a code failure (see _build_attempt) rebuilds from the same re-solve with
+    the next one, if the cost cap allows. The result records which model built the entry
+    (built_by) and one cascade row per builder tried."""
     entry_id = f"fam_{family_id}"
     recs = usable(records)
     if not recs:
@@ -737,64 +968,138 @@ def _build_simple(family_id: str, records: list[dict]) -> BuildResult:
     state: dict = {"record_id": rec["id"], "model": model, "attempts": [], "time": time.time()}
     start = len(llm.LEDGER.records)
 
-    def result(status, reason, accepted=False):
-        state.update(status=status, reason=reason, cost=llm.LEDGER.cost(since=start), parts=parts)
+    def result(status, reason, accepted=False, failure=None):
+        state.update(status=status, reason=reason, cost=llm.LEDGER.cost(since=start), parts=parts, failure=failure)
         d = _state_dir(entry_id)
         d.mkdir(parents=True, exist_ok=True)
         (d / "state.json").write_text(json.dumps(state, indent=1, default=str))
         return BuildResult(accepted, entry_id if accepted else None, reason, 0.0, parts,
-                           None, None, status, rec["id"])
+                           None, None, status, rec["id"], state.get("built_by"), list(state.get("cascade", [])),
+                           failure)
 
     worked = None
     for i in range(1, config.LABELFREE_RESOLVE_TRIES + 1):
         if llm.LEDGER.cost(since=start) >= config.LABELFREE_MAX_COST:
-            return result("rejected", f"cost cap ${config.LABELFREE_MAX_COST} reached after {i - 1} re-solves")
+            return result("rejected", f"cost cap ${config.LABELFREE_MAX_COST} reached after {i - 1} re-solves",
+                          failure="cost_cap")
         with llm.LEDGER.span() as sp:
             try:
-                w = _resolve(rec["question"], model, f"{entry_id}:resolve{i}")
+                w = _resolve(rec["question"], model, f"{entry_id}:resolve{i}", unit_hint=unit_hint(rec["response"]))
+                ran = getattr(w, "executed", False)
                 cmp = _compare("production vs re-solve", rec["question"], rec["response"], w.final_answer,
-                               f"{entry_id}:resolve{i}:cmp")
+                               f"{entry_id}:resolve{i}:cmp") if ran else None
             except llm.LLMError as e:
                 sp.end = len(llm.LEDGER.records)
                 parts["resolve"] = parts.get("resolve", 0.0) + sp.cost()
-                return result("rejected", f"re-solve failed: {e}"[:300])
+                return result("rejected", f"re-solve failed: {e}"[:300], failure="api")
             sp.end = len(llm.LEDGER.records)
         parts["resolve"] = parts.get("resolve", 0.0) + sp.cost()
-        state["attempts"].append({"final_answer": w.final_answer, "agree": cmp.agree})
-        if cmp.agree:
+        state["attempts"].append({"final_answer": w.final_answer, "agree": bool(cmp and cmp.agree),
+                                  "executed": ran, "working_kept": getattr(w, "working_kept", False),
+                                  **({} if ran else {"program_error": getattr(w, "error", "")})})
+        if cmp is not None and cmp.agree:
             worked = w
             break
     if worked is None:
+        if not any(a["executed"] for a in state["attempts"]):      # no try gave a working program
+            errors = "; ".join(a.get("program_error") or "no answer" for a in state["attempts"])
+            return result("mismatch", f"{PROGRAM_FAILED_REASON}: {errors}"[:400])
         return result("mismatch", MISMATCH_REASON)
 
     t = Transcript(entry_id, rec["question"], f"{worked.working}\n\nFinal answer: {worked.final_answer}",
                    f"re-solve by the production model ({model}), agreed with production", model, 0.0)
+    # the builder's reference values always come from the executed program (never hand numbers)
+    state["reference"] = "executed"
+    builders = config.LABELFREE_BUILDERS or [config.BUILDER_MODEL]
+    state["cascade"] = cascade = []
+    status, reason, failure = "rejected", "", None
+    for k, bmodel in enumerate(builders):
+        spent = llm.LEDGER.cost(since=start)
+        if spent >= config.LABELFREE_MAX_COST:
+            cap = f"cost cap ${config.LABELFREE_MAX_COST} reached (${spent:.2f} spent), {bmodel} not tried"
+            cascade.append({"model": bmodel, "status": "skipped", "reason": cap, "retry": False, "cost": 0.0})
+            # a builder already failed: its failure stands (code failures still count); none yet: the cap
+            return result(status, f"{reason}; {cap}"[:500] if reason else cap,
+                          failure=failure if reason else "cost_cap")
+        before = len(llm.LEDGER.records)
+        for key in _ATTEMPT_KEYS:          # top-level details always describe the latest attempt
+            state.pop(key, None)
+        cache, pre, status, reason, retry, failure = _build_attempt(bmodel, entry_id, rec, t, recs, parts, state,
+                                                                    start)
+        row = {"model": bmodel, "status": "accepted" if cache is not None else status, "reason": reason,
+               "retry": retry, "failure": failure, "cost": llm.LEDGER.cost(since=before),
+               **{key: state[key] for key in _ATTEMPT_KEYS if key in state}}
+        cascade.append(row)
+        if cache is not None:
+            state["built_by"] = bmodel
+            state["indexed"] = len(_publish(cache, entry_id, pre["rows"] if pre else None))
+            how = f" (after {', '.join(r['model'] for r in cascade[:-1])} failed)" if k else ""
+            return result("accepted", f"re-solve {len(state['attempts'])} by {model} matched production; "
+                                      f"built by {bmodel}{how} and published", accepted=True)
+        if not retry:
+            break
+        if k + 1 < len(builders):
+            row["next"] = f"code failure, rebuilding with {builders[k + 1]}"
+    return result(status, reason, failure=failure)
+
+
+_ATTEMPT_KEYS = ("conventions", "convention_check", "outputs", "seed_questions", "prepublish")
+
+
+def _build_attempt(bmodel: str, entry_id: str, rec: dict, t: Transcript, recs: list[dict], parts: dict,
+                   state: dict, start: int) -> tuple[Cache | None, dict | None, str, str, bool, str | None]:
+    """One builder of the cascade: build from the agreed re-solve, write and check the
+    conventions and output specs, run the pre-publish check. Returns (cache, prepublish,
+    status, reason, retry, failure): cache is set only when every check passed (publish it); retry
+    says the failure is the code's fault, so the next builder may fix it; failure is
+    BuildResult.failure for this attempt."""
+    from .builder import Builder, BuildError
     problem = {"id": entry_id, "question": rec["question"], "golden_label": ""}
     with llm.LEDGER.span() as sp:
         try:
-            cache = Builder(problem, t, use_golden=False).build()
+            cache = Builder(problem, t, use_golden=False, units="strict", model=bmodel,
+                            reference="executed").build()
             _add_gate_data(cache, problem, t)
-        except (BuildError, llm.LLMError) as e:
-            cache, why = None, f"build failed: {e}"[:300]
+            why, retry = "", False
+        except (BuildError, llm.OutputError) as e:      # its own tests failed, or unusable output
+            cache, why, retry, failure = None, f"build failed: {e}"[:300], True, "code"
+        except llm.LLMError as e:                       # API or network: another model won't help
+            cache, why, retry, failure = None, f"build failed: {e}"[:300], False, "api"
         finally:
             sp.end = len(llm.LEDGER.records)
-    parts["build"] = sp.cost()
+    parts["build"] = parts.get("build", 0.0) + sp.cost()
     if cache is None:
-        return result("rejected", why)
+        return None, None, "rejected", why, retry, failure
     # conventions: written from the code, then checked against it on the build question
+    # output specs first: the convention check asks its program for the code's output units
     with llm.LEDGER.span() as sp:
         try:
-            state["conventions"] = write_conventions(cache, entry_id, t)
-            conv = _convention_check(cache, entry_id, rec)
-        except llm.LLMError as e:
-            conv = {"passed": False, "detail": f"model error: {e}"[:200]}
+            try:
+                state["conventions"] = write_conventions(cache, entry_id, t, model=bmodel)
+                conv = None
+            except Exception as e:  # noqa: BLE001  model error, truncated or invalid JSON: never raise
+                conv = {"passed": False, "detail": f"{type(e).__name__}: {e}"[:200], "failure": _failure_of(e)}
+            try:
+                state["outputs"] = write_outputs(cache, entry_id, t, model=bmodel)
+                outputs_error, outputs_failure = "", None
+            except Exception as e:  # noqa: BLE001
+                outputs_error = f"{type(e).__name__}: {e}"[:200]
+                outputs_failure = _failure_of(e)
+            if conv is None:
+                try:
+                    conv = _convention_check(cache, entry_id, rec)
+                except Exception as e:  # noqa: BLE001
+                    conv = {"passed": False, "detail": f"{type(e).__name__}: {e}"[:200], "failure": _failure_of(e)}
         finally:
             sp.end = len(llm.LEDGER.records)
-    parts["conventions"] = sp.cost()
+    parts["conventions"] = parts.get("conventions", 0.0) + sp.cost()
     if conv is not None:
         state["convention_check"] = conv
         if not conv["passed"]:
-            return result("mismatch", f"{CONVENTION_REASON}: {conv['detail']}"[:400])
+            return (None, None, "mismatch", f"{CONVENTION_REASON}: {conv['detail']}"[:400], True,
+                    conv.get("failure", "code"))
+    if outputs_error:
+        return None, None, "mismatch", f"{OUTPUTS_REASON}: {outputs_error}"[:400], True, outputs_failure
 
     others = [r for r in recs if r["id"] != rec["id"]]
     seeds = _add_seed_questions(cache, entry_id, others, min(config.LABELFREE_FIT_CHECKS, len(others)))
@@ -807,13 +1112,29 @@ def _build_simple(family_id: str, records: list[dict]) -> BuildResult:
             _remove_seed_questions(cache, entry_id, seeds)    # only verified questions are kept
     state["seed_questions"] = seeds
     if pre is not None:
-        parts["prepublish"] = sp.cost()
+        parts["prepublish"] = parts.get("prepublish", 0.0) + sp.cost()
         state["prepublish"] = pre
         if not pre["passed"]:      # same status as a mismatch: the family retries on a newer record
-            return result("mismatch", pre["reason"])
-    state["indexed"] = len(_publish(cache, entry_id, pre["rows"] if pre else None))
-    return result("accepted", f"re-solve {len(state['attempts'])} by {model} matched production; built and published",
-                  accepted=True)
+            return None, pre, "mismatch", pre["reason"], pre["code_error"] and not pre["stopped"], _prepublish_failure(pre)
+    return cache, pre, "accepted", "", False, None
+
+
+def _failure_of(e: Exception) -> str:
+    """A model/API error is "api"; anything else (unusable output, invalid JSON, a crash) is "code"."""
+    return "api" if isinstance(e, llm.LLMError) and not isinstance(e, llm.OutputError) else "code"
+
+
+def _prepublish_failure(pre: dict) -> str | None:
+    """Failed pre-publish check -> BuildResult.failure. The cost cap stopped it -> "cost_cap"; the
+    code was wrong, crashed or broke a relation -> "code"; too few questions fit -> None, unless a
+    gate/model error is why ("api": an outage is no verdict on the entry)."""
+    if pre["stopped"]:
+        return "cost_cap"
+    if pre["code_error"]:
+        return "code"
+    if any(r.get("outcome") == "error" for r in pre["rows"]):
+        return "api"
+    return None
 
 
 def build_family(family_id: str, records: list[dict]) -> BuildResult:
@@ -857,5 +1178,5 @@ def audit_should_disable(outcome: str) -> bool:
     return outcome in ("cache_wrong", "unresolved")
 
 
-__all__ = ["CONVENTION_REASON", "write_conventions", "MISMATCH_REASON", "MISFIT_REASON", "CODE_WRONG_REASON", "RELATION_REASON", "BuildResult", "Certificate", "build_family", "certify", "adjudicate", "audit_hit",
+__all__ = ["unit_hint", "OUTPUTS_REASON", "write_outputs", "OutputSpecs", "ResolveOut", "CONVENTION_REASON", "write_conventions", "MISMATCH_REASON", "MISFIT_REASON", "CODE_WRONG_REASON", "RELATION_REASON", "BuildResult", "Certificate", "build_family", "certify", "adjudicate", "audit_hit",
            "audit_should_disable", "error_upper_bound", "usable", "typical_first", "STATUSES"]
