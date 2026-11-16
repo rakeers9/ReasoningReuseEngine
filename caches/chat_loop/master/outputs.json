@@ -1,16 +1,21 @@
 {
   "fam_f0002": {
-    "final book value after the elapsed years, formatted in dollars to two decimal places": {
+    "book value after the elapsed years in dollars": {
       "kind": "money",
       "unit": "USD",
       "decimals": 2
     }
   },
-  "fam_f0004": {
-    "pressure of the gas in bar": {
-      "kind": "measure",
-      "unit": "bar",
-      "decimals": null
+  "fam_f0003": {
+    "monthly payment in dollars": {
+      "kind": "money",
+      "unit": "USD",
+      "decimals": 2
+    },
+    "total interest in dollars": {
+      "kind": "money",
+      "unit": "USD",
+      "decimals": 2
     }
   }
 }

@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import anthropic
+import pydantic
 from pydantic import BaseModel
 
 from . import config
@@ -141,6 +142,23 @@ def _log(entry: dict) -> None:
             f.write(line)
 
 
+def _charge(role: str, response: Any, model: str, tag: str | None) -> float:
+    """Record a paid response in the ledger and return its cost. Every response the API
+    returns is paid for, usable or not (refused, cut off, unparseable), so every one counts
+    toward cost caps and spend reports."""
+    served = getattr(response, "model", model) or model
+    usage = response.usage
+    cost = _price(served, usage)
+    LEDGER.add(Record(
+        role=role, model=served,
+        input_tokens=usage.input_tokens, output_tokens=usage.output_tokens,
+        cache_write=getattr(usage, "cache_creation_input_tokens", 0) or 0,
+        cache_read=getattr(usage, "cache_read_input_tokens", 0) or 0,
+        cost=cost, tag=tag,
+    ))
+    return cost
+
+
 def _usage_fields(usage: Any) -> dict:
     return {
         "input_tokens": usage.input_tokens, "output_tokens": usage.output_tokens,
@@ -208,12 +226,20 @@ def call(
         else:
             api = client().messages
 
+    adapter = None
+    if schema is not None:
+        # Structured output is requested with create() and validated below, never with the SDK's
+        # parse(): parse() validates inside the request and raises a bare pydantic ValidationError
+        # that loses the response, so a paid reply that doesn't fit the schema (cut off mid-JSON,
+        # a missing or mistyped field) went unlogged, uncharged and uncaught (fam_f0003,
+        # 2026-11-16: "build error: ValidationError ... for ResolveOut" at $0).
+        adapter = pydantic.TypeAdapter(schema)
+        fmt = {"type": "json_schema", "schema": anthropic.transform_schema(adapter.json_schema())}
+        kwargs["output_config"] = {**kwargs.get("output_config", {}), "format": fmt}
+
     started = time.time()
     try:
-        if schema is not None:
-            response = api.parse(output_format=schema, **kwargs)
-        else:
-            response = api.create(**kwargs)
+        response = api.create(**kwargs)
     except anthropic.APIStatusError as e:
         _log({"time": started, "seconds": round(time.time() - started, 2), "role": role, "model": model,
               "tag": tag, "prompt": prompt, "system": system, "cost": 0.0,
@@ -230,7 +256,7 @@ def call(
         explanation = getattr(details, "explanation", None)
         _log({"time": started, "seconds": round(time.time() - started, 2), "role": role, "model": model,
               "tag": tag, "prompt": prompt, "system": system,
-              "cost": _price(getattr(response, "model", model) or model, response.usage),
+              "cost": _charge(role, response, model, tag),
               **_usage_fields(response.usage),
               "refusal_category": category, "refusal_explanation": explanation})
         raise OutputError(f"{role} call was refused by the model "
@@ -239,32 +265,33 @@ def call(
         _log({"time": started, "seconds": round(time.time() - started, 2), "role": role,
               "model": getattr(response, "model", model) or model, "tag": tag, "prompt": prompt,
               "system": system, "response": "".join(b.text for b in response.content if b.type == "text"),
-              "cost": _price(getattr(response, "model", model) or model, response.usage),
+              "cost": _charge(role, response, model, tag),
               **_usage_fields(response.usage), "error": f"hit max_tokens={max_tokens}"})
         raise OutputError(f"{role} call hit max_tokens={max_tokens}")
 
     text = "".join(b.text for b in response.content if b.type == "text")
     thinking = "".join(getattr(b, "thinking", "") or "" for b in response.content if b.type == "thinking")
     served_model = getattr(response, "model", model) or model
-    cost = _price(served_model, response.usage)
     usage = response.usage
-    LEDGER.add(Record(
-        role=role, model=served_model,
-        input_tokens=usage.input_tokens, output_tokens=usage.output_tokens,
-        cache_write=getattr(usage, "cache_creation_input_tokens", 0) or 0,
-        cache_read=getattr(usage, "cache_read_input_tokens", 0) or 0,
-        cost=cost, tag=tag,
-    ))
+    cost = _charge(role, response, model, tag)
+    parsed, parse_error = None, ""
+    if adapter is not None:
+        try:
+            parsed = adapter.validate_json(text)
+        except pydantic.ValidationError as e:
+            parse_error = f"{e.error_count()} error(s): " + "; ".join(
+                f"{'.'.join(map(str, x['loc'])) or '(root)'}: {x['msg']}" for x in e.errors()[:3])
     _log({
         "time": started, "seconds": round(time.time() - started, 2), "role": role,
         "model": served_model, "tag": tag, "prompt": prompt, "system": system,
         "response": text, "cost": cost, **_usage_fields(usage),
         "effort": effort, "max_tokens": max_tokens, "stop_reason": response.stop_reason,
         "visible_text_chars": len(text), "thinking_chars": len(thinking),
+        **({"error": f"no parseable output: {parse_error}"} if parse_error else {}),
     })
-    parsed = getattr(response, "parsed_output", None) if schema is not None else None
-    if schema is not None and parsed is None:
-        raise OutputError(f"{role} call returned no parseable output")
+    if adapter is not None and parsed is None:
+        raise OutputError(f"{role} call returned no parseable output"
+                          + (f" ({parse_error})"[:300] if parse_error else ""))
     return LLMResult(text=text, parsed=parsed, thinking=thinking, model=served_model, cost=cost,
                      input_tokens=usage.input_tokens, output_tokens=usage.output_tokens)
 

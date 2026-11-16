@@ -1,0 +1,14 @@
+{
+  "fam_f0003": {
+    "monthly payment in dollars": {
+      "kind": "money",
+      "unit": "USD",
+      "decimals": 2
+    },
+    "total interest in dollars": {
+      "kind": "money",
+      "unit": "USD",
+      "decimals": 2
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "fam_f0002": [
+    "Do not round any intermediate value: masses, temperatures, specific heats, heat capacities and the weighted sum are all kept at full precision.",
+    "Convert every input to base units first: mass to grams, temperature to kelvin (Celsius + 273.15), specific heat to J/(g·K) with a 1 °C difference equal to 1 K.",
+    "Heat capacity of each body = mass in grams x specific heat in J/(g·K).",
+    "Equilibrium temperature = (C_water x T_water + C_aluminum x T_aluminum) / (C_water + C_aluminum), a heat-capacity-weighted average with all temperatures in K and no heat loss.",
+    "The energy-balance check is only a verification and does not change the answer.",
+    "Round only the final equilibrium temperature, once, to 4 significant figures with halves rounded up, and report it in K."
+  ]
+}

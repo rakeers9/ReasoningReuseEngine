@@ -39,6 +39,7 @@ from . import config, judges, llm
 from .cache import Cache, EntryPoint
 from .checks import number_check
 from .serve import dispatch_root, extract_parameters, format_output
+from .present import ROUNDING_POLICY
 from .source import SOLVE_PROMPT, Transcript
 
 
@@ -110,8 +111,9 @@ def _generate_instances(question: str, template: str, ep: EntryPoint, n: int, ta
 
 def _fresh_solve(question: str, tag: str) -> str:
     """The source model solves from scratch: no transcript, no code, no label."""
-    prompt = SOLVE_PROMPT.format(question=question) + (
-        "\n\nPut the full working in `working` and only the final answer, with units, in `final_answer`.")
+    prompt = SOLVE_PROMPT.format(question=question) + (   # the paper's prompt, unchanged, then our rules
+        "\n\nPut the full working in `working` and only the final answer, with units, in `final_answer`.\n"
+        + ROUNDING_POLICY)
     out = llm.call("source", prompt, model=config.SOURCE_MODEL, schema=Solved,
                    effort=config.SOURCE_EFFORT, max_tokens=16000, tag=tag).parsed
     return out.final_answer

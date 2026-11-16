@@ -208,8 +208,10 @@ def test_default_convention_applies_when_the_entry_states_none(fake_llm, judge_p
     _queue(fake_llm, ROUNDED_PROGRAM)
     labelfree.adjudicate(Q, PRODUCTION, "total_interest: 95368.40", "t", max_solves=1)
     assert labelfree.DEFAULT_CONVENTION in fake_llm.calls[0]["prompt"]
-    # owner decision 2026-11-15 (revised): "never round until the end", no payment-rounding exception
-    assert "no intermediate rounding" in labelfree.DEFAULT_CONVENTION
+    # owner decisions 2026-11-15/16: "never round until the end", now present.ROUNDING_POLICY
+    from arc import present
+    assert labelfree.DEFAULT_CONVENTION == present.ROUNDING_POLICY
+    assert "never round any intermediate value" in labelfree.DEFAULT_CONVENTION
     assert "round only the final answer" in labelfree.DEFAULT_CONVENTION
 
 
@@ -221,7 +223,7 @@ def test_one_rounding_rule_everywhere():
     prompts = {"builder strict rules": builder.STRICT_UNITS_RULES,
                "re-solve": labelfree.RESOLVE_RULES.format(default=labelfree.DEFAULT_CONVENTION),
                "tie-break program": labelfree.PROGRAM_PROMPT.format(
-                   question="q", default=labelfree.DEFAULT_CONVENTION, and_rules="", rules="", print_as=""),
+                   question="q", rounding=labelfree.DEFAULT_CONVENTION, and_rules="", rules="", print_as=""),
                "conventions writer": labelfree.CONVENTIONS_PROMPT,
                "default": labelfree.DEFAULT_CONVENTION}
     for name, text in prompts.items():
