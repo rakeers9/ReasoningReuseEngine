@@ -57,7 +57,8 @@ def test_values_come_back_as_written_with_rules_in_the_system_prompt(fake_llm):
         "years elapsed": "3 years", "cost": "$50k", "useful life": "10-year useful life", "salvage": "$5k"}
     call = fake_llm.calls[0]
     assert call["role"] == "extractor" and call["system"] == extraction.EVIDENCE_SYSTEM
-    assert "never from the order of the inputs" in call["system"] and "are NOT extras" in call["system"]
+    assert "respectively" in call["system"] and "are NOT extras" in call["system"]
+    assert "calculator" not in call["system"] + call["prompt"]    # general wording, not math-only
     msg = call["prompt"]
     assert "Copy each value" not in msg                         # fixed rules are not in the user message
     assert EXAMPLE in msg and 'p1 (cost): "$379,000"' in msg     # worked example with the original values
@@ -89,6 +90,21 @@ def test_a_value_must_come_from_its_own_evidence():
     assert extraction.check_evidence_value("cost $50k", "$5k", Q) is not None
     assert extraction.check_evidence_value("cost $50k", "$50k", Q) is None
     assert extraction.check_evidence_value("cost $50,000", "$50,000", Q) is not None   # not the words in the question
+
+
+def test_evidence_ignores_punctuation_and_quote_styles_but_not_words():
+    q = "Machine cost: $50k, salvage “$5k”; life — 10 years."
+    assert extraction.check_evidence_value("cost $50k", "$50k", q) is None             # colon dropped
+    assert extraction.check_evidence_value('salvage "$5k"', "$5k", q) is None          # straight vs curly quotes
+    assert extraction.check_evidence_value("life - 10 years", "10 years", q) is None   # dash style
+    assert extraction.check_evidence_value("cost $5", "$5", q) is not None             # part of "$50k" is not a match
+    assert extraction.check_evidence_value("salvage $50k", "$50k", q) is not None      # words in a different place
+
+
+def test_a_value_may_reword_its_evidence_but_not_change_a_number():
+    q = "A 3.00 L flask holds 0.250 mol of CO2(g) at 25°C. What pressure does it exert?"
+    assert extraction.check_evidence_value("CO2(g)", "carbon dioxide", q) is None
+    assert extraction.check_evidence_value("3.00 L flask", "3000 mL", q) is not None    # a converted number
 
 
 def test_ambiguous_assignment_goes_to_the_model(fake_llm):
