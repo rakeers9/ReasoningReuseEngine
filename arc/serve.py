@@ -64,7 +64,7 @@ def extract_parameters(request: str, params: list[ParamSpec], tag: str | None = 
     where made-up values such as "300 K" came from.
 
     config.EXTRACT_FORM "evidence" (DEVIATION, opt-in): the text form plus the exact words that
-    state each value (checked in code), no implied values, and `example` (the question the entry
+    state each value (checked in code), no value without words in the question behind it, and `example` (the question the entry
     was built from) shown with its original values as a worked example."""
     if config.EXTRACT_FORM == "evidence":
         from .extraction import extract_evidence
