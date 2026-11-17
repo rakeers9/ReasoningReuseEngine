@@ -1,0 +1,453 @@
+{
+  "name": "fam_f0003",
+  "functions": [
+    {
+      "id": "parse_a_money_amount_from_raw_text_with_7421a0",
+      "description": "Parse a money amount from raw text with currency symbols, separators and scale suffixes into an exact Decimal dollar amount.",
+      "inputs": [
+        "the money amount as raw text"
+      ],
+      "outputs": [
+        "amount in dollars"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0003"
+    },
+    {
+      "id": "parse_a_percentage_rate_from_raw_text_su_413ff3",
+      "description": "Parse a percentage rate from raw text such as '7.5%' or '7.5 percent' into an exact Decimal annual rate as a fraction.",
+      "inputs": [
+        "the percentage rate as raw text"
+      ],
+      "outputs": [
+        "annual rate as a decimal fraction"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0003"
+    },
+    {
+      "id": "parse_a_loan_term_from_raw_text_digits_o_8c5f6a",
+      "description": "Parse a loan term from raw text (digits or number words, in years or months) into a term in years and a term in months.",
+      "inputs": [
+        "the loan term with unit as raw text"
+      ],
+      "outputs": [
+        "term in years",
+        "term in months"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0003"
+    },
+    {
+      "id": "determine_the_number_of_compounding_peri_db88fa",
+      "description": "Determine the number of compounding periods per year from a frequency description such as monthly, quarterly, semiannual, annual, weekly, biweekly or daily.",
+      "inputs": [
+        "the compounding and payment frequency description as raw text"
+      ],
+      "outputs": [
+        "periods per year"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0003"
+    },
+    {
+      "id": "compute_the_periodic_interest_rate_annua_e0309a",
+      "description": "Compute the periodic interest rate (annual rate divided by periods per year) and the total number of payments (periods per year times term in years).",
+      "inputs": [
+        "annual rate as a decimal fraction",
+        "periods per year",
+        "term in years"
+      ],
+      "outputs": [
+        "periodic rate",
+        "number of payments"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0003"
+    },
+    {
+      "id": "compute_the_growth_factor_1_r_n_and_the_8632d7",
+      "description": "Compute the growth factor (1+r)^n and the unrounded level periodic annuity payment from principal, periodic rate and number of payments, treating a zero rate as principal divided by number of payments.",
+      "inputs": [
+        "principal in dollars",
+        "periodic rate",
+        "number of payments"
+      ],
+      "outputs": [
+        "growth factor",
+        "unrounded periodic payment in dollars"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0003"
+    },
+    {
+      "id": "round_the_periodic_payment_to_the_cent_w_16028e",
+      "description": "Round the periodic payment to the cent with half-up rounding and compute total interest as the rounded payment times the number of payments minus the principal.",
+      "inputs": [
+        "unrounded periodic payment in dollars",
+        "number of payments",
+        "principal in dollars"
+      ],
+      "outputs": [
+        "monthly payment in dollars",
+        "total interest in dollars"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0003"
+    },
+    {
+      "id": "solve_a_fixed_rate_amortizing_loan_compu_8e8e38",
+      "description": "Solve a fixed-rate amortizing loan: compute the level periodic payment and the total interest paid over the term, from the principal, the annual nominal rate, the compounding frequency and the term.",
+      "inputs": [
+        "the loan principal amount in dollars",
+        "the annual nominal interest rate as a percentage",
+        "the compounding and payment frequency description",
+        "the loan term with unit"
+      ],
+      "outputs": [
+        "monthly payment in dollars",
+        "total interest in dollars"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0003"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "A \u25cf1 mortgage has a \u25cf2 annual interest rate, compounded \u25cf3, over \u25cf4. What is the monthly payment, and how much total interest is paid over the life of the loan?",
+      "kind": "template",
+      "root_id": "solve_a_fixed_rate_amortizing_loan_compu_8e8e38",
+      "params": [
+        {
+          "description": "the loan principal amount in dollars",
+          "format_examples": [
+            "$446,000",
+            "$250k",
+            "$1.2 million"
+          ],
+          "original_value": "$446,000",
+          "validity_range": "Positive money amount; may include currency symbol, thousands separators or scale suffixes (k, thousand, million, bn); must be greater than zero."
+        },
+        {
+          "description": "the annual nominal interest rate as a percentage",
+          "format_examples": [
+            "7.5%",
+            "4 percent",
+            "3.25%"
+          ],
+          "original_value": "7.5%",
+          "validity_range": "Non-negative percentage, typically 0% to about 30%; zero rate is handled as principal divided by number of payments."
+        },
+        {
+          "description": "the compounding and payment frequency description",
+          "format_examples": [
+            "monthly",
+            "quarterly",
+            "semiannually"
+          ],
+          "original_value": "monthly",
+          "validity_range": "One of monthly (12), quarterly (4), semiannual (2), annual (1), weekly (52), biweekly (26), daily (365) periods per year."
+        },
+        {
+          "description": "the loan term with unit",
+          "format_examples": [
+            "20 years",
+            "30 years",
+            "180 months"
+          ],
+          "original_value": "20 years",
+          "validity_range": "Positive duration in years or months (digits or number words) such that the total number of payments is a positive integer."
+        }
+      ],
+      "problem_id": "fam_f0003"
+    },
+    {
+      "text": "A $446,000 mortgage has a 7.5% annual interest rate, compounded monthly, over 20 years. What is the monthly payment, and how much total interest is paid over the life of the loan?",
+      "kind": "original",
+      "root_id": "solve_a_fixed_rate_amortizing_loan_compu_8e8e38",
+      "params": [
+        {
+          "description": "the loan principal amount in dollars",
+          "format_examples": [
+            "$446,000",
+            "$250k",
+            "$1.2 million"
+          ],
+          "original_value": "$446,000",
+          "validity_range": "Positive money amount; may include currency symbol, thousands separators or scale suffixes (k, thousand, million, bn); must be greater than zero."
+        },
+        {
+          "description": "the annual nominal interest rate as a percentage",
+          "format_examples": [
+            "7.5%",
+            "4 percent",
+            "3.25%"
+          ],
+          "original_value": "7.5%",
+          "validity_range": "Non-negative percentage, typically 0% to about 30%; zero rate is handled as principal divided by number of payments."
+        },
+        {
+          "description": "the compounding and payment frequency description",
+          "format_examples": [
+            "monthly",
+            "quarterly",
+            "semiannually"
+          ],
+          "original_value": "monthly",
+          "validity_range": "One of monthly (12), quarterly (4), semiannual (2), annual (1), weekly (52), biweekly (26), daily (365) periods per year."
+        },
+        {
+          "description": "the loan term with unit",
+          "format_examples": [
+            "20 years",
+            "30 years",
+            "180 months"
+          ],
+          "original_value": "20 years",
+          "validity_range": "Positive duration in years or months (digits or number words) such that the total number of payments is a positive integer."
+        }
+      ],
+      "problem_id": "fam_f0003"
+    },
+    {
+      "text": "Calculate the monthly installment and lifetime interest for a $781k mortgage at 6.5% annual interest compounded monthly, repaid over 10 years.",
+      "kind": "family",
+      "root_id": "solve_a_fixed_rate_amortizing_loan_compu_8e8e38",
+      "params": [
+        {
+          "description": "the loan principal amount in dollars",
+          "format_examples": [
+            "$446,000",
+            "$250k",
+            "$1.2 million"
+          ],
+          "original_value": "$446,000",
+          "validity_range": "Positive money amount; may include currency symbol, thousands separators or scale suffixes (k, thousand, million, bn); must be greater than zero."
+        },
+        {
+          "description": "the annual nominal interest rate as a percentage",
+          "format_examples": [
+            "7.5%",
+            "4 percent",
+            "3.25%"
+          ],
+          "original_value": "7.5%",
+          "validity_range": "Non-negative percentage, typically 0% to about 30%; zero rate is handled as principal divided by number of payments."
+        },
+        {
+          "description": "the compounding and payment frequency description",
+          "format_examples": [
+            "monthly",
+            "quarterly",
+            "semiannually"
+          ],
+          "original_value": "monthly",
+          "validity_range": "One of monthly (12), quarterly (4), semiannual (2), annual (1), weekly (52), biweekly (26), daily (365) periods per year."
+        },
+        {
+          "description": "the loan term with unit",
+          "format_examples": [
+            "20 years",
+            "30 years",
+            "180 months"
+          ],
+          "original_value": "20 years",
+          "validity_range": "Positive duration in years or months (digits or number words) such that the total number of payments is a positive integer."
+        }
+      ],
+      "problem_id": "fam_f0003"
+    },
+    {
+      "text": "What are the monthly payments on a 10-year, $335,000 home loan at 3.5% per year (monthly compounding), and what is the total interest over the full term?",
+      "kind": "family",
+      "root_id": "solve_a_fixed_rate_amortizing_loan_compu_8e8e38",
+      "params": [
+        {
+          "description": "the loan principal amount in dollars",
+          "format_examples": [
+            "$446,000",
+            "$250k",
+            "$1.2 million"
+          ],
+          "original_value": "$446,000",
+          "validity_range": "Positive money amount; may include currency symbol, thousands separators or scale suffixes (k, thousand, million, bn); must be greater than zero."
+        },
+        {
+          "description": "the annual nominal interest rate as a percentage",
+          "format_examples": [
+            "7.5%",
+            "4 percent",
+            "3.25%"
+          ],
+          "original_value": "7.5%",
+          "validity_range": "Non-negative percentage, typically 0% to about 30%; zero rate is handled as principal divided by number of payments."
+        },
+        {
+          "description": "the compounding and payment frequency description",
+          "format_examples": [
+            "monthly",
+            "quarterly",
+            "semiannually"
+          ],
+          "original_value": "monthly",
+          "validity_range": "One of monthly (12), quarterly (4), semiannual (2), annual (1), weekly (52), biweekly (26), daily (365) periods per year."
+        },
+        {
+          "description": "the loan term with unit",
+          "format_examples": [
+            "20 years",
+            "30 years",
+            "180 months"
+          ],
+          "original_value": "20 years",
+          "validity_range": "Positive duration in years or months (digits or number words) such that the total number of payments is a positive integer."
+        }
+      ],
+      "problem_id": "fam_f0003"
+    },
+    {
+      "text": "What are the monthly payments on a 10-year, $639,000 home loan at 5.875% per year (monthly compounding), and what is the total interest over the full term?",
+      "kind": "family",
+      "root_id": "solve_a_fixed_rate_amortizing_loan_compu_8e8e38",
+      "params": [
+        {
+          "description": "the loan principal amount in dollars",
+          "format_examples": [
+            "$446,000",
+            "$250k",
+            "$1.2 million"
+          ],
+          "original_value": "$446,000",
+          "validity_range": "Positive money amount; may include currency symbol, thousands separators or scale suffixes (k, thousand, million, bn); must be greater than zero."
+        },
+        {
+          "description": "the annual nominal interest rate as a percentage",
+          "format_examples": [
+            "7.5%",
+            "4 percent",
+            "3.25%"
+          ],
+          "original_value": "7.5%",
+          "validity_range": "Non-negative percentage, typically 0% to about 30%; zero rate is handled as principal divided by number of payments."
+        },
+        {
+          "description": "the compounding and payment frequency description",
+          "format_examples": [
+            "monthly",
+            "quarterly",
+            "semiannually"
+          ],
+          "original_value": "monthly",
+          "validity_range": "One of monthly (12), quarterly (4), semiannual (2), annual (1), weekly (52), biweekly (26), daily (365) periods per year."
+        },
+        {
+          "description": "the loan term with unit",
+          "format_examples": [
+            "20 years",
+            "30 years",
+            "180 months"
+          ],
+          "original_value": "20 years",
+          "validity_range": "Positive duration in years or months (digits or number words) such that the total number of payments is a positive integer."
+        }
+      ],
+      "problem_id": "fam_f0003"
+    },
+    {
+      "text": "A $783,000 mortgage has a 6.25% annual interest rate, compounded monthly, over 25 years. What is the monthly payment, and how much total interest is paid over the life of the loan?",
+      "kind": "family",
+      "root_id": "solve_a_fixed_rate_amortizing_loan_compu_8e8e38",
+      "params": [
+        {
+          "description": "the loan principal amount in dollars",
+          "format_examples": [
+            "$446,000",
+            "$250k",
+            "$1.2 million"
+          ],
+          "original_value": "$446,000",
+          "validity_range": "Positive money amount; may include currency symbol, thousands separators or scale suffixes (k, thousand, million, bn); must be greater than zero."
+        },
+        {
+          "description": "the annual nominal interest rate as a percentage",
+          "format_examples": [
+            "7.5%",
+            "4 percent",
+            "3.25%"
+          ],
+          "original_value": "7.5%",
+          "validity_range": "Non-negative percentage, typically 0% to about 30%; zero rate is handled as principal divided by number of payments."
+        },
+        {
+          "description": "the compounding and payment frequency description",
+          "format_examples": [
+            "monthly",
+            "quarterly",
+            "semiannually"
+          ],
+          "original_value": "monthly",
+          "validity_range": "One of monthly (12), quarterly (4), semiannual (2), annual (1), weekly (52), biweekly (26), daily (365) periods per year."
+        },
+        {
+          "description": "the loan term with unit",
+          "format_examples": [
+            "20 years",
+            "30 years",
+            "180 months"
+          ],
+          "original_value": "20 years",
+          "validity_range": "Positive duration in years or months (digits or number words) such that the total number of payments is a positive integer."
+        }
+      ],
+      "problem_id": "fam_f0003"
+    },
+    {
+      "text": "What are the monthly payments on a 30-year, $418,000 home loan at 7.25% per year (monthly compounding), and what is the total interest over the full term?",
+      "kind": "family",
+      "root_id": "solve_a_fixed_rate_amortizing_loan_compu_8e8e38",
+      "params": [
+        {
+          "description": "the loan principal amount in dollars",
+          "format_examples": [
+            "$446,000",
+            "$250k",
+            "$1.2 million"
+          ],
+          "original_value": "$446,000",
+          "validity_range": "Positive money amount; may include currency symbol, thousands separators or scale suffixes (k, thousand, million, bn); must be greater than zero."
+        },
+        {
+          "description": "the annual nominal interest rate as a percentage",
+          "format_examples": [
+            "7.5%",
+            "4 percent",
+            "3.25%"
+          ],
+          "original_value": "7.5%",
+          "validity_range": "Non-negative percentage, typically 0% to about 30%; zero rate is handled as principal divided by number of payments."
+        },
+        {
+          "description": "the compounding and payment frequency description",
+          "format_examples": [
+            "monthly",
+            "quarterly",
+            "semiannually"
+          ],
+          "original_value": "monthly",
+          "validity_range": "One of monthly (12), quarterly (4), semiannual (2), annual (1), weekly (52), biweekly (26), daily (365) periods per year."
+        },
+        {
+          "description": "the loan term with unit",
+          "format_examples": [
+            "20 years",
+            "30 years",
+            "180 months"
+          ],
+          "original_value": "20 years",
+          "validity_range": "Positive duration in years or months (digits or number words) such that the total number of payments is a positive integer."
+        }
+      ],
+      "problem_id": "fam_f0003"
+    }
+  ]
+}

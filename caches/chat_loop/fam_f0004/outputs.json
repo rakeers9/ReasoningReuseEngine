@@ -1,9 +1,0 @@
-{
-  "fam_f0004": {
-    "pressure of the gas in bar": {
-      "kind": "measure",
-      "unit": "bar",
-      "decimals": null
-    }
-  }
-}

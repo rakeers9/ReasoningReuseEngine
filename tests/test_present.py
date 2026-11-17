@@ -93,3 +93,20 @@ def test_the_policy_text_states_every_rule():
     for must in ("never round any intermediate value", "If the question says how to round", "money to the cent",
                  "counts as exact whole numbers", "4 significant figures", "halves rounded up"):
         assert must in p, must
+
+
+def test_a_number_returned_as_text_is_rounded_too():
+    # regression (hidden run 2026-11-16): the code returned str(Decimal) and 50 digits were served
+    spec = {"equilibrium temperature in K": {"kind": "measure", "unit": "K", "decimals": None}}
+    out = present.apply({"equilibrium temperature in K": "301.01079281511303809228863425209043047383090740167"},
+                        None, spec)
+    assert out == {"equilibrium temperature in K": "301.0"}
+
+
+@pytest.mark.parametrize("text", ["301.01 K", "about 5", "n/a", "1,234.5", ""])
+def test_text_that_is_not_exactly_a_number_is_left_alone(text):
+    assert present.apply({"x": text}, None, {"x": {"kind": "measure"}}) == {"x": text}
+
+
+def test_money_returned_as_text_goes_to_the_cent():
+    assert present.apply({"m": "2176.8612"}, None, {"m": {"kind": "money", "unit": "USD"}}) == {"m": "2176.86"}

@@ -12,10 +12,10 @@ ROLES = ["SOURCE_MODEL", "BUILDER_MODEL", "JUDGE_MODEL", "GENERATOR_MODEL", "TAR
 
 
 def test_every_role_defaults_to_haiku(monkeypatch):
-    # user decisions 2026-11-15/16: "builder: Haiku first, Sonnet on code failure, then Opus".
-    # BUILDER_MODEL is Haiku; Sonnet and Opus run only as the label-free cascade's later
-    # builders (config.LABELFREE_BUILDERS, tests/test_builder_cascade.py).
-    for name in ["ARC_PROFILE", "ARC_LABELFREE_BUILDERS", *(f"ARC_{r}" for r in ROLES)]:
+    # user decisions 2026-11-15/16 (kept 2026-11-17): "builder: Haiku first, Sonnet on code
+    # failure, then Opus". Independent tests (arc/tester.py) default to Sonnet, Opus when Sonnet
+    # built the entry. Every other role stays Haiku.
+    for name in ["ARC_PROFILE", "ARC_LABELFREE_BUILDERS", "ARC_TESTER_MODEL", *(f"ARC_{r}" for r in ROLES)]:
         monkeypatch.delenv(name, raising=False)
     try:
         c = importlib.reload(config)
@@ -23,6 +23,7 @@ def test_every_role_defaults_to_haiku(monkeypatch):
         for role in ROLES:
             assert getattr(c, role) == HAIKU, role
         assert c.LABELFREE_BUILDERS == [HAIKU, "claude-sonnet-5-5", "claude-opus-5-5"]
+        assert c.TESTER_MODEL == "claude-sonnet-5-5" and c.TESTER_FALLBACK_MODEL == "claude-opus-5-5"
         assert c.EXPLAINER_MODEL == HAIKU
     finally:
         importlib.reload(config)
@@ -69,8 +70,8 @@ def test_every_other_role_still_refuses_opus(role):
         llm.call(role, "hi", model="claude-opus-5-5")
 
 
-def test_only_resolve_and_the_builder_are_exempt():
-    assert llm.CUSTOMER_MODEL_ROLES == {"resolve"} and llm.OPUS_BUILDER_ROLES == {"builder"}
+def test_only_resolve_and_the_build_time_roles_are_exempt():
+    assert llm.CUSTOMER_MODEL_ROLES == {"resolve"} and llm.OPUS_BUILDER_ROLES == {"builder", "tester"}
 
 
 def test_the_builder_may_run_opus_as_the_last_cascade_step():

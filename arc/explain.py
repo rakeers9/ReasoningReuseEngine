@@ -30,6 +30,7 @@ from pydantic import BaseModel, ConfigDict
 
 from . import config, llm
 from .certify import Comparison, _compare
+from .present import ROUNDING_POLICY
 from .source import SOLVE_PROMPT, Transcript
 
 
@@ -69,8 +70,9 @@ class Explanation:
 
 
 def _blind_solve(question: str, tag: str) -> Worked:
-    prompt = SOLVE_PROMPT.format(question=question) + (
-        "\n\nPut the full working in `working` and only the final answer, with units, in `final_answer`.")
+    prompt = SOLVE_PROMPT.format(question=question) + (   # the paper's prompt, unchanged, then our rules
+        "\n\nPut the full working in `working` and only the final answer, with units, in `final_answer`.\n"
+        + ROUNDING_POLICY)
     return llm.call("explainer", prompt, model=config.EXPLAINER_MODEL, schema=Worked,
                     effort=config.SOURCE_EFFORT, max_tokens=16000, tag=tag).parsed
 

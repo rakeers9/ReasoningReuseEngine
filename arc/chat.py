@@ -30,8 +30,14 @@ from typing import Callable
 from . import backlog, config, families, llm, serve
 from .cache import Cache
 
+from .present import ROUNDING_POLICY
+
+# The wrapper's own chatbot instructions (a customer's chatbot keeps its own). They carry the
+# shared rounding policy, so the answers the cache is checked against round the same way.
 PRODUCTION_SYSTEM = ("You are a helpful assistant. For calculations, show brief working and end with "
-                     "the final answer and its units.")
+                     "the final answer and its units. " + ROUNDING_POLICY)
+# Room for adaptive thinking plus the answer (a 4000 cap cut a mortgage answer off mid-sentence).
+PRODUCTION_MAX_TOKENS = 16000
 _HAS_NUMBER = re.compile(r"\d")
 
 
@@ -76,7 +82,7 @@ class Chatbot:
         if self._production is not None:
             return self._production(message)
         return llm.call("production", message, model=self.model, system=PRODUCTION_SYSTEM,
-                        effort="medium", max_tokens=4000, tag="chat:production")
+                        effort="medium", max_tokens=PRODUCTION_MAX_TOKENS, tag="chat:production")
 
     def chat(self, message: str, session: str | None = None) -> ChatReply:
         reusable = is_reusable(message)
@@ -104,11 +110,13 @@ class Chatbot:
         return ChatReply(r.text, False, None, reason, r.cost, rec)
 
     # ---- learning between turns ----
-    def learn(self, build_fn: Callable | None = None, max_builds: int | None = None) -> list:
+    def learn(self, build_fn: Callable | None = None, max_builds: int | None = None,
+              can_start: Callable[[], bool] | None = None) -> list:
         """Read new backlog records, build every family that has reached break-even, and
         reload the cache. PAID when build_fn is the real builder."""
         self.tracker.ingest(self.backlog_path)
         self.tracker.save()
-        results = families.build_ready(self.tracker, build_fn, max_builds=max_builds, path=self.backlog_path)
+        results = families.build_ready(self.tracker, build_fn, max_builds=max_builds, path=self.backlog_path,
+                                       can_start=can_start)
         self.reload()
         return results

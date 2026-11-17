@@ -1,30 +1,19 @@
 {
   "fam_f0002": [
-    "No intermediate amount is rounded: each year's depreciation charge and year-end book value are carried forward at full Decimal precision (50 significant digits), not to cents.",
-    "The DDB rate is the exact fraction 2/useful life (for example 2/11), never a rounded decimal.",
-    "Each year's declining-balance charge is beginning book value x 2/useful life, computed at 50 significant digits without rounding.",
-    "Each year's straight-line charge is (beginning book value - salvage) / remaining years, computed at 50 significant digits without rounding; if book value is below salvage the base is zero.",
-    "Remaining years for year y (1-based) equals useful life - y + 1, so year 1 uses the full useful life and the current year is included in the count.",
-    "Each year the depreciation charge is the larger of the declining-balance charge and the straight-line charge, so the switch is tested every year rather than made once.",
-    "Each year's charge is capped at (beginning book value - salvage), with that headroom floored at zero, so year-end book value never falls below salvage.",
-    "The simulation runs years 1 through min(elapsed years, useful life) inclusive, and the elapsed-year book value is the year-end book value of the last simulated year.",
-    "If elapsed years exceed the useful life, the book value is set to salvage value.",
-    "The only rounding in the program is the final step: the unrounded book value is quantized to two decimal places (cents) using round-half-up.",
-    "The final output is the rounded dollar amount in cents followed by the text ' $' (for example '76109.31 $'), with no thousands separator."
+    "The annual DDB rate is exactly 2 divided by the useful life in years, computed at 50-digit precision with no rounding, so 2/11 stays unrounded.",
+    "Each year's depreciation charge is the beginning book value multiplied by the unrounded rate, and the running book value is carried forward unrounded at every step.",
+    "Exactly the elapsed-year count of depreciation steps is applied, covering years 1 through that count inclusive; zero elapsed years returns the original cost.",
+    "The charge is capped: if beginning book value times the rate exceeds beginning book value minus salvage value, the charge is set to that difference, so book value never falls below salvage value.",
+    "No switch to straight-line depreciation is made in any year; the DDB rate is applied to the declining balance every year.",
+    "The code performs no rounding at all; the returned book value is the full-precision unrounded value, and the final answer is rounded to the nearest cent with halves rounded up, applied once outside the code."
   ],
-  "fam_f0004": [
-    "No rounding is applied anywhere in the code: the returned pressure in bar is the full-precision Decimal quotient, not rounded to any number of decimal places or significant figures.",
-    "Each intermediate (volume in m3, moles, kelvin, pascals) is passed along as its full-precision Decimal string with no rounding.",
-    "The ideal gas pressure is p = (n x R x T) / V, computed as n x R x T first and then divided by V, in the default Decimal context of 28 significant digits.",
-    "R is the literal value 8.314462618 J/(K mol), used exactly as written with no truncation or rounding.",
-    "Pascals are converted to bar by dividing by exactly 100000 at 60-digit precision, so the bar result is not rounded.",
-    "Kelvin input is used as given; Celsius adds exactly 273.15; Fahrenheit computes (F - 32) x 5 / 9 and then adds 273.15, all at 60-digit precision.",
-    "A temperature is rejected unless the converted kelvin value is strictly greater than 0.",
-    "Volume unit factors to m3: m3 = 1; dm3, l, litre(s), liter(s) = 1E-3; cm3, cc, ml, millilitre(s), milliliter(s) = 1E-6; mm3 = 1E-9; unit text is matched after removing whitespace and '^', lowercased.",
-    "A volume is rejected unless it is strictly greater than 0.",
-    "Amount factors to mol: mol, mole, moles = 1; mmol = 1E-3; kmol = 1E3; an amount of zero is accepted (only negative amounts are rejected).",
-    "A trailing 'k' not followed by a letter multiplies the number by 1000; the words thousand, million, billion and bn multiply by 10^3, 10^6, 10^9 respectively.",
-    "Comma-separated digit groups in a quantity are read as thousands separators and the commas are removed before conversion.",
-    "The pressure in pascals must be finite and non-negative before conversion to bar."
+  "fam_f0003": [
+    "Periodic rate = annual nominal rate / periods per year (simple division, no effective-rate conversion); payment frequency equals compounding frequency",
+    "Number of payments = periods per year x term in years (term in months is converted to years by dividing by 12), and must be a whole number",
+    "Payment frequency map: monthly 12, quarterly 4, semiannual 2, annual 1, weekly 52, biweekly 26, semimonthly 24, bimonthly 6, daily 365",
+    "Level payment = P x r x (1+r)^n / ((1+r)^n - 1) with the unrounded rate, or P / n if the rate is zero",
+    "Round the level payment to the cent (half up) first, and report that rounded payment",
+    "Total interest = rounded payment x number of payments - principal (not the unrounded payment), then rounded to the cent half up",
+    "Amounts and rates are in dollars and fractions of one (percent / 100); no other intermediate values are rounded"
   ]
 }

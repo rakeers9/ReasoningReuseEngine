@@ -1,0 +1,515 @@
+{
+  "name": "fam_f0002",
+  "functions": [
+    {
+      "id": "parse_a_mass_given_as_text_with_a_unit_g_96c30e",
+      "description": "Parse a mass given as text with a unit (g, kg, mg, lb) into grams as a Decimal.",
+      "inputs": [
+        "mass text with unit"
+      ],
+      "outputs": [
+        "mass in grams"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0002"
+    },
+    {
+      "id": "parse_a_temperature_given_as_text_with_a_ceac19",
+      "description": "Parse a temperature given as text with a unit (K, \u00b0C, \u00b0F) into kelvin as a Decimal, applying the proper offset.",
+      "inputs": [
+        "temperature text with unit"
+      ],
+      "outputs": [
+        "temperature in K"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0002"
+    },
+    {
+      "id": "parse_a_specific_heat_given_as_text_with_5ebf54",
+      "description": "Parse a specific heat given as text with a unit (J/(g\u00b7\u00b0C), J/(g\u00b7K), J/(kg\u00b7K), kJ/(kg\u00b7K), cal/(g\u00b7\u00b0C)) into J/(g\u00b7K) as a Decimal.",
+      "inputs": [
+        "specific heat text with unit"
+      ],
+      "outputs": [
+        "specific heat in J/(g\u00b7K)"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0002"
+    },
+    {
+      "id": "compute_the_heat_capacity_of_a_body_as_m_5f4b03",
+      "description": "Compute the heat capacity of a body as mass in grams times specific heat in J/(g\u00b7K).",
+      "inputs": [
+        "mass in grams",
+        "specific heat in J/(g\u00b7K)"
+      ],
+      "outputs": [
+        "heat capacity in J/K"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0002"
+    },
+    {
+      "id": "solve_the_energy_balance_for_the_final_t_4ad7cd",
+      "description": "Solve the energy balance for the final temperature as the heat-capacity-weighted average of the initial temperatures.",
+      "inputs": [
+        "heat capacity of the first body in J/K",
+        "initial temperature of the first body in K",
+        "heat capacity of the second body in J/K",
+        "initial temperature of the second body in K"
+      ],
+      "outputs": [
+        "equilibrium temperature in K",
+        "total heat capacity in J/K"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0002"
+    },
+    {
+      "id": "verify_that_the_heat_gained_by_the_colde_9b05f2",
+      "description": "Verify that the heat gained by the colder body equals the heat lost by the hotter body at the equilibrium temperature.",
+      "inputs": [
+        "heat capacity of the first body in J/K",
+        "initial temperature of the first body in K",
+        "heat capacity of the second body in J/K",
+        "initial temperature of the second body in K",
+        "equilibrium temperature in K"
+      ],
+      "outputs": [
+        "heat gained in J",
+        "heat lost in J",
+        "balance holds"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0002"
+    },
+    {
+      "id": "compute_the_equilibrium_temperature_of_t_b44777",
+      "description": "Compute the equilibrium temperature of two bodies mixed in an isolated system from their masses, specific heats and initial temperatures.",
+      "inputs": [
+        "the mass of the water (the colder body) with unit",
+        "the initial temperature of the water with unit",
+        "the mass of the aluminum object (the hot body) with unit",
+        "the initial temperature of the aluminum object with unit",
+        "the specific heat of aluminum with unit",
+        "the specific heat of water with unit"
+      ],
+      "outputs": [
+        "equilibrium temperature in K"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0002"
+    }
+  ],
+  "entry_points": [
+    {
+      "text": "Find the equilibrium temperature when \u25cf1 of water at \u25cf2 is mixed with a hot \u25cf3 aluminum object at \u25cf4. Specific heats: aluminum \u25cf5, water \u25cf6. Assume the system is isolated.",
+      "kind": "template",
+      "root_id": "compute_the_equilibrium_temperature_of_t_b44777",
+      "params": [
+        {
+          "description": "the mass of the water (the colder body) with unit",
+          "format_examples": [
+            "430 g",
+            "0.25 kg",
+            "500 g"
+          ],
+          "original_value": "430 g",
+          "validity_range": "Positive mass with a mass unit (g, kg, mg, lb); must be greater than zero."
+        },
+        {
+          "description": "the initial temperature of the water with unit",
+          "format_examples": [
+            "294.65 K",
+            "21.5 \u00b0C",
+            "70 \u00b0F"
+          ],
+          "original_value": "294.65 K",
+          "validity_range": "Physical temperature above absolute zero, in K, \u00b0C or \u00b0F; should be lower than the hot object's temperature for the hot/cold narrative, and the substances should stay in one phase (liquid water roughly 273.15 K to 373.15 K)."
+        },
+        {
+          "description": "the mass of the aluminum object (the hot body) with unit",
+          "format_examples": [
+            "365 g",
+            "0.5 kg",
+            "200 g"
+          ],
+          "original_value": "365 g",
+          "validity_range": "Positive mass with a mass unit (g, kg, mg, lb); must be greater than zero."
+        },
+        {
+          "description": "the initial temperature of the aluminum object with unit",
+          "format_examples": [
+            "363.15 K",
+            "90 \u00b0C",
+            "194 \u00b0F"
+          ],
+          "original_value": "363.15 K",
+          "validity_range": "Physical temperature above absolute zero, in K, \u00b0C or \u00b0F; normally higher than the water's initial temperature; no phase change assumed."
+        },
+        {
+          "description": "the specific heat of aluminum with unit",
+          "format_examples": [
+            "0.897 J/(g\u00b7\u00b0C)",
+            "897 J/(kg\u00b7K)",
+            "0.214 cal/(g\u00b7\u00b0C)"
+          ],
+          "original_value": "0.897 J/(g\u00b7\u00b0C)",
+          "validity_range": "Positive specific heat with a recognised unit (J/(g\u00b7\u00b0C), J/(g\u00b7K), J/(kg\u00b7K), kJ/(kg\u00b7K), cal/(g\u00b7\u00b0C)); aluminum is about 0.9 J/(g\u00b7K)."
+        },
+        {
+          "description": "the specific heat of water with unit",
+          "format_examples": [
+            "4.18 J/(g\u00b7\u00b0C)",
+            "4184 J/(kg\u00b7K)",
+            "1.00 cal/(g\u00b7\u00b0C)"
+          ],
+          "original_value": "4.18 J/(g\u00b7\u00b0C)",
+          "validity_range": "Positive specific heat with a recognised unit (J/(g\u00b7\u00b0C), J/(g\u00b7K), J/(kg\u00b7K), kJ/(kg\u00b7K), cal/(g\u00b7\u00b0C)); liquid water is about 4.18 J/(g\u00b7K)."
+        }
+      ],
+      "problem_id": "fam_f0002"
+    },
+    {
+      "text": "Find the equilibrium temperature when 430 g of water at 294.65 K is mixed with a hot 365 g aluminum object at 363.15 K. Specific heats: aluminum 0.897 J/(g\u00b7\u00b0C), water 4.18 J/(g\u00b7\u00b0C). Assume the system is isolated.",
+      "kind": "original",
+      "root_id": "compute_the_equilibrium_temperature_of_t_b44777",
+      "params": [
+        {
+          "description": "the mass of the water (the colder body) with unit",
+          "format_examples": [
+            "430 g",
+            "0.25 kg",
+            "500 g"
+          ],
+          "original_value": "430 g",
+          "validity_range": "Positive mass with a mass unit (g, kg, mg, lb); must be greater than zero."
+        },
+        {
+          "description": "the initial temperature of the water with unit",
+          "format_examples": [
+            "294.65 K",
+            "21.5 \u00b0C",
+            "70 \u00b0F"
+          ],
+          "original_value": "294.65 K",
+          "validity_range": "Physical temperature above absolute zero, in K, \u00b0C or \u00b0F; should be lower than the hot object's temperature for the hot/cold narrative, and the substances should stay in one phase (liquid water roughly 273.15 K to 373.15 K)."
+        },
+        {
+          "description": "the mass of the aluminum object (the hot body) with unit",
+          "format_examples": [
+            "365 g",
+            "0.5 kg",
+            "200 g"
+          ],
+          "original_value": "365 g",
+          "validity_range": "Positive mass with a mass unit (g, kg, mg, lb); must be greater than zero."
+        },
+        {
+          "description": "the initial temperature of the aluminum object with unit",
+          "format_examples": [
+            "363.15 K",
+            "90 \u00b0C",
+            "194 \u00b0F"
+          ],
+          "original_value": "363.15 K",
+          "validity_range": "Physical temperature above absolute zero, in K, \u00b0C or \u00b0F; normally higher than the water's initial temperature; no phase change assumed."
+        },
+        {
+          "description": "the specific heat of aluminum with unit",
+          "format_examples": [
+            "0.897 J/(g\u00b7\u00b0C)",
+            "897 J/(kg\u00b7K)",
+            "0.214 cal/(g\u00b7\u00b0C)"
+          ],
+          "original_value": "0.897 J/(g\u00b7\u00b0C)",
+          "validity_range": "Positive specific heat with a recognised unit (J/(g\u00b7\u00b0C), J/(g\u00b7K), J/(kg\u00b7K), kJ/(kg\u00b7K), cal/(g\u00b7\u00b0C)); aluminum is about 0.9 J/(g\u00b7K)."
+        },
+        {
+          "description": "the specific heat of water with unit",
+          "format_examples": [
+            "4.18 J/(g\u00b7\u00b0C)",
+            "4184 J/(kg\u00b7K)",
+            "1.00 cal/(g\u00b7\u00b0C)"
+          ],
+          "original_value": "4.18 J/(g\u00b7\u00b0C)",
+          "validity_range": "Positive specific heat with a recognised unit (J/(g\u00b7\u00b0C), J/(g\u00b7K), J/(kg\u00b7K), kJ/(kg\u00b7K), cal/(g\u00b7\u00b0C)); liquid water is about 4.18 J/(g\u00b7K)."
+        }
+      ],
+      "problem_id": "fam_f0002"
+    },
+    {
+      "text": "What final temperature results if a nickel ingot (330 g, 190 \u00b0C) is quenched in 500 g of water (39 \u00b0C)? Use 0.444 J/(g\u00b7K) for nickel and 4.184 J/(g\u00b7K) for water, and assume a perfectly insulated system.",
+      "kind": "family",
+      "root_id": "compute_the_equilibrium_temperature_of_t_b44777",
+      "params": [
+        {
+          "description": "the mass of the water (the colder body) with unit",
+          "format_examples": [
+            "430 g",
+            "0.25 kg",
+            "500 g"
+          ],
+          "original_value": "430 g",
+          "validity_range": "Positive mass with a mass unit (g, kg, mg, lb); must be greater than zero."
+        },
+        {
+          "description": "the initial temperature of the water with unit",
+          "format_examples": [
+            "294.65 K",
+            "21.5 \u00b0C",
+            "70 \u00b0F"
+          ],
+          "original_value": "294.65 K",
+          "validity_range": "Physical temperature above absolute zero, in K, \u00b0C or \u00b0F; should be lower than the hot object's temperature for the hot/cold narrative, and the substances should stay in one phase (liquid water roughly 273.15 K to 373.15 K)."
+        },
+        {
+          "description": "the mass of the aluminum object (the hot body) with unit",
+          "format_examples": [
+            "365 g",
+            "0.5 kg",
+            "200 g"
+          ],
+          "original_value": "365 g",
+          "validity_range": "Positive mass with a mass unit (g, kg, mg, lb); must be greater than zero."
+        },
+        {
+          "description": "the initial temperature of the aluminum object with unit",
+          "format_examples": [
+            "363.15 K",
+            "90 \u00b0C",
+            "194 \u00b0F"
+          ],
+          "original_value": "363.15 K",
+          "validity_range": "Physical temperature above absolute zero, in K, \u00b0C or \u00b0F; normally higher than the water's initial temperature; no phase change assumed."
+        },
+        {
+          "description": "the specific heat of aluminum with unit",
+          "format_examples": [
+            "0.897 J/(g\u00b7\u00b0C)",
+            "897 J/(kg\u00b7K)",
+            "0.214 cal/(g\u00b7\u00b0C)"
+          ],
+          "original_value": "0.897 J/(g\u00b7\u00b0C)",
+          "validity_range": "Positive specific heat with a recognised unit (J/(g\u00b7\u00b0C), J/(g\u00b7K), J/(kg\u00b7K), kJ/(kg\u00b7K), cal/(g\u00b7\u00b0C)); aluminum is about 0.9 J/(g\u00b7K)."
+        },
+        {
+          "description": "the specific heat of water with unit",
+          "format_examples": [
+            "4.18 J/(g\u00b7\u00b0C)",
+            "4184 J/(kg\u00b7K)",
+            "1.00 cal/(g\u00b7\u00b0C)"
+          ],
+          "original_value": "4.18 J/(g\u00b7\u00b0C)",
+          "validity_range": "Positive specific heat with a recognised unit (J/(g\u00b7\u00b0C), J/(g\u00b7K), J/(kg\u00b7K), kJ/(kg\u00b7K), cal/(g\u00b7\u00b0C)); liquid water is about 4.18 J/(g\u00b7K)."
+        }
+      ],
+      "problem_id": "fam_f0002"
+    },
+    {
+      "text": "It was the third lab session of the week and the thermometer kept sticking. Anyway: a 295 g aluminum cylinder, preheated to 80 \u00b0C, goes into 0.45 kg of water at 30 \u00b0C in a foam-cup calorimeter that loses no heat. Given specific heats of 0.897 J/(g\u00b7K) for aluminum and 4.18 J/(g\u00b7K) for water, find the final temperature.",
+      "kind": "family",
+      "root_id": "compute_the_equilibrium_temperature_of_t_b44777",
+      "params": [
+        {
+          "description": "the mass of the water (the colder body) with unit",
+          "format_examples": [
+            "430 g",
+            "0.25 kg",
+            "500 g"
+          ],
+          "original_value": "430 g",
+          "validity_range": "Positive mass with a mass unit (g, kg, mg, lb); must be greater than zero."
+        },
+        {
+          "description": "the initial temperature of the water with unit",
+          "format_examples": [
+            "294.65 K",
+            "21.5 \u00b0C",
+            "70 \u00b0F"
+          ],
+          "original_value": "294.65 K",
+          "validity_range": "Physical temperature above absolute zero, in K, \u00b0C or \u00b0F; should be lower than the hot object's temperature for the hot/cold narrative, and the substances should stay in one phase (liquid water roughly 273.15 K to 373.15 K)."
+        },
+        {
+          "description": "the mass of the aluminum object (the hot body) with unit",
+          "format_examples": [
+            "365 g",
+            "0.5 kg",
+            "200 g"
+          ],
+          "original_value": "365 g",
+          "validity_range": "Positive mass with a mass unit (g, kg, mg, lb); must be greater than zero."
+        },
+        {
+          "description": "the initial temperature of the aluminum object with unit",
+          "format_examples": [
+            "363.15 K",
+            "90 \u00b0C",
+            "194 \u00b0F"
+          ],
+          "original_value": "363.15 K",
+          "validity_range": "Physical temperature above absolute zero, in K, \u00b0C or \u00b0F; normally higher than the water's initial temperature; no phase change assumed."
+        },
+        {
+          "description": "the specific heat of aluminum with unit",
+          "format_examples": [
+            "0.897 J/(g\u00b7\u00b0C)",
+            "897 J/(kg\u00b7K)",
+            "0.214 cal/(g\u00b7\u00b0C)"
+          ],
+          "original_value": "0.897 J/(g\u00b7\u00b0C)",
+          "validity_range": "Positive specific heat with a recognised unit (J/(g\u00b7\u00b0C), J/(g\u00b7K), J/(kg\u00b7K), kJ/(kg\u00b7K), cal/(g\u00b7\u00b0C)); aluminum is about 0.9 J/(g\u00b7K)."
+        },
+        {
+          "description": "the specific heat of water with unit",
+          "format_examples": [
+            "4.18 J/(g\u00b7\u00b0C)",
+            "4184 J/(kg\u00b7K)",
+            "1.00 cal/(g\u00b7\u00b0C)"
+          ],
+          "original_value": "4.18 J/(g\u00b7\u00b0C)",
+          "validity_range": "Positive specific heat with a recognised unit (J/(g\u00b7\u00b0C), J/(g\u00b7K), J/(kg\u00b7K), kJ/(kg\u00b7K), cal/(g\u00b7\u00b0C)); liquid water is about 4.18 J/(g\u00b7K)."
+        }
+      ],
+      "problem_id": "fam_f0002"
+    },
+    {
+      "text": "calorimetry q: water 110 mL (density 1.00 g/mL) 27 \u00b0C; titanium 55 g 90 \u00b0C; c_metal 0.523 J/(g\u00b7\u00b0C); c_water 4.186 J/(g\u00b7\u00b0C); thermally isolated; final temperature of the mixture?",
+      "kind": "family",
+      "root_id": "compute_the_equilibrium_temperature_of_t_b44777",
+      "params": [
+        {
+          "description": "the mass of the water (the colder body) with unit",
+          "format_examples": [
+            "430 g",
+            "0.25 kg",
+            "500 g"
+          ],
+          "original_value": "430 g",
+          "validity_range": "Positive mass with a mass unit (g, kg, mg, lb); must be greater than zero."
+        },
+        {
+          "description": "the initial temperature of the water with unit",
+          "format_examples": [
+            "294.65 K",
+            "21.5 \u00b0C",
+            "70 \u00b0F"
+          ],
+          "original_value": "294.65 K",
+          "validity_range": "Physical temperature above absolute zero, in K, \u00b0C or \u00b0F; should be lower than the hot object's temperature for the hot/cold narrative, and the substances should stay in one phase (liquid water roughly 273.15 K to 373.15 K)."
+        },
+        {
+          "description": "the mass of the aluminum object (the hot body) with unit",
+          "format_examples": [
+            "365 g",
+            "0.5 kg",
+            "200 g"
+          ],
+          "original_value": "365 g",
+          "validity_range": "Positive mass with a mass unit (g, kg, mg, lb); must be greater than zero."
+        },
+        {
+          "description": "the initial temperature of the aluminum object with unit",
+          "format_examples": [
+            "363.15 K",
+            "90 \u00b0C",
+            "194 \u00b0F"
+          ],
+          "original_value": "363.15 K",
+          "validity_range": "Physical temperature above absolute zero, in K, \u00b0C or \u00b0F; normally higher than the water's initial temperature; no phase change assumed."
+        },
+        {
+          "description": "the specific heat of aluminum with unit",
+          "format_examples": [
+            "0.897 J/(g\u00b7\u00b0C)",
+            "897 J/(kg\u00b7K)",
+            "0.214 cal/(g\u00b7\u00b0C)"
+          ],
+          "original_value": "0.897 J/(g\u00b7\u00b0C)",
+          "validity_range": "Positive specific heat with a recognised unit (J/(g\u00b7\u00b0C), J/(g\u00b7K), J/(kg\u00b7K), kJ/(kg\u00b7K), cal/(g\u00b7\u00b0C)); aluminum is about 0.9 J/(g\u00b7K)."
+        },
+        {
+          "description": "the specific heat of water with unit",
+          "format_examples": [
+            "4.18 J/(g\u00b7\u00b0C)",
+            "4184 J/(kg\u00b7K)",
+            "1.00 cal/(g\u00b7\u00b0C)"
+          ],
+          "original_value": "4.18 J/(g\u00b7\u00b0C)",
+          "validity_range": "Positive specific heat with a recognised unit (J/(g\u00b7\u00b0C), J/(g\u00b7K), J/(kg\u00b7K), kJ/(kg\u00b7K), cal/(g\u00b7\u00b0C)); liquid water is about 4.18 J/(g\u00b7K)."
+        }
+      ],
+      "problem_id": "fam_f0002"
+    },
+    {
+      "text": "Find the equilibrium temperature when 110 mL (density 1.00 g/mL) of water at 35 \u00b0C is mixed with a hot 0.215 kg zinc object at 135 \u00b0C. Specific heats: zinc 0.388 J/(g\u00b7\u00b0C), water 4.186 J/(g\u00b7\u00b0C). Assume the system is isolated.",
+      "kind": "family",
+      "root_id": "compute_the_equilibrium_temperature_of_t_b44777",
+      "params": [
+        {
+          "description": "the mass of the water (the colder body) with unit",
+          "format_examples": [
+            "430 g",
+            "0.25 kg",
+            "500 g"
+          ],
+          "original_value": "430 g",
+          "validity_range": "Positive mass with a mass unit (g, kg, mg, lb); must be greater than zero."
+        },
+        {
+          "description": "the initial temperature of the water with unit",
+          "format_examples": [
+            "294.65 K",
+            "21.5 \u00b0C",
+            "70 \u00b0F"
+          ],
+          "original_value": "294.65 K",
+          "validity_range": "Physical temperature above absolute zero, in K, \u00b0C or \u00b0F; should be lower than the hot object's temperature for the hot/cold narrative, and the substances should stay in one phase (liquid water roughly 273.15 K to 373.15 K)."
+        },
+        {
+          "description": "the mass of the aluminum object (the hot body) with unit",
+          "format_examples": [
+            "365 g",
+            "0.5 kg",
+            "200 g"
+          ],
+          "original_value": "365 g",
+          "validity_range": "Positive mass with a mass unit (g, kg, mg, lb); must be greater than zero."
+        },
+        {
+          "description": "the initial temperature of the aluminum object with unit",
+          "format_examples": [
+            "363.15 K",
+            "90 \u00b0C",
+            "194 \u00b0F"
+          ],
+          "original_value": "363.15 K",
+          "validity_range": "Physical temperature above absolute zero, in K, \u00b0C or \u00b0F; normally higher than the water's initial temperature; no phase change assumed."
+        },
+        {
+          "description": "the specific heat of aluminum with unit",
+          "format_examples": [
+            "0.897 J/(g\u00b7\u00b0C)",
+            "897 J/(kg\u00b7K)",
+            "0.214 cal/(g\u00b7\u00b0C)"
+          ],
+          "original_value": "0.897 J/(g\u00b7\u00b0C)",
+          "validity_range": "Positive specific heat with a recognised unit (J/(g\u00b7\u00b0C), J/(g\u00b7K), J/(kg\u00b7K), kJ/(kg\u00b7K), cal/(g\u00b7\u00b0C)); aluminum is about 0.9 J/(g\u00b7K)."
+        },
+        {
+          "description": "the specific heat of water with unit",
+          "format_examples": [
+            "4.18 J/(g\u00b7\u00b0C)",
+            "4184 J/(kg\u00b7K)",
+            "1.00 cal/(g\u00b7\u00b0C)"
+          ],
+          "original_value": "4.18 J/(g\u00b7\u00b0C)",
+          "validity_range": "Positive specific heat with a recognised unit (J/(g\u00b7\u00b0C), J/(g\u00b7K), J/(kg\u00b7K), kJ/(kg\u00b7K), cal/(g\u00b7\u00b0C)); liquid water is about 4.18 J/(g\u00b7K)."
+        }
+      ],
+      "problem_id": "fam_f0002"
+    }
+  ]
+}

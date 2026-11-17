@@ -1,12 +1,12 @@
 {
   "fam_f0002": {
     "task": "compute",
-    "deliverable": "book value of an asset after a number of years",
+    "deliverable": "book value of an asset after a set number of years",
     "method": "double-declining-balance depreciation",
     "conditions": [
-      "asset is depreciated over a stated useful life",
-      "depreciation uses an accelerated balance method",
-      "a salvage value is subtracted from the asset cost"
+      "asset depreciated using an accelerated method",
+      "book value measured at the end of a stated year",
+      "salvage value taken into account"
     ],
     "inputs": [
       {

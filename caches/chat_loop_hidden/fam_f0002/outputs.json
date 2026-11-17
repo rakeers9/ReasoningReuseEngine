@@ -1,0 +1,9 @@
+{
+  "fam_f0002": {
+    "equilibrium temperature in K": {
+      "kind": "measure",
+      "unit": "K",
+      "decimals": null
+    }
+  }
+}

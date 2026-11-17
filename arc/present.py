@@ -17,6 +17,7 @@ Text and boolean outputs pass through unchanged.
 
 from __future__ import annotations
 
+import re
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from typing import Any
 
@@ -40,7 +41,14 @@ class PresentError(CacheInvocationError):
     """The answer can't be put in the form the question asks for: let the model answer."""
 
 
+_NUMERIC_TEXT = re.compile(r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?")
+
+
 def _num(v: Any) -> Decimal | None:
+    """A number, or text that is exactly a number (cached code often returns str(Decimal) to
+    keep full precision; that must be rounded too). Text with anything else in it is left as is."""
+    if isinstance(v, str) and _NUMERIC_TEXT.fullmatch(v.strip()):
+        v = Decimal(v.strip())
     if isinstance(v, bool) or not isinstance(v, (int, float, Decimal)):
         return None
     try:

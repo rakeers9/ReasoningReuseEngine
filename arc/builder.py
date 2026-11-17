@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import ast
 import json
+import re
 import traceback
 from dataclasses import asdict, dataclass, field
 from typing import Any
@@ -28,6 +29,7 @@ from pydantic import BaseModel, ConfigDict
 from . import config, judges, llm, sandbox
 from .cache import Cache, EntryPoint, ParamSpec
 from .checks import number_check
+from .present import ROUNDING_POLICY
 from .runtime import PRIMITIVES, Context
 from .serve import dispatch_root, extract_parameters, format_output
 from .source import Transcript
@@ -133,6 +135,13 @@ STRICT_UNITS_RULES = '''
   the number (digits or number words, thousands separators, a sign), any scale word or suffix
   ("k", "thousand", "million", "bn", "billion"; multiply by 10**3, 10**6, 10**9) and the unit.
   Never assume a value is already a bare number, and raise an error for text you can't parse.
+- Parameter descriptions (phase 3) ask for each value AS WRITTEN in the question, with its
+  unit, never in a fixed unit or form: "the loan term as written, e.g. '144 months' or
+  '12 years'", "the annual interest rate as written, e.g. '8%' or 'eight percent APR'", not
+  "the loan term in years" or "the interest rate as a percentage". Every description contains
+  the words "as written". The format examples show the different ways a question may write
+  the value (other units, number words, shorthand). Whoever reads the question copies the
+  value; your code parses and converts it.
 - Convert units yourself in plain Python with exact factors. Check every prefix (mL vs L,
   cm3 vs dm3 vs m3, kPa vs Pa) and every temperature offset, and handle each unit the
   question family could use, not only the one in this example. Raise an error for a unit
@@ -141,11 +150,48 @@ STRICT_UNITS_RULES = '''
 - Return full precision. Never round until the end: do not round any intermediate value or
   any result (a monthly payment used in a total stays unrounded), unless the question itself
   states a rounding rule. Rounding for display happens once, later, outside your code.
+- Output units. If the question asks for the answer in a unit, return it in that unit.
+  Otherwise, when an output is the same kind of quantity as an input (a temperature from
+  temperatures, a length from lengths, a mass from masses), return it in the unit this
+  question's inputs use for that kind of quantity; if those inputs use different units, use
+  the unit of the first one. Compute in whatever unit the formula needs, then convert the
+  result back at the end of your code in plain Python: temperatures given in °C are converted
+  to K for the gas law, and the final temperature is converted back to °C. That output unit
+  is fixed by this question: put it in the output's name, and convert to it for every input
+  your code accepts (a temperature later given in K still comes back in °C).
 - Name each output with its unit or currency, e.g. "monthly payment in dollars",
   "pressure in kPa", and return the value in exactly that unit.
-'''
+- For context only (your code must NOT apply it; it is applied to your full-precision result
+  when the answer is shown): ''' + ROUNDING_POLICY + "\n"
 
 BUILDER_SYSTEM_STRICT = BUILDER_SYSTEM + STRICT_UNITS_RULES
+
+# units="strict": a parameter description must ask for the value as written. A description that
+# asks for a fixed unit or form ("as a duration in years") makes the extractor convert, and the
+# extraction checks then refuse the converted value (hidden-set run 2026-11-16, fam_f0003: 4 of
+# 5 family questions refused). Quoted format examples inside a description are not checked.
+_FIXED_FORM = [
+    re.compile(r"\bas an? (?:\w+ ){0,3}in\b", re.I),                     # "as a duration in years"
+    re.compile(r"\bas an? (?:percentage|fraction|decimal|proportion|ratio|integer|count|"
+               r"(?:plain |bare )?number)\b", re.I),                         # "as a percentage"
+    re.compile(r"\b(?:expressed|converted|measured|normali[sz]ed|stated|given) (?:in|into|to|as)\b", re.I),
+    re.compile(r"\bas written,? (?:in|into)\b", re.I),                    # "as written, in years"
+]
+_QUOTED = re.compile(r"'[^']*'|\"[^\"]*\"|‘[^’]*’|“[^”]*”")
+
+
+def fixed_form_problems(parameters) -> list[str]:
+    """units="strict" parameter rule: each description asks for its value as written. Returns
+    one problem per offending description (empty: all fine)."""
+    out = []
+    for p in parameters:
+        bare = _QUOTED.sub("''", p.description)
+        hit = next((m.group(0) for rx in _FIXED_FORM if (m := rx.search(bare))), None)
+        if hit:
+            out.append(f"{p.description!r} asks for a fixed unit or form ({hit!r})")
+        elif not re.search(r"\bas written\b", bare, re.I):
+            out.append(f"{p.description!r} does not ask for the value as written")
+    return out
 
 
 # ----------------------------------------------------------------------------
@@ -282,7 +328,7 @@ class BuildError(RuntimeError):
 class Builder:
     def __init__(self, problem: dict, transcript: Transcript, use_golden: bool = True,
                  granularity: str = config.GRANULARITY, units: str = "paper", model: str | None = None,
-                 reference: str = "transcript"):
+                 reference: str = "transcript", feedback: list[str] | None = None):
         """units="paper": the paper's builder, unchanged. units="strict" (label-free builds,
         DEVIATION): raw-text inputs parsed by the code, Decimal money, full precision, output
         names with units; with config.BUILDER_FACTOR_SCAN on, a scan also sends hand-typed
@@ -290,7 +336,10 @@ class Builder:
         config.BUILDER_MODEL; the label-free cascade passes each of LABELFREE_BUILDERS).
         reference="transcript": the paper's build judges, unchanged. reference="executed"
         (label-free builds, DEVIATION): the transcript's values come from an executed program,
-        so the judges compare with those values and never redo the arithmetic by hand."""
+        so the judges compare with those values and never redo the arithmetic by hand.
+        feedback (label-free repair round, arc/tester.py): semantic descriptions of what an
+        earlier build of this entry got wrong in independent tests. The tests themselves are
+        never shown, and the repaired entry is tested again with fresh ones."""
         if units not in ("paper", "strict"):
             raise ValueError(f"units must be 'paper' or 'strict', not {units!r}")
         if reference not in ("transcript", "executed"):
@@ -306,6 +355,14 @@ class Builder:
         self.report = BuildReport(problem["id"])
         golden = (f"\n\n## Golden label (correct final answer)\n\n{problem['golden_label']}"
                   if use_golden else "")
+        self.feedback = list(feedback or [])
+        if self.feedback:
+            golden += ("\n\n## Problems independent testing found in an earlier build of this entry\n\n"
+                       "A separate tester checked an earlier version on new questions of this kind. Make "
+                       "sure this build handles these correctly. Fix the general behaviour each line "
+                       "describes; do not special-case particular values or questions (the tests "
+                       "themselves are hidden and new ones will be used):\n"
+                       + "\n".join(f"- {f}" for f in self.feedback))
         self._context_block = {
             "type": "text",
             "text": (f"## User query q(o)\n\n{transcript.question}\n\n"
@@ -354,7 +411,7 @@ class Builder:
         return out
 
     def phase3(self) -> ParameterRecognition:
-        out = self._ask(
+        instructions = (
             self._so_far() + "\n\n# Phase 3: parameter recognition\n\nIdentify the class of "
             "problems this query belongs to and which parts of the user input are the natural "
             "input parameters that vary across instances of that class. Every parameter must be "
@@ -366,7 +423,20 @@ class Builder:
             "its marker, a descriptive natural-language name (this is how the value is looked "
             "up, e.g. 'the temperature of the gas with unit'), 2-3 format examples, its concrete "
             "value in the original input copied verbatim, and an analysis of its logical "
-            "validity range.", ParameterRecognition, "phase3")
+            "validity range.")
+        out = self._ask(instructions, ParameterRecognition, "phase3")
+        if self.units == "strict":
+            problems = fixed_form_problems(out.parameters)
+            if problems:              # one retry with the reasons, then it is a code failure
+                log(f"  [phase 3] descriptions break the as-written rule: {'; '.join(problems)}")
+                out = self._ask(instructions + "\n\nYour previous answer broke the input rule (every "
+                                "parameter description asks for the value as written, with its unit, "
+                                "never in a fixed unit or form):\n- " + "\n- ".join(problems) +
+                                "\nAnswer again with corrected descriptions.", ParameterRecognition,
+                                "phase3:as_written")
+                problems = fixed_form_problems(out.parameters)
+                if problems:
+                    raise BuildError("parameter descriptions break the as-written rule: " + "; ".join(problems))
         self.report.phases["Phase 3 (parameter recognition)"] = out.model_dump()
         log(f"  [phase 3] class: {out.problem_class}")
         log(f"  [phase 3] template: {out.template}")
@@ -583,6 +653,8 @@ class Builder:
             "and format examples) and, if the root code needs to change, the corrected root code "
             "(else null). Explain the fix briefly.", Repair, "repair")
         log(f"  [repair] {fix.explanation}")
+        if self.units == "strict" and (problems := fixed_form_problems(fix.parameters)):
+            raise BuildError("repaired parameter descriptions break the as-written rule: " + "; ".join(problems))
         params = ParameterRecognition(problem_class=params.problem_class, template=params.template,
                                       parameters=fix.parameters)
         self.report.phases["Phase 3 (parameter recognition)"] = params.model_dump()

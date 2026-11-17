@@ -1,6 +1,8 @@
 """eval/chat_loop.py scoring: a right answer counts in any equivalent unit."""
 
 import sys
+
+import pytest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -66,3 +68,52 @@ def test_a_unit_label_before_the_number_counts():
          "should_hit": True}
     assert cl.score_message(m, "pressure of the gas in bar: 7.758933821320725274725274725")[0] is True
     assert cl.score_message(m, "pressure of the gas in atm: 7.758933821320725")[0] is False   # labelled atm: wrong
+
+
+def test_load_messages_reads_a_message_set_and_fills_defaults(tmp_path):
+    import json
+    p = tmp_path / "set.jsonl"
+    p.write_text(json.dumps({"kind": "variant", "family": "f", "question": "q?", "answer": "1 m", "answer_value": 1.0,
+                             "answer_unit": "m", "should_hit": True}) + "\n")
+    [m] = cl.load_messages(p)
+    assert m["acceptable_either"] is False and m["category"] is None
+
+
+def test_load_messages_rejects_a_bad_schema(tmp_path):
+    import json
+    p = tmp_path / "bad.jsonl"
+    p.write_text(json.dumps({"kind": "variant", "question": "q?"}) + "\n")
+    with pytest.raises(ValueError, match="missing"):
+        cl.load_messages(p)
+
+
+@pytest.mark.parametrize("raw, want", [
+    ("P ≈ 2.355×10⁶ Pa", "P ≈ 2.355e6 Pa"),
+    (r"$2.354611\times10^{6}\ \text{Pa}$", r"$2.354611e6\ \text{Pa}$"),
+    ("1.237 × 10^6 Pa", "1.237e6 Pa"),
+    ("3.2 x 10^-4 mol", "3.2e-4 mol"),
+    ("6.1 × 10⁻³ M", "6.1e-3 M"),
+    ("a 10 x 10 grid", "a 10 x 10 grid"),            # not a power of ten: left alone
+    ("$4,665.73 per month", "$4,665.73 per month"),
+])
+def test_scientific_notation_is_read_as_e_notation(raw, want):
+    assert cl.sci_to_e(raw) == want
+
+
+def test_a_pressure_in_scientific_pascals_scores_right_and_a_wrong_one_does_not():
+    # regression (chat run 2026-11-16): "p ≈ 1.237 × 10⁶ Pa" for 12.21 atm was scored wrong
+    m = {"kind": "variant", "answer": "12.21 atm", "answer_value": 12.20869, "answer_unit": "atm"}
+    assert cl.score_message(m, "Final answer: p ≈ 1.237 × 10⁶ Pa (about 1.237 MPa)")[0] is True
+    assert cl.score_message(m, "Final answer: p ≈ 1.250 × 10⁶ Pa")[0] is not True
+
+
+def test_rescore_keeps_chatbot_errors_unscored(tmp_path):
+    import json
+    q = "What pressure does 1 mol at 300 K in 10 L exert?"
+    (tmp_path / "backlog.jsonl").write_text("")
+    (tmp_path / "chat_loop.json").write_text(json.dumps({"settings": {"per_family": 25, "messages": str(tmp_path / "m.jsonl")},
+        "messages": [{"question": q, "answer": "", "correct": None, "how": "chatbot_error"}]}))
+    (tmp_path / "m.jsonl").write_text(json.dumps({"kind": "variant", "family": "g", "question": q, "answer": "2.462 atm",
+                                                  "answer_value": 2.4617, "answer_unit": "atm", "should_hit": True}))
+    [row] = cl.rescore(tmp_path)["messages"]
+    assert row["how"] == "chatbot_error" and row["correct"] is None

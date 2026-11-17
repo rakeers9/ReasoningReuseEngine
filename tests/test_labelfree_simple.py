@@ -32,7 +32,12 @@ class FakeBuilder:
     fail = False
     cost = {}
 
-    def __init__(self, problem, transcript, use_golden=True, units="paper", model=None, reference="transcript"):
+    feedbacks = []              # Builder(feedback=...) of every build (repair rounds)
+
+    def __init__(self, problem, transcript, use_golden=True, units="paper", model=None, reference="transcript",
+                 feedback=None):
+        FakeBuilder.feedbacks.append(list(feedback or []))
+        self.feedback = list(feedback or [])
         assert use_golden is False and problem["golden_label"] == ""
         FakeBuilder.references.append(reference)
         assert units == "strict"            # label-free builds always use the strict unit rules
@@ -51,7 +56,7 @@ class FakeBuilder:
             raise BuildError("code did not run")
         FakeBuilder.built.append(self.transcript)
         c = Cache(self.problem["id"])
-        c.built_by = self.model
+        c.built_by = self.model + ("+repaired" if self.feedback else "")
         c.entry_points = [EntryPoint(self.problem["question"], "original", "root", [ParamSpec("x")],
                                      self.problem["id"])]
         return c
@@ -71,6 +76,7 @@ def sim(monkeypatch, tmp_path):
     monkeypatch.setattr(config, "LABELFREE_CONVENTION_CHECK", False)   # convention tests turn it on
     monkeypatch.setattr(config, "CLEF_SEEDS", 1)                  # seed tests raise it
     monkeypatch.setattr(config, "LABELFREE_BUILDERS", ["claude-haiku-5-5"])   # cascade tests use two
+    monkeypatch.setattr(config, "TESTER_CASES", 0)               # tests/test_tester.py turns it on
     monkeypatch.setattr(labelfree, "write_conventions",
                         lambda cache, eid, t, model=None: cache.conventions.setdefault(eid, list(s.rules)))
     monkeypatch.setattr(labelfree, "write_outputs",
@@ -78,7 +84,7 @@ def sim(monkeypatch, tmp_path):
                                                                                      "decimals": None}}))
     monkeypatch.setattr(arc.builder, "Builder", FakeBuilder)
     FakeBuilder.built, FakeBuilder.models, FakeBuilder.given, FakeBuilder.fail, FakeBuilder.cost = [], [], [], False, {}
-    FakeBuilder.references = []
+    FakeBuilder.references, FakeBuilder.feedbacks = [], []
     s = SimpleNamespace(path=tmp_path, answers=[], calls=[], error=None, rules=[])
 
     def resolve(question, model, tag, unit_hint=None):
@@ -104,7 +110,7 @@ def state(s):
 
 def test_default_flow_is_simple(monkeypatch):
     seen = []
-    monkeypatch.setattr(labelfree, "_build_simple", lambda f, r: seen.append("simple") or
+    monkeypatch.setattr(labelfree, "_build_simple", lambda f, r, n=None: seen.append("simple") or
                         labelfree.BuildResult(False, None, "", 0.0))
     monkeypatch.setattr(labelfree, "_build_certified", lambda f, r: seen.append("certified") or
                         labelfree.BuildResult(False, None, "", 0.0))
@@ -222,14 +228,15 @@ def _x(q):
 @pytest.fixture
 def pre(sim, monkeypatch):
     """Fake serving: gate P per question from pre.p (default 0.95), served if P >= 0.8.
-    The cached code doubles x, except questions in pre.wrong (adds 1) or pre.crash.
-    Blind solves give the true answer unless pre.blind overrides it."""
+    The cached code doubles x, except questions in pre.wrong (adds 1), pre.crash (the code
+    raises) or pre.decline (extraction refuses: serve.ExtractionError). Blind solves give the true answer unless pre.blind overrides it."""
     monkeypatch.setattr(config, "GATE", "clef")
     monkeypatch.setattr(config, "CLEF_THRESHOLD", 0.8)
     monkeypatch.setattr(config, "LABELFREE_FIT_CHECKS", 5)
     monkeypatch.setattr(config, "LABELFREE_FIT_MIN", 0.8)
     monkeypatch.setattr(labelfree, "_add_gate_data", lambda *a: None)
     sim.p, sim.asked, sim.wrong, sim.crash, sim.gate_error, sim.blind = {}, [], set(), set(), set(), {}
+    sim.decline = {}           # question -> ExtractionError message
     sim.relations = []
     sim.bad_by = None          # None: pre.wrong / pre.crash apply to every builder; else only these
 
@@ -245,6 +252,8 @@ def pre(sim, monkeypatch):
             trace.update(stage="gate_rejected", rejected_by=["clef"])
             return None
         bad = sim.bad_by is None or getattr(cache, "built_by", None) in sim.bad_by
+        if q in sim.decline and bad:
+            raise serve.ExtractionError(sim.decline[q])
         if q in sim.crash and bad:
             raise serve.CacheInvocationError("ValueError: could not parse '$150k'")
         y = 2 * _x(q) + (1 if q in sim.wrong and bad else 0)
@@ -552,7 +561,7 @@ def test_unrounded_resolve_matches_production_on_the_017_million_loan(fake_llm, 
     fake_llm.queue(labelfree.ResolveOut(working="...", program=PROGRAM017, final_answer="1048.17 and 81560.86"))
     w = labelfree._resolve(Q017, "cust-model", "t")
     assert "81560.86" in w.final_answer and "1048.17" in w.final_answer
-    assert "no intermediate rounding" in fake_llm.calls[0]["prompt"]
+    assert "never round any intermediate value" in fake_llm.calls[0]["prompt"]
     assert certify._compare("t", Q017, PROD017, w.final_answer, "t").agree
     # the old payment-rounding convention gave 81560.80, which the strict compare rejects
     fake_llm.queue(labelfree.ResolveOut(working="...", program=OLD_ROUNDED017, final_answer="x"))

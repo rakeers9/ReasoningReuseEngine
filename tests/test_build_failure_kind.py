@@ -151,3 +151,11 @@ def test_cap_before_the_first_builder_is_cost_cap(cascade, monkeypatch):
                                     (ValueError("x"), "code")])
 def test_failure_of(e, want):
     assert labelfree._failure_of(e) == want
+
+
+def test_extraction_refusals_that_cost_the_fit_are_not_a_failure(cascade):
+    # an extraction refusal is a safe decline (the question goes to the model), not a code fault
+    cascade.decline = {f"double {i} m": "extraction failed its checks: no value extracted" for i in range(3, 7)}
+    res = build()
+    assert res.status == "mismatch" and res.reason.startswith(labelfree.MISFIT_REASON)
+    assert res.failure is None and state(cascade)["failure"] is None

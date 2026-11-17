@@ -1,0 +1,46 @@
+{
+  "fam_f0002": {
+    "task": "compute",
+    "deliverable": "final equilibrium temperature of a mixed system",
+    "method": "calorimetry energy balance assuming an isolated system with heat lost equal heat gained",
+    "conditions": [
+      "two bodies at different starting temperatures brought into thermal contact",
+      "system is isolated from surroundings",
+      "no phase change occurs",
+      "specific heat values are given per gram per degree"
+    ],
+    "inputs": [
+      {
+        "name": "mass of water",
+        "value": "430 g",
+        "evidence": "430 g of water"
+      },
+      {
+        "name": "initial temperature of water",
+        "value": "294.65 K",
+        "evidence": "430 g of water at 294.65 K"
+      },
+      {
+        "name": "mass of aluminum object",
+        "value": "365 g",
+        "evidence": "a hot 365 g aluminum object"
+      },
+      {
+        "name": "initial temperature of aluminum object",
+        "value": "363.15 K",
+        "evidence": "aluminum object at 363.15 K"
+      },
+      {
+        "name": "specific heat of aluminum",
+        "value": "0.897 J/(g·°C)",
+        "evidence": "Specific heats: aluminum 0.897 J/(g·°C)"
+      },
+      {
+        "name": "specific heat of water",
+        "value": "4.18 J/(g·°C)",
+        "evidence": "water 4.18 J/(g·°C)"
+      }
+    ],
+    "output_form": "a temperature with a kelvin unit"
+  }
+}

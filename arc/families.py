@@ -401,7 +401,7 @@ class FamilyTracker:
 # ---- acting on the report ----
 
 def build_ready(tracker: FamilyTracker, build_fn: Callable | None = None, max_builds: int | None = None,
-                path: Path | None = None) -> list[tuple[str, object]]:
+                path: Path | None = None, can_start: Callable[[], bool] | None = None) -> list[tuple[str, object]]:
     """Build every family whose verdict is "build", best first. PAID when build_fn is real.
 
     build_fn(family_id, records) gets the family's source-model records and returns an
@@ -412,11 +412,16 @@ def build_ready(tracker: FamilyTracker, build_fn: Callable | None = None, max_bu
     certify it; the family stays watching and is retried on newer records. Its spend is
     logged as pending: it counts toward cost per cached entry but not as an attempt.
     Each result is applied (mark_built / mark_rejected, record_build_cost, serve rate) and
-    saved immediately, so a crash part-way loses nothing already paid for."""
+    saved immediately, so a crash part-way loses nothing already paid for.
+    can_start(): asked before EACH build (e.g. "does the budget left still cover a worst-case
+    build?"); False stops the batch. Checking per build, against what earlier builds really
+    cost, lets cheap builds go ahead instead of reserving the worst case for all of them."""
     if build_fn is None:
         from .labelfree import build_family as build_fn   # label-free build path (separate module)
     done = []
     for row in [r for r in tracker.readiness() if r.verdict == "build"][:max_builds]:
+        if can_start is not None and not can_start():
+            break
         records = tracker.members_of(row.family, path, served=False, confirmed=True)
         if config.FAMILY_BUILD_CHECK == "clef" and records:
             blocked = _build_check(tracker, row.family, records)
@@ -424,7 +429,11 @@ def build_ready(tracker: FamilyTracker, build_fn: Callable | None = None, max_bu
                 done.append((row.family, blocked))
                 continue
         try:
-            result = build_fn(row.family, records)
+            if _takes_near_misses(build_fn):     # real look-alikes for the independent tester
+                result = build_fn(row.family, records,
+                                  near_misses=near_misses(tracker, row.family, path, config.TESTER_NEAR_MISSES))
+            else:
+                result = build_fn(row.family, records)
         except Exception as e:   # one broken family must not stop the batch
             # A crash is a failure of the build machinery (a cut-off model reply, a network
             # error), not evidence the family is wrong: wait for a newer question and try again,
@@ -445,7 +454,9 @@ def build_ready(tracker: FamilyTracker, build_fn: Callable | None = None, max_bu
         elif status == "mismatch":   # stays watching; tried again once a newer question arrives
             tried = getattr(result, "record_id", None) or fam.last_source_id
             why = (result.reason or MISMATCH_NOTE)[:160]   # e.g. a failed fit check says so
-            if getattr(result, "failure", None) == "code":   # the built code was wrong: counts toward the cap
+            # the built code was wrong, or the independent tests couldn't give a verdict
+            # (arc/tester.py): both count toward the cap, so a family can't retry forever
+            if getattr(result, "failure", None) in ("code", "tests", "gate"):
                 fam.failed_builds += 1
             if fam.failed_builds >= config.FAMILY_MAX_FAILED_BUILDS:
                 tracker.mark_rejected(row.family, f"{why} ({fam.failed_builds} failed builds)")
@@ -481,6 +492,32 @@ def build_ready(tracker: FamilyTracker, build_fn: Callable | None = None, max_bu
 
 
 MISMATCH_NOTE = "caching tried but answer didn't match"
+
+
+def _takes_near_misses(fn: Callable) -> bool:
+    import inspect
+    try:
+        return "near_misses" in inspect.signature(fn).parameters
+    except (TypeError, ValueError):
+        return False
+
+
+def near_misses(tracker: FamilyTracker, family_id: str, path: Path | None = None, k: int = 8) -> list[str]:
+    """Real questions that were close to this family but placed elsewhere: they had it as a
+    candidate (embedding) and Clef or the embedding rule put them in another family. These are
+    the look-alikes the gate actually meets. Empty on a young cache, closest first."""
+    if k <= 0:
+        return []
+    scored = []
+    for rid, how in tracker.assignments.items():
+        sim = (how.get("candidates") or {}).get(family_id)
+        if sim is not None and how.get("family") not in (None, family_id):
+            scored.append((sim, rid))
+    if not scored:
+        return []
+    want = [rid for _, rid in sorted(scored, reverse=True)]
+    text = {r["id"]: r["question"] for r in backlog.read(path) if r["id"] in set(want)}
+    return list(dict.fromkeys(text[rid] for rid in want if rid in text))[:k]
 
 
 def _most_typical(tracker: FamilyTracker, fam: Family, records: list[dict]) -> dict:

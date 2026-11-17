@@ -2,94 +2,79 @@
   "name": "master",
   "functions": [
     {
-      "id": "parse_a_monetary_amount_text_with_curren_7889e6",
-      "description": "Parse a monetary amount text with currency symbol and scale word into an exact Decimal dollar amount",
+      "id": "parse_a_monetary_amount_in_dollars_from_aac94f",
+      "description": "Parse a monetary amount in dollars from raw text, handling currency sign, thousands separators and scale words such as k, thousand, million, bn and billion.",
       "inputs": [
-        "monetary amount as text copied from the question with currency symbol and scale word"
+        "raw text of a monetary amount such as $379,000 or $0.42 million"
       ],
       "outputs": [
-        "amount in dollars as an exact Decimal"
+        "monetary amount in dollars as exact decimal"
       ],
       "aliases": [],
       "origin": "builder:fam_f0002"
     },
     {
-      "id": "parse_a_count_of_years_written_as_digits_f55351",
-      "description": "Parse a count of years written as digits or English number words into an integer.",
+      "id": "parse_a_whole_number_of_years_or_a_usefu_21e076",
+      "description": "Parse a whole number of years or a useful life from raw text, handling digits and number words.",
       "inputs": [
-        "number of years as text copied from the question"
+        "raw text of a whole number such as 8 years or 11-year life or eleven years"
       ],
       "outputs": [
-        "whole number of years as an integer"
+        "whole number as integer"
       ],
       "aliases": [],
       "origin": "builder:fam_f0002"
     },
     {
-      "id": "compute_the_double_declining_balance_rat_e99bd7",
-      "description": "Compute the double-declining-balance rate as two divided by the useful life in years.",
+      "id": "compute_the_annual_double_declining_bala_667b54",
+      "description": "Compute the annual double-declining-balance rate as two divided by the useful life in years.",
       "inputs": [
-        "useful life of the asset in years"
+        "the useful life in years as a positive whole number"
       ],
       "outputs": [
-        "double-declining-balance rate as an exact fraction"
+        "annual double-declining-balance rate as exact fraction"
       ],
       "aliases": [],
       "origin": "builder:fam_f0002"
     },
     {
-      "id": "cap_a_candidate_depreciation_charge_so_t_dcf8de",
-      "description": "Cap a candidate depreciation charge so the resulting book value does not fall below salvage value, parsing each dollar input robustly first.",
+      "id": "apply_one_year_of_double_declining_balan_bc0411",
+      "description": "Apply one year of double-declining-balance depreciation to a beginning book value, capping the charge so the ending book value does not fall below salvage value.",
       "inputs": [
-        "candidate depreciation charge in dollars",
-        "beginning book value for the year in dollars",
+        "beginning book value in dollars",
+        "annual double-declining-balance rate",
         "salvage value in dollars"
       ],
       "outputs": [
-        "capped depreciation charge in dollars"
+        "depreciation charged this year in dollars",
+        "ending book value in dollars"
       ],
       "aliases": [],
       "origin": "builder:fam_f0002"
     },
     {
-      "id": "compute_the_straight_line_depreciation_c_e3ee52",
-      "description": "Compute the straight-line depreciation charge for the year on the remaining depreciable base over the remaining years",
+      "id": "iterate_double_declining_balance_yearly_1f6bb7",
+      "description": "Iterate double-declining-balance yearly depreciation with a salvage-value floor from the original cost for the elapsed years and return the unrounded book value.",
       "inputs": [
-        "beginning book value for the year in dollars",
-        "salvage value in dollars",
-        "remaining useful life in years including the current year"
-      ],
-      "outputs": [
-        "straight-line charge for the year in dollars"
-      ],
-      "aliases": [],
-      "origin": "builder:fam_f0002"
-    },
-    {
-      "id": "compute_one_year_of_double_declining_bal_351e61",
-      "description": "Compute one year of double-declining-balance depreciation as the larger of the declining-balance and straight-line charges, capped so book value stays at or above salvage, and return the charge and year-end book value.",
-      "inputs": [
-        "beginning book value for the year in dollars",
-        "salvage value in dollars",
-        "double-declining-balance rate as an exact fraction",
-        "remaining useful life in years including the current year"
-      ],
-      "outputs": [
-        "depreciation charge for the year in dollars",
-        "book value at year end in dollars"
-      ],
-      "aliases": [],
-      "origin": "builder:fam_f0002"
-    },
-    {
-      "id": "simulate_year_by_year_double_declining_b_ceb77a",
-      "description": "Simulate year-by-year double-declining-balance depreciation with salvage floor to find the book value after a number of years.",
-      "inputs": [
-        "asset cost in dollars",
+        "original cost in dollars",
         "salvage value in dollars",
         "useful life in years",
-        "number of elapsed years",
-        "double-declining-balance rate as an exact fraction"
+        "number of years elapsed"
+      ],
+      "outputs": [
+        "book value after the elapsed years in dollars unrounded"
+      ],
+      "aliases": [],
+      "origin": "builder:fam_f0002"
+    },
+    {
+      "id": "compute_the_book_value_after_a_given_num_58e2ac",
+      "description": "Compute the book value after a given number of elapsed years under double-declining-balance depreciation that never falls below salvage value.",
+      "inputs": [
+        "the number of years elapsed since the asset was acquired, as a whole number of years",
+        "the original cost of the asset in dollars with currency unit",
+        "the useful life of the asset in years",
+        "the estimated salvage value of the asset in dollars with currency unit"
       ],
       "outputs": [
         "book value after the elapsed years in dollars"
@@ -98,168 +83,161 @@
       "origin": "builder:fam_f0002"
     },
     {
-      "id": "format_a_dollar_book_value_rounded_half_2410fe",
-      "description": "Format a dollar book value rounded half-up to cents for the final answer.",
+      "id": "parse_a_money_amount_from_raw_text_with_7421a0",
+      "description": "Parse a money amount from raw text with currency symbols, separators and scale suffixes into an exact Decimal dollar amount.",
       "inputs": [
-        "book value after the elapsed years in dollars"
+        "the money amount as raw text"
       ],
       "outputs": [
-        "formatted book value in dollars to two decimal places"
+        "amount in dollars"
       ],
       "aliases": [],
-      "origin": "builder:fam_f0002"
+      "origin": "builder:fam_f0003"
     },
     {
-      "id": "compute_the_book_value_after_a_given_num_9b0b19",
-      "description": "Compute the book value after a given number of years under double-declining-balance depreciation with a salvage floor by parsing the inputs and simulating year by year.",
+      "id": "parse_a_percentage_rate_from_raw_text_su_413ff3",
+      "description": "Parse a percentage rate from raw text such as '7.5%' or '7.5 percent' into an exact Decimal annual rate as a fraction.",
       "inputs": [
-        "the original cost of the asset in dollars, as text copied from the question including currency symbol and any scale word",
-        "the useful life of the asset in years, as text copied from the question",
-        "the salvage (residual) value of the asset at the end of its useful life in dollars, as text copied from the question",
-        "the number of years elapsed since acquisition at which the book value is required, as text copied from the question"
+        "the percentage rate as raw text"
       ],
       "outputs": [
-        "final book value after the elapsed years, formatted in dollars to two decimal places"
+        "annual rate as a decimal fraction"
       ],
       "aliases": [],
-      "origin": "builder:fam_f0002"
+      "origin": "builder:fam_f0003"
     },
     {
-      "id": "parse_a_raw_quantity_text_into_its_numer_91da7c",
-      "description": "Parse a raw quantity text into its numeric magnitude with any scale word applied and its unit symbol.",
+      "id": "parse_a_loan_term_from_raw_text_digits_o_8c5f6a",
+      "description": "Parse a loan term from raw text (digits or number words, in years or months) into a term in years and a term in months.",
       "inputs": [
-        "quantity as raw text copied from the question"
+        "the loan term with unit as raw text"
       ],
       "outputs": [
-        "numeric magnitude of the quantity",
-        "unit symbol of the quantity"
+        "term in years",
+        "term in months"
       ],
       "aliases": [],
-      "origin": "builder:fam_f0004"
+      "origin": "builder:fam_f0003"
     },
     {
-      "id": "convert_a_container_volume_text_into_cub_e0c729",
-      "description": "Convert a container volume text into cubic metres using exact unit factors.",
+      "id": "determine_the_number_of_compounding_peri_db88fa",
+      "description": "Determine the number of compounding periods per year from a frequency description such as monthly, quarterly, semiannual, annual, weekly, biweekly or daily.",
       "inputs": [
-        "the volume of the flask or container holding the gas with unit"
+        "the compounding and payment frequency description as raw text"
       ],
       "outputs": [
-        "volume in cubic metres"
+        "periods per year"
       ],
       "aliases": [],
-      "origin": "builder:fam_f0004"
+      "origin": "builder:fam_f0003"
     },
     {
-      "id": "convert_an_amount_of_substance_given_as_dd91a8",
-      "description": "Convert an amount of substance given as raw text into moles using exact unit factors.",
+      "id": "compute_the_periodic_interest_rate_annua_e0309a",
+      "description": "Compute the periodic interest rate (annual rate divided by periods per year) and the total number of payments (periods per year times term in years).",
       "inputs": [
-        "the amount of gas in moles with unit"
+        "annual rate as a decimal fraction",
+        "periods per year",
+        "term in years"
       ],
       "outputs": [
-        "amount of substance in moles"
+        "periodic rate",
+        "number of payments"
       ],
       "aliases": [],
-      "origin": "builder:fam_f0004"
+      "origin": "builder:fam_f0003"
     },
     {
-      "id": "convert_a_temperature_text_with_unit_int_fdf726",
-      "description": "Convert a temperature text with unit into kelvin, applying the Celsius or Fahrenheit offset when needed and rejecting non-physical values.",
+      "id": "compute_the_growth_factor_1_r_n_and_the_8632d7",
+      "description": "Compute the growth factor (1+r)^n and the unrounded level periodic annuity payment from principal, periodic rate and number of payments, treating a zero rate as principal divided by number of payments.",
       "inputs": [
-        "the temperature of the gas with unit"
+        "principal in dollars",
+        "periodic rate",
+        "number of payments"
       ],
       "outputs": [
-        "temperature in kelvin"
+        "growth factor",
+        "unrounded periodic payment in dollars"
       ],
       "aliases": [],
-      "origin": "builder:fam_f0004"
+      "origin": "builder:fam_f0003"
     },
     {
-      "id": "apply_the_ideal_gas_law_to_compute_press_7a1d52",
-      "description": "Apply the ideal gas law to compute pressure in pascals from amount in moles, temperature in kelvin and volume in cubic metres",
+      "id": "round_the_periodic_payment_to_the_cent_w_16028e",
+      "description": "Round the periodic payment to the cent with half-up rounding and compute total interest as the rounded payment times the number of payments minus the principal.",
       "inputs": [
-        "amount of substance in moles",
-        "temperature in kelvin",
-        "volume in cubic metres"
+        "unrounded periodic payment in dollars",
+        "number of payments",
+        "principal in dollars"
       ],
       "outputs": [
-        "pressure in pascals"
+        "monthly payment in dollars",
+        "total interest in dollars"
       ],
       "aliases": [],
-      "origin": "builder:fam_f0004"
+      "origin": "builder:fam_f0003"
     },
     {
-      "id": "convert_a_pressure_given_in_pascals_into_303fbf",
-      "description": "Convert a pressure given in pascals into bar using the exact factor 1 bar = 100000 Pa.",
+      "id": "solve_a_fixed_rate_amortizing_loan_compu_8e8e38",
+      "description": "Solve a fixed-rate amortizing loan: compute the level periodic payment and the total interest paid over the term, from the principal, the annual nominal rate, the compounding frequency and the term.",
       "inputs": [
-        "pressure in pascals"
+        "the loan principal amount in dollars",
+        "the annual nominal interest rate as a percentage",
+        "the compounding and payment frequency description",
+        "the loan term with unit"
       ],
       "outputs": [
-        "pressure in bar"
+        "monthly payment in dollars",
+        "total interest in dollars"
       ],
       "aliases": [],
-      "origin": "builder:fam_f0004"
-    },
-    {
-      "id": "compute_the_pressure_of_a_perfect_gas_in_2c826b",
-      "description": "Compute the pressure of a perfect gas in bar from the container volume, the amount of gas and its temperature.",
-      "inputs": [
-        "the volume of the flask or container holding the gas with unit",
-        "the amount of gas in moles with unit",
-        "the name or chemical formula of the gas",
-        "the temperature of the gas with unit"
-      ],
-      "outputs": [
-        "pressure of the gas in bar"
-      ],
-      "aliases": [],
-      "origin": "builder:fam_f0004"
+      "origin": "builder:fam_f0003"
     }
   ],
   "entry_points": [
     {
-      "text": "Using the double-declining-balance method, find the book value after \u25cf4 of an asset that cost \u25cf1, has a \u25cf2 and a \u25cf3 salvage value.",
+      "text": "Using the double-declining-balance method, find the book value after \u25cf1 of an asset that cost \u25cf2, has a \u25cf3 and a \u25cf4 salvage value.",
       "kind": "template",
-      "root_id": "compute_the_book_value_after_a_given_num_9b0b19",
+      "root_id": "compute_the_book_value_after_a_given_num_58e2ac",
       "params": [
         {
-          "description": "the original cost of the asset in dollars, as text copied from the question including currency symbol and any scale word",
-          "format_examples": [
-            "$379,000",
-            "$0.42 million",
-            "$250k"
-          ],
-          "original_value": "$379,000",
-          "validity_range": "Must be a positive monetary amount, strictly greater than the salvage value (\u25cf3); if cost equals salvage there is no depreciable base and the book value is constant. Scale words k, thousand, million, billion multiply by 10^3, 10^3, 10^6, 10^9 respectively."
-        },
-        {
-          "description": "the useful life of the asset in years, as text copied from the question",
-          "format_examples": [
-            "11-year life",
-            "5 years",
-            "twenty-year life"
-          ],
-          "original_value": "11-year life",
-          "validity_range": "Must be a positive integer number of years (at least 1). The DDB rate 2/life is defined only for life \u2265 1; the life also sets the number of remaining years used in the straight-line switch test."
-        },
-        {
-          "description": "the salvage (residual) value of the asset at the end of its useful life in dollars, as text copied from the question",
-          "format_examples": [
-            "$41,000",
-            "$5k",
-            "$0.5 million"
-          ],
-          "original_value": "$41,000",
-          "validity_range": "Must be a non-negative monetary amount, less than the cost (\u25cf1). A salvage of zero is valid and means depreciation continues down to zero book value."
-        },
-        {
-          "description": "the number of years elapsed since acquisition at which the book value is required, as text copied from the question",
+          "description": "the number of years elapsed since the asset was acquired, as a whole number of years",
           "format_examples": [
             "8 years",
             "3 years",
-            "ten years"
+            "five years"
           ],
           "original_value": "8 years",
-          "validity_range": "Must be a non-negative whole number of years. Values from 0 up to the useful life (\u25cf2) are standard; beyond the useful life the book value is held at the salvage floor and the result is salvage value."
+          "validity_range": "Non-negative whole number of years. Values at or beyond the useful life give a book value equal to salvage value, so the value is meaningful for any non-negative integer and is floored at salvage."
+        },
+        {
+          "description": "the original cost of the asset in dollars with currency unit",
+          "format_examples": [
+            "$379,000",
+            "$0.42 million",
+            "$150k"
+          ],
+          "original_value": "$379,000",
+          "validity_range": "Positive monetary amount strictly greater than the salvage value, since depreciation is based on cost minus salvage."
+        },
+        {
+          "description": "the useful life of the asset in years",
+          "format_examples": [
+            "11-year life",
+            "5 years",
+            "a 7-year useful life"
+          ],
+          "original_value": "11-year life",
+          "validity_range": "Positive whole number of years. A life of at least 2 years gives a DDB rate of 2/life that does not exceed 100 percent; a life of 1 year gives a 200 percent rate, which the salvage floor still bounds."
+        },
+        {
+          "description": "the estimated salvage value of the asset in dollars with currency unit",
+          "format_examples": [
+            "$41,000",
+            "$25k",
+            "$0.05 million"
+          ],
+          "original_value": "$41,000",
+          "validity_range": "Non-negative monetary amount that is strictly less than the original cost, so that there is a depreciable base above salvage."
         }
       ],
       "problem_id": "fam_f0002"
@@ -267,47 +245,47 @@
     {
       "text": "Using the double-declining-balance method, find the book value after 8 years of an asset that cost $379,000, has a 11-year life and a $41,000 salvage value.",
       "kind": "original",
-      "root_id": "compute_the_book_value_after_a_given_num_9b0b19",
+      "root_id": "compute_the_book_value_after_a_given_num_58e2ac",
       "params": [
         {
-          "description": "the original cost of the asset in dollars, as text copied from the question including currency symbol and any scale word",
-          "format_examples": [
-            "$379,000",
-            "$0.42 million",
-            "$250k"
-          ],
-          "original_value": "$379,000",
-          "validity_range": "Must be a positive monetary amount, strictly greater than the salvage value (\u25cf3); if cost equals salvage there is no depreciable base and the book value is constant. Scale words k, thousand, million, billion multiply by 10^3, 10^3, 10^6, 10^9 respectively."
-        },
-        {
-          "description": "the useful life of the asset in years, as text copied from the question",
-          "format_examples": [
-            "11-year life",
-            "5 years",
-            "twenty-year life"
-          ],
-          "original_value": "11-year life",
-          "validity_range": "Must be a positive integer number of years (at least 1). The DDB rate 2/life is defined only for life \u2265 1; the life also sets the number of remaining years used in the straight-line switch test."
-        },
-        {
-          "description": "the salvage (residual) value of the asset at the end of its useful life in dollars, as text copied from the question",
-          "format_examples": [
-            "$41,000",
-            "$5k",
-            "$0.5 million"
-          ],
-          "original_value": "$41,000",
-          "validity_range": "Must be a non-negative monetary amount, less than the cost (\u25cf1). A salvage of zero is valid and means depreciation continues down to zero book value."
-        },
-        {
-          "description": "the number of years elapsed since acquisition at which the book value is required, as text copied from the question",
+          "description": "the number of years elapsed since the asset was acquired, as a whole number of years",
           "format_examples": [
             "8 years",
             "3 years",
-            "ten years"
+            "five years"
           ],
           "original_value": "8 years",
-          "validity_range": "Must be a non-negative whole number of years. Values from 0 up to the useful life (\u25cf2) are standard; beyond the useful life the book value is held at the salvage floor and the result is salvage value."
+          "validity_range": "Non-negative whole number of years. Values at or beyond the useful life give a book value equal to salvage value, so the value is meaningful for any non-negative integer and is floored at salvage."
+        },
+        {
+          "description": "the original cost of the asset in dollars with currency unit",
+          "format_examples": [
+            "$379,000",
+            "$0.42 million",
+            "$150k"
+          ],
+          "original_value": "$379,000",
+          "validity_range": "Positive monetary amount strictly greater than the salvage value, since depreciation is based on cost minus salvage."
+        },
+        {
+          "description": "the useful life of the asset in years",
+          "format_examples": [
+            "11-year life",
+            "5 years",
+            "a 7-year useful life"
+          ],
+          "original_value": "11-year life",
+          "validity_range": "Positive whole number of years. A life of at least 2 years gives a DDB rate of 2/life that does not exceed 100 percent; a life of 1 year gives a 200 percent rate, which the salvage floor still bounds."
+        },
+        {
+          "description": "the estimated salvage value of the asset in dollars with currency unit",
+          "format_examples": [
+            "$41,000",
+            "$25k",
+            "$0.05 million"
+          ],
+          "original_value": "$41,000",
+          "validity_range": "Non-negative monetary amount that is strictly less than the original cost, so that there is a depreciable base above salvage."
         }
       ],
       "problem_id": "fam_f0002"
@@ -315,95 +293,95 @@
     {
       "text": "Cost $51,000; salvage $3,200; life 5 years; method DDB. What is the net book value at the close of year 3?",
       "kind": "family",
-      "root_id": "compute_the_book_value_after_a_given_num_9b0b19",
+      "root_id": "compute_the_book_value_after_a_given_num_58e2ac",
       "params": [
         {
-          "description": "the original cost of the asset in dollars, as text copied from the question including currency symbol and any scale word",
-          "format_examples": [
-            "$379,000",
-            "$0.42 million",
-            "$250k"
-          ],
-          "original_value": "$379,000",
-          "validity_range": "Must be a positive monetary amount, strictly greater than the salvage value (\u25cf3); if cost equals salvage there is no depreciable base and the book value is constant. Scale words k, thousand, million, billion multiply by 10^3, 10^3, 10^6, 10^9 respectively."
-        },
-        {
-          "description": "the useful life of the asset in years, as text copied from the question",
-          "format_examples": [
-            "11-year life",
-            "5 years",
-            "twenty-year life"
-          ],
-          "original_value": "11-year life",
-          "validity_range": "Must be a positive integer number of years (at least 1). The DDB rate 2/life is defined only for life \u2265 1; the life also sets the number of remaining years used in the straight-line switch test."
-        },
-        {
-          "description": "the salvage (residual) value of the asset at the end of its useful life in dollars, as text copied from the question",
-          "format_examples": [
-            "$41,000",
-            "$5k",
-            "$0.5 million"
-          ],
-          "original_value": "$41,000",
-          "validity_range": "Must be a non-negative monetary amount, less than the cost (\u25cf1). A salvage of zero is valid and means depreciation continues down to zero book value."
-        },
-        {
-          "description": "the number of years elapsed since acquisition at which the book value is required, as text copied from the question",
+          "description": "the number of years elapsed since the asset was acquired, as a whole number of years",
           "format_examples": [
             "8 years",
             "3 years",
-            "ten years"
+            "five years"
           ],
           "original_value": "8 years",
-          "validity_range": "Must be a non-negative whole number of years. Values from 0 up to the useful life (\u25cf2) are standard; beyond the useful life the book value is held at the salvage floor and the result is salvage value."
+          "validity_range": "Non-negative whole number of years. Values at or beyond the useful life give a book value equal to salvage value, so the value is meaningful for any non-negative integer and is floored at salvage."
+        },
+        {
+          "description": "the original cost of the asset in dollars with currency unit",
+          "format_examples": [
+            "$379,000",
+            "$0.42 million",
+            "$150k"
+          ],
+          "original_value": "$379,000",
+          "validity_range": "Positive monetary amount strictly greater than the salvage value, since depreciation is based on cost minus salvage."
+        },
+        {
+          "description": "the useful life of the asset in years",
+          "format_examples": [
+            "11-year life",
+            "5 years",
+            "a 7-year useful life"
+          ],
+          "original_value": "11-year life",
+          "validity_range": "Positive whole number of years. A life of at least 2 years gives a DDB rate of 2/life that does not exceed 100 percent; a life of 1 year gives a 200 percent rate, which the salvage floor still bounds."
+        },
+        {
+          "description": "the estimated salvage value of the asset in dollars with currency unit",
+          "format_examples": [
+            "$41,000",
+            "$25k",
+            "$0.05 million"
+          ],
+          "original_value": "$41,000",
+          "validity_range": "Non-negative monetary amount that is strictly less than the original cost, so that there is a depreciable base above salvage."
         }
       ],
       "problem_id": "fam_f0002"
     },
     {
-      "text": "Using the double-declining-balance method, find the book value after 2 years of an asset that cost $332,000, has a 9-year life and a $43,300 salvage value.",
+      "text": "Cost $211,000; salvage $37,400; life 7 years; method DDB. What is the net book value at the close of year 1?",
       "kind": "family",
-      "root_id": "compute_the_book_value_after_a_given_num_9b0b19",
+      "root_id": "compute_the_book_value_after_a_given_num_58e2ac",
       "params": [
         {
-          "description": "the original cost of the asset in dollars, as text copied from the question including currency symbol and any scale word",
-          "format_examples": [
-            "$379,000",
-            "$0.42 million",
-            "$250k"
-          ],
-          "original_value": "$379,000",
-          "validity_range": "Must be a positive monetary amount, strictly greater than the salvage value (\u25cf3); if cost equals salvage there is no depreciable base and the book value is constant. Scale words k, thousand, million, billion multiply by 10^3, 10^3, 10^6, 10^9 respectively."
-        },
-        {
-          "description": "the useful life of the asset in years, as text copied from the question",
-          "format_examples": [
-            "11-year life",
-            "5 years",
-            "twenty-year life"
-          ],
-          "original_value": "11-year life",
-          "validity_range": "Must be a positive integer number of years (at least 1). The DDB rate 2/life is defined only for life \u2265 1; the life also sets the number of remaining years used in the straight-line switch test."
-        },
-        {
-          "description": "the salvage (residual) value of the asset at the end of its useful life in dollars, as text copied from the question",
-          "format_examples": [
-            "$41,000",
-            "$5k",
-            "$0.5 million"
-          ],
-          "original_value": "$41,000",
-          "validity_range": "Must be a non-negative monetary amount, less than the cost (\u25cf1). A salvage of zero is valid and means depreciation continues down to zero book value."
-        },
-        {
-          "description": "the number of years elapsed since acquisition at which the book value is required, as text copied from the question",
+          "description": "the number of years elapsed since the asset was acquired, as a whole number of years",
           "format_examples": [
             "8 years",
             "3 years",
-            "ten years"
+            "five years"
           ],
           "original_value": "8 years",
-          "validity_range": "Must be a non-negative whole number of years. Values from 0 up to the useful life (\u25cf2) are standard; beyond the useful life the book value is held at the salvage floor and the result is salvage value."
+          "validity_range": "Non-negative whole number of years. Values at or beyond the useful life give a book value equal to salvage value, so the value is meaningful for any non-negative integer and is floored at salvage."
+        },
+        {
+          "description": "the original cost of the asset in dollars with currency unit",
+          "format_examples": [
+            "$379,000",
+            "$0.42 million",
+            "$150k"
+          ],
+          "original_value": "$379,000",
+          "validity_range": "Positive monetary amount strictly greater than the salvage value, since depreciation is based on cost minus salvage."
+        },
+        {
+          "description": "the useful life of the asset in years",
+          "format_examples": [
+            "11-year life",
+            "5 years",
+            "a 7-year useful life"
+          ],
+          "original_value": "11-year life",
+          "validity_range": "Positive whole number of years. A life of at least 2 years gives a DDB rate of 2/life that does not exceed 100 percent; a life of 1 year gives a 200 percent rate, which the salvage floor still bounds."
+        },
+        {
+          "description": "the estimated salvage value of the asset in dollars with currency unit",
+          "format_examples": [
+            "$41,000",
+            "$25k",
+            "$0.05 million"
+          ],
+          "original_value": "$41,000",
+          "validity_range": "Non-negative monetary amount that is strictly less than the original cost, so that there is a depreciable base above salvage."
         }
       ],
       "problem_id": "fam_f0002"
@@ -411,47 +389,95 @@
     {
       "text": "Using the double-declining-balance method, find the book value after 9 years of an asset that cost $149,000, has a 12-year life and a $24,900 salvage value.",
       "kind": "family",
-      "root_id": "compute_the_book_value_after_a_given_num_9b0b19",
+      "root_id": "compute_the_book_value_after_a_given_num_58e2ac",
       "params": [
         {
-          "description": "the original cost of the asset in dollars, as text copied from the question including currency symbol and any scale word",
-          "format_examples": [
-            "$379,000",
-            "$0.42 million",
-            "$250k"
-          ],
-          "original_value": "$379,000",
-          "validity_range": "Must be a positive monetary amount, strictly greater than the salvage value (\u25cf3); if cost equals salvage there is no depreciable base and the book value is constant. Scale words k, thousand, million, billion multiply by 10^3, 10^3, 10^6, 10^9 respectively."
-        },
-        {
-          "description": "the useful life of the asset in years, as text copied from the question",
-          "format_examples": [
-            "11-year life",
-            "5 years",
-            "twenty-year life"
-          ],
-          "original_value": "11-year life",
-          "validity_range": "Must be a positive integer number of years (at least 1). The DDB rate 2/life is defined only for life \u2265 1; the life also sets the number of remaining years used in the straight-line switch test."
-        },
-        {
-          "description": "the salvage (residual) value of the asset at the end of its useful life in dollars, as text copied from the question",
-          "format_examples": [
-            "$41,000",
-            "$5k",
-            "$0.5 million"
-          ],
-          "original_value": "$41,000",
-          "validity_range": "Must be a non-negative monetary amount, less than the cost (\u25cf1). A salvage of zero is valid and means depreciation continues down to zero book value."
-        },
-        {
-          "description": "the number of years elapsed since acquisition at which the book value is required, as text copied from the question",
+          "description": "the number of years elapsed since the asset was acquired, as a whole number of years",
           "format_examples": [
             "8 years",
             "3 years",
-            "ten years"
+            "five years"
           ],
           "original_value": "8 years",
-          "validity_range": "Must be a non-negative whole number of years. Values from 0 up to the useful life (\u25cf2) are standard; beyond the useful life the book value is held at the salvage floor and the result is salvage value."
+          "validity_range": "Non-negative whole number of years. Values at or beyond the useful life give a book value equal to salvage value, so the value is meaningful for any non-negative integer and is floored at salvage."
+        },
+        {
+          "description": "the original cost of the asset in dollars with currency unit",
+          "format_examples": [
+            "$379,000",
+            "$0.42 million",
+            "$150k"
+          ],
+          "original_value": "$379,000",
+          "validity_range": "Positive monetary amount strictly greater than the salvage value, since depreciation is based on cost minus salvage."
+        },
+        {
+          "description": "the useful life of the asset in years",
+          "format_examples": [
+            "11-year life",
+            "5 years",
+            "a 7-year useful life"
+          ],
+          "original_value": "11-year life",
+          "validity_range": "Positive whole number of years. A life of at least 2 years gives a DDB rate of 2/life that does not exceed 100 percent; a life of 1 year gives a 200 percent rate, which the salvage floor still bounds."
+        },
+        {
+          "description": "the estimated salvage value of the asset in dollars with currency unit",
+          "format_examples": [
+            "$41,000",
+            "$25k",
+            "$0.05 million"
+          ],
+          "original_value": "$41,000",
+          "validity_range": "Non-negative monetary amount that is strictly less than the original cost, so that there is a depreciable base above salvage."
+        }
+      ],
+      "problem_id": "fam_f0002"
+    },
+    {
+      "text": "Using the double-declining-balance method, find the book value after 2 years of an asset that cost $332,000, has a 9-year life and a $43,300 salvage value.",
+      "kind": "family",
+      "root_id": "compute_the_book_value_after_a_given_num_58e2ac",
+      "params": [
+        {
+          "description": "the number of years elapsed since the asset was acquired, as a whole number of years",
+          "format_examples": [
+            "8 years",
+            "3 years",
+            "five years"
+          ],
+          "original_value": "8 years",
+          "validity_range": "Non-negative whole number of years. Values at or beyond the useful life give a book value equal to salvage value, so the value is meaningful for any non-negative integer and is floored at salvage."
+        },
+        {
+          "description": "the original cost of the asset in dollars with currency unit",
+          "format_examples": [
+            "$379,000",
+            "$0.42 million",
+            "$150k"
+          ],
+          "original_value": "$379,000",
+          "validity_range": "Positive monetary amount strictly greater than the salvage value, since depreciation is based on cost minus salvage."
+        },
+        {
+          "description": "the useful life of the asset in years",
+          "format_examples": [
+            "11-year life",
+            "5 years",
+            "a 7-year useful life"
+          ],
+          "original_value": "11-year life",
+          "validity_range": "Positive whole number of years. A life of at least 2 years gives a DDB rate of 2/life that does not exceed 100 percent; a life of 1 year gives a 200 percent rate, which the salvage floor still bounds."
+        },
+        {
+          "description": "the estimated salvage value of the asset in dollars with currency unit",
+          "format_examples": [
+            "$41,000",
+            "$25k",
+            "$0.05 million"
+          ],
+          "original_value": "$41,000",
+          "validity_range": "Non-negative monetary amount that is strictly less than the original cost, so that there is a depreciable base above salvage."
         }
       ],
       "problem_id": "fam_f0002"
@@ -459,386 +485,386 @@
     {
       "text": "Using the double-declining-balance method, find the book value after 1 years of an asset that cost $396,000, has a 4-year life and a $47,800 salvage value.",
       "kind": "family",
-      "root_id": "compute_the_book_value_after_a_given_num_9b0b19",
+      "root_id": "compute_the_book_value_after_a_given_num_58e2ac",
       "params": [
         {
-          "description": "the original cost of the asset in dollars, as text copied from the question including currency symbol and any scale word",
-          "format_examples": [
-            "$379,000",
-            "$0.42 million",
-            "$250k"
-          ],
-          "original_value": "$379,000",
-          "validity_range": "Must be a positive monetary amount, strictly greater than the salvage value (\u25cf3); if cost equals salvage there is no depreciable base and the book value is constant. Scale words k, thousand, million, billion multiply by 10^3, 10^3, 10^6, 10^9 respectively."
-        },
-        {
-          "description": "the useful life of the asset in years, as text copied from the question",
-          "format_examples": [
-            "11-year life",
-            "5 years",
-            "twenty-year life"
-          ],
-          "original_value": "11-year life",
-          "validity_range": "Must be a positive integer number of years (at least 1). The DDB rate 2/life is defined only for life \u2265 1; the life also sets the number of remaining years used in the straight-line switch test."
-        },
-        {
-          "description": "the salvage (residual) value of the asset at the end of its useful life in dollars, as text copied from the question",
-          "format_examples": [
-            "$41,000",
-            "$5k",
-            "$0.5 million"
-          ],
-          "original_value": "$41,000",
-          "validity_range": "Must be a non-negative monetary amount, less than the cost (\u25cf1). A salvage of zero is valid and means depreciation continues down to zero book value."
-        },
-        {
-          "description": "the number of years elapsed since acquisition at which the book value is required, as text copied from the question",
+          "description": "the number of years elapsed since the asset was acquired, as a whole number of years",
           "format_examples": [
             "8 years",
             "3 years",
-            "ten years"
+            "five years"
           ],
           "original_value": "8 years",
-          "validity_range": "Must be a non-negative whole number of years. Values from 0 up to the useful life (\u25cf2) are standard; beyond the useful life the book value is held at the salvage floor and the result is salvage value."
+          "validity_range": "Non-negative whole number of years. Values at or beyond the useful life give a book value equal to salvage value, so the value is meaningful for any non-negative integer and is floored at salvage."
+        },
+        {
+          "description": "the original cost of the asset in dollars with currency unit",
+          "format_examples": [
+            "$379,000",
+            "$0.42 million",
+            "$150k"
+          ],
+          "original_value": "$379,000",
+          "validity_range": "Positive monetary amount strictly greater than the salvage value, since depreciation is based on cost minus salvage."
+        },
+        {
+          "description": "the useful life of the asset in years",
+          "format_examples": [
+            "11-year life",
+            "5 years",
+            "a 7-year useful life"
+          ],
+          "original_value": "11-year life",
+          "validity_range": "Positive whole number of years. A life of at least 2 years gives a DDB rate of 2/life that does not exceed 100 percent; a life of 1 year gives a 200 percent rate, which the salvage floor still bounds."
+        },
+        {
+          "description": "the estimated salvage value of the asset in dollars with currency unit",
+          "format_examples": [
+            "$41,000",
+            "$25k",
+            "$0.05 million"
+          ],
+          "original_value": "$41,000",
+          "validity_range": "Non-negative monetary amount that is strictly less than the original cost, so that there is a depreciable base above salvage."
         }
       ],
       "problem_id": "fam_f0002"
     },
     {
-      "text": "A \u25cf1 flask holds \u25cf2 of \u25cf3 at \u25cf4. Assuming perfect-gas behaviour, what pressure does the gas exert?",
+      "text": "A \u25cf1 mortgage has a \u25cf2 annual interest rate, compounded \u25cf3, over \u25cf4. What is the monthly payment, and how much total interest is paid over the life of the loan?",
       "kind": "template",
-      "root_id": "compute_the_pressure_of_a_perfect_gas_in_2c826b",
+      "root_id": "solve_a_fixed_rate_amortizing_loan_compu_8e8e38",
       "params": [
         {
-          "description": "the volume of the flask or container holding the gas with unit",
+          "description": "the loan principal amount in dollars",
           "format_examples": [
-            "8.4 L",
-            "250 mL",
-            "0.012 m3"
+            "$446,000",
+            "$250k",
+            "$1.2 million"
           ],
-          "original_value": "8.4 L",
-          "validity_range": "Strictly positive finite volume; any unit with a known exact factor to cubic metres (L, mL, dm3, cm3, m3) is valid, and zero or negative volume is physically impossible and must be rejected."
+          "original_value": "$446,000",
+          "validity_range": "Positive money amount; may include currency symbol, thousands separators or scale suffixes (k, thousand, million, bn); must be greater than zero."
         },
         {
-          "description": "the amount of gas in moles with unit",
+          "description": "the annual nominal interest rate as a percentage",
           "format_examples": [
-            "2.69 mol",
-            "0.50 mol",
-            "1.2 kmol"
+            "7.5%",
+            "4 percent",
+            "3.25%"
           ],
-          "original_value": "2.69 mol",
-          "validity_range": "Non-negative finite amount of substance; zero gives zero pressure and negative amounts are unphysical. Units must be convertible to moles (mol, mmol, kmol)."
+          "original_value": "7.5%",
+          "validity_range": "Non-negative percentage, typically 0% to about 30%; zero rate is handled as principal divided by number of payments."
         },
         {
-          "description": "the name or chemical formula of the gas",
+          "description": "the compounding and payment frequency description",
           "format_examples": [
-            "nitrogen",
-            "argon",
-            "carbon dioxide"
+            "monthly",
+            "quarterly",
+            "semiannually"
           ],
-          "original_value": "nitrogen",
-          "validity_range": "Any substance treated as a perfect gas at the stated conditions; the ideal gas law is accurate only away from condensation and at low to moderate pressure, and the identity of the gas does not change the calculation under the perfect-gas assumption."
+          "original_value": "monthly",
+          "validity_range": "One of monthly (12), quarterly (4), semiannual (2), annual (1), weekly (52), biweekly (26), daily (365) periods per year."
         },
         {
-          "description": "the temperature of the gas with unit",
+          "description": "the loan term with unit",
           "format_examples": [
-            "260.15 K",
-            "27\u00b0C",
-            "300 K"
+            "20 years",
+            "30 years",
+            "180 months"
           ],
-          "original_value": "260.15 K",
-          "validity_range": "Must be above absolute zero: strictly positive in kelvin, or above -273.15 \u00b0C, or above -459.67 \u00b0F; kelvin, Celsius and Fahrenheit are valid units with their offsets applied before use."
+          "original_value": "20 years",
+          "validity_range": "Positive duration in years or months (digits or number words) such that the total number of payments is a positive integer."
         }
       ],
-      "problem_id": "fam_f0004"
+      "problem_id": "fam_f0003"
     },
     {
-      "text": "A 8.4 L flask holds 2.69 mol of nitrogen at 260.15 K. Assuming perfect-gas behaviour, what pressure does the gas exert?",
+      "text": "A $446,000 mortgage has a 7.5% annual interest rate, compounded monthly, over 20 years. What is the monthly payment, and how much total interest is paid over the life of the loan?",
       "kind": "original",
-      "root_id": "compute_the_pressure_of_a_perfect_gas_in_2c826b",
+      "root_id": "solve_a_fixed_rate_amortizing_loan_compu_8e8e38",
       "params": [
         {
-          "description": "the volume of the flask or container holding the gas with unit",
+          "description": "the loan principal amount in dollars",
           "format_examples": [
-            "8.4 L",
-            "250 mL",
-            "0.012 m3"
+            "$446,000",
+            "$250k",
+            "$1.2 million"
           ],
-          "original_value": "8.4 L",
-          "validity_range": "Strictly positive finite volume; any unit with a known exact factor to cubic metres (L, mL, dm3, cm3, m3) is valid, and zero or negative volume is physically impossible and must be rejected."
+          "original_value": "$446,000",
+          "validity_range": "Positive money amount; may include currency symbol, thousands separators or scale suffixes (k, thousand, million, bn); must be greater than zero."
         },
         {
-          "description": "the amount of gas in moles with unit",
+          "description": "the annual nominal interest rate as a percentage",
           "format_examples": [
-            "2.69 mol",
-            "0.50 mol",
-            "1.2 kmol"
+            "7.5%",
+            "4 percent",
+            "3.25%"
           ],
-          "original_value": "2.69 mol",
-          "validity_range": "Non-negative finite amount of substance; zero gives zero pressure and negative amounts are unphysical. Units must be convertible to moles (mol, mmol, kmol)."
+          "original_value": "7.5%",
+          "validity_range": "Non-negative percentage, typically 0% to about 30%; zero rate is handled as principal divided by number of payments."
         },
         {
-          "description": "the name or chemical formula of the gas",
+          "description": "the compounding and payment frequency description",
           "format_examples": [
-            "nitrogen",
-            "argon",
-            "carbon dioxide"
+            "monthly",
+            "quarterly",
+            "semiannually"
           ],
-          "original_value": "nitrogen",
-          "validity_range": "Any substance treated as a perfect gas at the stated conditions; the ideal gas law is accurate only away from condensation and at low to moderate pressure, and the identity of the gas does not change the calculation under the perfect-gas assumption."
+          "original_value": "monthly",
+          "validity_range": "One of monthly (12), quarterly (4), semiannual (2), annual (1), weekly (52), biweekly (26), daily (365) periods per year."
         },
         {
-          "description": "the temperature of the gas with unit",
+          "description": "the loan term with unit",
           "format_examples": [
-            "260.15 K",
-            "27\u00b0C",
-            "300 K"
+            "20 years",
+            "30 years",
+            "180 months"
           ],
-          "original_value": "260.15 K",
-          "validity_range": "Must be above absolute zero: strictly positive in kelvin, or above -273.15 \u00b0C, or above -459.67 \u00b0F; kelvin, Celsius and Fahrenheit are valid units with their offsets applied before use."
+          "original_value": "20 years",
+          "validity_range": "Positive duration in years or months (digits or number words) such that the total number of payments is a positive integer."
         }
       ],
-      "problem_id": "fam_f0004"
+      "problem_id": "fam_f0003"
     },
     {
-      "text": "0.51 mol of methane gas is held in a 26.13 dm3 vessel at 131\u00b0C. Assuming ideal behaviour, calculate the pressure.",
+      "text": "Calculate the monthly installment and lifetime interest for a $781k mortgage at 6.5% annual interest compounded monthly, repaid over 10 years.",
       "kind": "family",
-      "root_id": "compute_the_pressure_of_a_perfect_gas_in_2c826b",
+      "root_id": "solve_a_fixed_rate_amortizing_loan_compu_8e8e38",
       "params": [
         {
-          "description": "the volume of the flask or container holding the gas with unit",
+          "description": "the loan principal amount in dollars",
           "format_examples": [
-            "8.4 L",
-            "250 mL",
-            "0.012 m3"
+            "$446,000",
+            "$250k",
+            "$1.2 million"
           ],
-          "original_value": "8.4 L",
-          "validity_range": "Strictly positive finite volume; any unit with a known exact factor to cubic metres (L, mL, dm3, cm3, m3) is valid, and zero or negative volume is physically impossible and must be rejected."
+          "original_value": "$446,000",
+          "validity_range": "Positive money amount; may include currency symbol, thousands separators or scale suffixes (k, thousand, million, bn); must be greater than zero."
         },
         {
-          "description": "the amount of gas in moles with unit",
+          "description": "the annual nominal interest rate as a percentage",
           "format_examples": [
-            "2.69 mol",
-            "0.50 mol",
-            "1.2 kmol"
+            "7.5%",
+            "4 percent",
+            "3.25%"
           ],
-          "original_value": "2.69 mol",
-          "validity_range": "Non-negative finite amount of substance; zero gives zero pressure and negative amounts are unphysical. Units must be convertible to moles (mol, mmol, kmol)."
+          "original_value": "7.5%",
+          "validity_range": "Non-negative percentage, typically 0% to about 30%; zero rate is handled as principal divided by number of payments."
         },
         {
-          "description": "the name or chemical formula of the gas",
+          "description": "the compounding and payment frequency description",
           "format_examples": [
-            "nitrogen",
-            "argon",
-            "carbon dioxide"
+            "monthly",
+            "quarterly",
+            "semiannually"
           ],
-          "original_value": "nitrogen",
-          "validity_range": "Any substance treated as a perfect gas at the stated conditions; the ideal gas law is accurate only away from condensation and at low to moderate pressure, and the identity of the gas does not change the calculation under the perfect-gas assumption."
+          "original_value": "monthly",
+          "validity_range": "One of monthly (12), quarterly (4), semiannual (2), annual (1), weekly (52), biweekly (26), daily (365) periods per year."
         },
         {
-          "description": "the temperature of the gas with unit",
+          "description": "the loan term with unit",
           "format_examples": [
-            "260.15 K",
-            "27\u00b0C",
-            "300 K"
+            "20 years",
+            "30 years",
+            "180 months"
           ],
-          "original_value": "260.15 K",
-          "validity_range": "Must be above absolute zero: strictly positive in kelvin, or above -273.15 \u00b0C, or above -459.67 \u00b0F; kelvin, Celsius and Fahrenheit are valid units with their offsets applied before use."
+          "original_value": "20 years",
+          "validity_range": "Positive duration in years or months (digits or number words) such that the total number of payments is a positive integer."
         }
       ],
-      "problem_id": "fam_f0004"
+      "problem_id": "fam_f0003"
     },
     {
-      "text": "9.45 mol of methane gas is held in a 9.19 dm3 vessel at 2\u00b0C. Assuming ideal behaviour, calculate the pressure.",
+      "text": "What are the monthly payments on a 10-year, $335,000 home loan at 3.5% per year (monthly compounding), and what is the total interest over the full term?",
       "kind": "family",
-      "root_id": "compute_the_pressure_of_a_perfect_gas_in_2c826b",
+      "root_id": "solve_a_fixed_rate_amortizing_loan_compu_8e8e38",
       "params": [
         {
-          "description": "the volume of the flask or container holding the gas with unit",
+          "description": "the loan principal amount in dollars",
           "format_examples": [
-            "8.4 L",
-            "250 mL",
-            "0.012 m3"
+            "$446,000",
+            "$250k",
+            "$1.2 million"
           ],
-          "original_value": "8.4 L",
-          "validity_range": "Strictly positive finite volume; any unit with a known exact factor to cubic metres (L, mL, dm3, cm3, m3) is valid, and zero or negative volume is physically impossible and must be rejected."
+          "original_value": "$446,000",
+          "validity_range": "Positive money amount; may include currency symbol, thousands separators or scale suffixes (k, thousand, million, bn); must be greater than zero."
         },
         {
-          "description": "the amount of gas in moles with unit",
+          "description": "the annual nominal interest rate as a percentage",
           "format_examples": [
-            "2.69 mol",
-            "0.50 mol",
-            "1.2 kmol"
+            "7.5%",
+            "4 percent",
+            "3.25%"
           ],
-          "original_value": "2.69 mol",
-          "validity_range": "Non-negative finite amount of substance; zero gives zero pressure and negative amounts are unphysical. Units must be convertible to moles (mol, mmol, kmol)."
+          "original_value": "7.5%",
+          "validity_range": "Non-negative percentage, typically 0% to about 30%; zero rate is handled as principal divided by number of payments."
         },
         {
-          "description": "the name or chemical formula of the gas",
+          "description": "the compounding and payment frequency description",
           "format_examples": [
-            "nitrogen",
-            "argon",
-            "carbon dioxide"
+            "monthly",
+            "quarterly",
+            "semiannually"
           ],
-          "original_value": "nitrogen",
-          "validity_range": "Any substance treated as a perfect gas at the stated conditions; the ideal gas law is accurate only away from condensation and at low to moderate pressure, and the identity of the gas does not change the calculation under the perfect-gas assumption."
+          "original_value": "monthly",
+          "validity_range": "One of monthly (12), quarterly (4), semiannual (2), annual (1), weekly (52), biweekly (26), daily (365) periods per year."
         },
         {
-          "description": "the temperature of the gas with unit",
+          "description": "the loan term with unit",
           "format_examples": [
-            "260.15 K",
-            "27\u00b0C",
-            "300 K"
+            "20 years",
+            "30 years",
+            "180 months"
           ],
-          "original_value": "260.15 K",
-          "validity_range": "Must be above absolute zero: strictly positive in kelvin, or above -273.15 \u00b0C, or above -459.67 \u00b0F; kelvin, Celsius and Fahrenheit are valid units with their offsets applied before use."
+          "original_value": "20 years",
+          "validity_range": "Positive duration in years or months (digits or number words) such that the total number of payments is a positive integer."
         }
       ],
-      "problem_id": "fam_f0004"
+      "problem_id": "fam_f0003"
     },
     {
-      "text": "What pressure do 0.67 moles of helium exert in a 13.19 litre container at 10 \u00b0C, treating it as a perfect gas?",
+      "text": "What are the monthly payments on a 10-year, $639,000 home loan at 5.875% per year (monthly compounding), and what is the total interest over the full term?",
       "kind": "family",
-      "root_id": "compute_the_pressure_of_a_perfect_gas_in_2c826b",
+      "root_id": "solve_a_fixed_rate_amortizing_loan_compu_8e8e38",
       "params": [
         {
-          "description": "the volume of the flask or container holding the gas with unit",
+          "description": "the loan principal amount in dollars",
           "format_examples": [
-            "8.4 L",
-            "250 mL",
-            "0.012 m3"
+            "$446,000",
+            "$250k",
+            "$1.2 million"
           ],
-          "original_value": "8.4 L",
-          "validity_range": "Strictly positive finite volume; any unit with a known exact factor to cubic metres (L, mL, dm3, cm3, m3) is valid, and zero or negative volume is physically impossible and must be rejected."
+          "original_value": "$446,000",
+          "validity_range": "Positive money amount; may include currency symbol, thousands separators or scale suffixes (k, thousand, million, bn); must be greater than zero."
         },
         {
-          "description": "the amount of gas in moles with unit",
+          "description": "the annual nominal interest rate as a percentage",
           "format_examples": [
-            "2.69 mol",
-            "0.50 mol",
-            "1.2 kmol"
+            "7.5%",
+            "4 percent",
+            "3.25%"
           ],
-          "original_value": "2.69 mol",
-          "validity_range": "Non-negative finite amount of substance; zero gives zero pressure and negative amounts are unphysical. Units must be convertible to moles (mol, mmol, kmol)."
+          "original_value": "7.5%",
+          "validity_range": "Non-negative percentage, typically 0% to about 30%; zero rate is handled as principal divided by number of payments."
         },
         {
-          "description": "the name or chemical formula of the gas",
+          "description": "the compounding and payment frequency description",
           "format_examples": [
-            "nitrogen",
-            "argon",
-            "carbon dioxide"
+            "monthly",
+            "quarterly",
+            "semiannually"
           ],
-          "original_value": "nitrogen",
-          "validity_range": "Any substance treated as a perfect gas at the stated conditions; the ideal gas law is accurate only away from condensation and at low to moderate pressure, and the identity of the gas does not change the calculation under the perfect-gas assumption."
+          "original_value": "monthly",
+          "validity_range": "One of monthly (12), quarterly (4), semiannual (2), annual (1), weekly (52), biweekly (26), daily (365) periods per year."
         },
         {
-          "description": "the temperature of the gas with unit",
+          "description": "the loan term with unit",
           "format_examples": [
-            "260.15 K",
-            "27\u00b0C",
-            "300 K"
+            "20 years",
+            "30 years",
+            "180 months"
           ],
-          "original_value": "260.15 K",
-          "validity_range": "Must be above absolute zero: strictly positive in kelvin, or above -273.15 \u00b0C, or above -459.67 \u00b0F; kelvin, Celsius and Fahrenheit are valid units with their offsets applied before use."
+          "original_value": "20 years",
+          "validity_range": "Positive duration in years or months (digits or number words) such that the total number of payments is a positive integer."
         }
       ],
-      "problem_id": "fam_f0004"
+      "problem_id": "fam_f0003"
     },
     {
-      "text": "What pressure do 10.07 moles of ammonia exert in a 5.37 litre container at 78 \u00b0C, treating it as a perfect gas?",
+      "text": "A $783,000 mortgage has a 6.25% annual interest rate, compounded monthly, over 25 years. What is the monthly payment, and how much total interest is paid over the life of the loan?",
       "kind": "family",
-      "root_id": "compute_the_pressure_of_a_perfect_gas_in_2c826b",
+      "root_id": "solve_a_fixed_rate_amortizing_loan_compu_8e8e38",
       "params": [
         {
-          "description": "the volume of the flask or container holding the gas with unit",
+          "description": "the loan principal amount in dollars",
           "format_examples": [
-            "8.4 L",
-            "250 mL",
-            "0.012 m3"
+            "$446,000",
+            "$250k",
+            "$1.2 million"
           ],
-          "original_value": "8.4 L",
-          "validity_range": "Strictly positive finite volume; any unit with a known exact factor to cubic metres (L, mL, dm3, cm3, m3) is valid, and zero or negative volume is physically impossible and must be rejected."
+          "original_value": "$446,000",
+          "validity_range": "Positive money amount; may include currency symbol, thousands separators or scale suffixes (k, thousand, million, bn); must be greater than zero."
         },
         {
-          "description": "the amount of gas in moles with unit",
+          "description": "the annual nominal interest rate as a percentage",
           "format_examples": [
-            "2.69 mol",
-            "0.50 mol",
-            "1.2 kmol"
+            "7.5%",
+            "4 percent",
+            "3.25%"
           ],
-          "original_value": "2.69 mol",
-          "validity_range": "Non-negative finite amount of substance; zero gives zero pressure and negative amounts are unphysical. Units must be convertible to moles (mol, mmol, kmol)."
+          "original_value": "7.5%",
+          "validity_range": "Non-negative percentage, typically 0% to about 30%; zero rate is handled as principal divided by number of payments."
         },
         {
-          "description": "the name or chemical formula of the gas",
+          "description": "the compounding and payment frequency description",
           "format_examples": [
-            "nitrogen",
-            "argon",
-            "carbon dioxide"
+            "monthly",
+            "quarterly",
+            "semiannually"
           ],
-          "original_value": "nitrogen",
-          "validity_range": "Any substance treated as a perfect gas at the stated conditions; the ideal gas law is accurate only away from condensation and at low to moderate pressure, and the identity of the gas does not change the calculation under the perfect-gas assumption."
+          "original_value": "monthly",
+          "validity_range": "One of monthly (12), quarterly (4), semiannual (2), annual (1), weekly (52), biweekly (26), daily (365) periods per year."
         },
         {
-          "description": "the temperature of the gas with unit",
+          "description": "the loan term with unit",
           "format_examples": [
-            "260.15 K",
-            "27\u00b0C",
-            "300 K"
+            "20 years",
+            "30 years",
+            "180 months"
           ],
-          "original_value": "260.15 K",
-          "validity_range": "Must be above absolute zero: strictly positive in kelvin, or above -273.15 \u00b0C, or above -459.67 \u00b0F; kelvin, Celsius and Fahrenheit are valid units with their offsets applied before use."
+          "original_value": "20 years",
+          "validity_range": "Positive duration in years or months (digits or number words) such that the total number of payments is a positive integer."
         }
       ],
-      "problem_id": "fam_f0004"
+      "problem_id": "fam_f0003"
     },
     {
-      "text": "What pressure do 8.34 moles of carbon dioxide exert in a 6.87 litre container at 110 \u00b0C, treating it as a perfect gas?",
+      "text": "What are the monthly payments on a 30-year, $418,000 home loan at 7.25% per year (monthly compounding), and what is the total interest over the full term?",
       "kind": "family",
-      "root_id": "compute_the_pressure_of_a_perfect_gas_in_2c826b",
+      "root_id": "solve_a_fixed_rate_amortizing_loan_compu_8e8e38",
       "params": [
         {
-          "description": "the volume of the flask or container holding the gas with unit",
+          "description": "the loan principal amount in dollars",
           "format_examples": [
-            "8.4 L",
-            "250 mL",
-            "0.012 m3"
+            "$446,000",
+            "$250k",
+            "$1.2 million"
           ],
-          "original_value": "8.4 L",
-          "validity_range": "Strictly positive finite volume; any unit with a known exact factor to cubic metres (L, mL, dm3, cm3, m3) is valid, and zero or negative volume is physically impossible and must be rejected."
+          "original_value": "$446,000",
+          "validity_range": "Positive money amount; may include currency symbol, thousands separators or scale suffixes (k, thousand, million, bn); must be greater than zero."
         },
         {
-          "description": "the amount of gas in moles with unit",
+          "description": "the annual nominal interest rate as a percentage",
           "format_examples": [
-            "2.69 mol",
-            "0.50 mol",
-            "1.2 kmol"
+            "7.5%",
+            "4 percent",
+            "3.25%"
           ],
-          "original_value": "2.69 mol",
-          "validity_range": "Non-negative finite amount of substance; zero gives zero pressure and negative amounts are unphysical. Units must be convertible to moles (mol, mmol, kmol)."
+          "original_value": "7.5%",
+          "validity_range": "Non-negative percentage, typically 0% to about 30%; zero rate is handled as principal divided by number of payments."
         },
         {
-          "description": "the name or chemical formula of the gas",
+          "description": "the compounding and payment frequency description",
           "format_examples": [
-            "nitrogen",
-            "argon",
-            "carbon dioxide"
+            "monthly",
+            "quarterly",
+            "semiannually"
           ],
-          "original_value": "nitrogen",
-          "validity_range": "Any substance treated as a perfect gas at the stated conditions; the ideal gas law is accurate only away from condensation and at low to moderate pressure, and the identity of the gas does not change the calculation under the perfect-gas assumption."
+          "original_value": "monthly",
+          "validity_range": "One of monthly (12), quarterly (4), semiannual (2), annual (1), weekly (52), biweekly (26), daily (365) periods per year."
         },
         {
-          "description": "the temperature of the gas with unit",
+          "description": "the loan term with unit",
           "format_examples": [
-            "260.15 K",
-            "27\u00b0C",
-            "300 K"
+            "20 years",
+            "30 years",
+            "180 months"
           ],
-          "original_value": "260.15 K",
-          "validity_range": "Must be above absolute zero: strictly positive in kelvin, or above -273.15 \u00b0C, or above -459.67 \u00b0F; kelvin, Celsius and Fahrenheit are valid units with their offsets applied before use."
+          "original_value": "20 years",
+          "validity_range": "Positive duration in years or months (digits or number words) such that the total number of payments is a positive integer."
         }
       ],
-      "problem_id": "fam_f0004"
+      "problem_id": "fam_f0003"
     }
   ]
 }

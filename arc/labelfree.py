@@ -64,12 +64,14 @@ from . import metamorphic as mm
 from .cache import Cache, EntryPoint
 from .certify import _compare
 from .checks import number_check, round_long_numbers
+from .present import ROUNDING_POLICY
 from .runtime import CacheInvocationError
 from .source import Transcript
 
 STATUSES = ("accepted", "rejected", "need_more_data", "mismatch")
 MISMATCH_REASON = "caching tried but answer didn't match"
 PROGRAM_FAILED_REASON = "re-solve program failed"
+RESOLVE_OUTPUT_REASON = "re-solve gave no usable reply"
 MISFIT_REASON = "built entry doesn't fit its family"
 CODE_WRONG_REASON = "cached code got a family question wrong"
 RELATION_REASON = "cached code changed its answer when an input was rewritten"
@@ -93,8 +95,8 @@ class BuildResult:
     built_by: str | None = None      # simple flow: the builder model of the published entry
     cascade: list = field(default_factory=list)   # simple flow: one row per builder tried
     # simple flow: why the build (the cascade's last attempt) failed. "code": the built code
-    # failed its own tests or a code check; "api": a model/API error; "cost_cap": the cost cap
-    # stopped it. None: accepted, or a mismatch that is no failure (re-solve disagrees with
+    # failed its own tests or a code check; "api": a model/API error; "output": every re-solve
+    # reply was unusable (cut off, refused, unparseable); "cost_cap": the cost cap stopped it. None: accepted, or a mismatch that is no failure (re-solve disagrees with
     # production, questions don't fit the entry).
     failure: str | None = None
 
@@ -203,12 +205,16 @@ class Program(BaseModel):
     program: str
 
 
-# Owner decision 2026-11-15 (revised): one rule, "never round until the end". Replaces the old
-# default (payments rounded to the cent before totals). The question still wins if it states a
-# rounding rule. Used by the re-solve program and the tie-break programs; the builder's strict
-# rules (arc/builder.py STRICT_UNITS_RULES) say the same.
-DEFAULT_CONVENTION = ("no intermediate rounding: compute with full precision and round only the "
-                      "final answer")
+# Owner decisions 2026-11-15/16: one rounding policy for every agent, arc/present.py
+# ROUNDING_POLICY (never round intermediates; round the final answer once; the question's own
+# rule wins; else money to the cent, counts exact, other quantities to 4 significant figures).
+# Quoted verbatim (imported, never copied) in the re-solve and tie-break programs, the
+# conventions writer and the builder's strict rules. Replaces "payments rounded to the cent first".
+DEFAULT_CONVENTION = ROUNDING_POLICY
+# The convention check compares its program with the code's exact output, so that program
+# prints full precision instead (a 4-significant-figure answer would hide convention differences).
+FULL_PRECISION = ("Never round: print every quantity at full precision, unrounded, unless the "
+                  "question itself says how to round (it is compared with exact computed values).")
 
 PROGRAM_PROMPT = """\
 Write a short, self-contained Python 3 program that computes the answer to the question below \
@@ -218,10 +224,10 @@ Rules:
 - Work only from the question{and_rules}. Put each given value in a variable, with a comment \
 naming its unit.
 - Keep exact arithmetic: full precision through every step (use decimal.Decimal with a high \
-precision for money). Round only where a rule below or the question says to, and round printed \
-money to the cent.
+precision for money).
 - Conventions, in order of priority: (1) anything the question itself says; (2) the rules \
-listed below; (3) by default, {default}.
+listed below; (3) by default, the rounding below.
+- {rounding}
 - Print one line per quantity the question asks for, with its name and unit, for example \
 "area of the plot: 12.50 square metres".
 - Allowed imports: math, fractions, decimal, statistics, itertools, functools. No input, files \
@@ -243,7 +249,7 @@ def _program_solve(question: str, tag: str, conventions: list[str] | None = None
     rules = "".join(f"\n- {r}" for r in conventions or [])
     wanted = "".join(f"\n- {q}" for q in print_as or [])
     prompt = PROGRAM_PROMPT.format(
-        question=question, default=DEFAULT_CONVENTION,
+        question=question, rounding=FULL_PRECISION if print_as else DEFAULT_CONVENTION,
         and_rules=" and the convention rules listed below" if conventions else "",
         rules=f"\nConvention rules for this kind of question:{rules}\n" if conventions else "",
         print_as=(f"\nPrint exactly these quantities, one line each, in these units (convert if you "
@@ -565,11 +571,13 @@ arithmetic (decimal.Decimal with a high precision for money). First print every 
 value at full precision, one per line, labelled with its name and unit (for example "monthly \
 rate: 0.004895833333333333333 per month"), including each final quantity unrounded. Then print a \
 line that says exactly FINAL ANSWER, and after it one line per quantity asked for, with its name \
-and unit, rounded only where a convention says to (round printed money to the cent). Allowed \
-imports: math, fractions, decimal, statistics, itertools, functools. No input, files or network.
+and unit, rounded by the rounding policy below (it applies to these FINAL ANSWER lines only; the \
+intermediate lines stay at full precision). Allowed imports: math, fractions, decimal, \
+statistics, itertools, functools. No input, files or network.
 - `final_answer`: ONE answer per quantity, with units. Give a single value for each, never \
 alternatives or "about X (or Y)".
-Conventions: follow anything the question says; otherwise {default}."""
+Conventions: follow anything the question says; otherwise this policy.
+{default}"""
 
 
 class Resolved(explain.Worked):
@@ -649,7 +657,7 @@ def _resolve(question: str, model: str, tag: str, unit_hint: str | None = None) 
         prompt += (f"\nGive the final answer in {unit_hint}, the unit(s) the answer is expected in; "
                    "the program must print it in that unit.")
     out = llm.call(RESOLVE_ROLE, prompt, model=model, schema=ResolveOut,
-                   effort=config.SOURCE_EFFORT, max_tokens=16000, tag=tag).parsed
+                   effort=config.RESOLVE_EFFORT, max_tokens=config.RESOLVE_MAX_TOKENS, tag=tag).parsed
     run = sandbox.run_program(out.program, seconds=config.LABELFREE_PROGRAM_SECONDS, max_output=12000)
     steps, printed = _split_program_output(run.stdout) if run.ok else ("", "")
     program = f"```python\n{out.program.strip()}\n```"
@@ -685,6 +693,11 @@ principal"), compounding or day-count conventions, which formula variant or rate
 exclusive bounds, how the final result is rounded and in what unit. Leave out anything that does \
 not change the answer. Return an empty list if there is nothing.
 
+Every answer is shown rounded by this policy, applied outside the code to its full-precision \
+result. Your rules must agree with it: state a different rounding only if the question itself \
+sets one.
+{policy}
+
 ## Example question
 {question}
 
@@ -702,7 +715,7 @@ def write_conventions(cache: Cache, entry_id: str, transcript: Transcript, model
     from .gatecard import _entry_code
     ep = next(e for e in cache.entry_points if e.problem_id == entry_id and e.kind == "original")
     prompt = CONVENTIONS_PROMPT.format(question=transcript.question, solution=transcript.solution,
-                                       code=_entry_code(cache, ep.root_id))
+                                       code=_entry_code(cache, ep.root_id), policy=ROUNDING_POLICY)
     rules = llm.call("builder", prompt, model=model or config.BUILDER_MODEL, schema=Conventions,
                      effort=config.BUILDER_EFFORT, max_tokens=16000, tag=f"{entry_id}:conventions").parsed.rules
     rules = [r.strip() for r in rules if r and r.strip()]
@@ -727,7 +740,7 @@ OUTPUTS_PROMPT = """\
 A cached solver returns the outputs below. For EACH output name, exactly as written, say:
 - kind: "money" (an amount of currency), "count" (a whole number of things), "measure" (a \
 physical or other quantity with a unit, or a plain ratio) or "text" (a word, label or decision);
-- unit: the unit or currency the code returns it in ("USD", "kPa", "K", "people", "" if none);
+- unit: the unit or currency the code actually returns it in, read from the code ("USD", "kPa", "°C", "people", "" if none). If the code computes in one unit and converts the result back to the unit of the question's inputs at the end (temperatures given in °C, answer converted back from K to °C), the unit is the one it converts back to;
 - decimals: how many decimals the answer should be shown with: 2 for money given to the cent, \
 0 for counts, the precision the question asks for if it asks for one, otherwise null.
 
@@ -873,11 +886,15 @@ def _prepublish_check(cache: Cache, entry_id: str, others: list[dict], budget: f
 
     A wrong or unresolved answer, or a violated relation, blocks publishing. A crash or an
     extraction refusal (serve.ExtractionError) is a safe decline in production (the question
-    falls back to the model), so it counts as "not served" toward the fit rule. Clef
+    falls back to the model), so it counts as "not served" toward the fit rule. A crash (the
+    cached code raised, outcome "crashed") is a code fault, so the builder cascade may rebuild;
+    an extraction refusal (outcome "declined") is not: it is a fit failure like a Clef
+    turn-away (hidden-set run 2026-11-16, fam_f0003: refusals counted as crashes sent the
+    cascade to Opus for $1.08 and the entry still didn't fit). Clef
     saying a question fits proves the entry is for it, not that the code reads it right.
     Gate or model errors count as "doesn't fit", so an outage never publishes unchecked.
     None = skipped (LABELFREE_FIT_CHECKS=0 or no other family questions)."""
-    from .serve import dispatch_root, format_output, use
+    from .serve import ExtractionError, dispatch_root, format_output, use
     n = config.LABELFREE_FIT_CHECKS
     ep = next((e for e in cache.entry_points if e.problem_id == entry_id and e.kind == "original"), None)
     if n <= 0 or not others or ep is None:
@@ -893,7 +910,10 @@ def _prepublish_check(cache: Cache, entry_id: str, others: list[dict], budget: f
         trace: dict = {}
         try:
             result = use(cache, r["question"], tag=tag, trace=trace, entry_point=ep)
-        except CacheInvocationError as e:   # code crash or extraction refusal: a safe decline
+        except ExtractionError as e:        # extraction refused the question: a safe decline
+            row.update(outcome="declined", detail=str(e).splitlines()[0][:200])
+            result = None
+        except CacheInvocationError as e:   # the cached code crashed: a safe decline, a code fault
             row.update(outcome="crashed", detail=str(e).splitlines()[0][:200])
             result = None
         except llm.LLMError as e:
@@ -945,7 +965,7 @@ def _prepublish_check(cache: Cache, entry_id: str, others: list[dict], budget: f
             "code_error": code_error, "stopped": stopped}
 
 
-def _build_simple(family_id: str, records: list[dict]) -> BuildResult:
+def _build_simple(family_id: str, records: list[dict], near_misses: list[str] | None = None) -> BuildResult:
     """LABELFREE_CERTIFY=off: newest record, re-solved by its own production model.
 
     Final answers match -> build from that working and publish. No match -> re-solve once
@@ -967,6 +987,10 @@ def _build_simple(family_id: str, records: list[dict]) -> BuildResult:
     parts: dict[str, float] = {}
     state: dict = {"record_id": rec["id"], "model": model, "attempts": [], "time": time.time()}
     start = len(llm.LEDGER.records)
+    # independent tests (arc/tester.py): what the tester may see, and the suites written so far
+    from . import tester
+    tctx = tester.context_from(recs, near_misses, _failure_history(entry_id))
+    bank = tester.Bank()
 
     def result(status, reason, accepted=False, failure=None):
         state.update(status=status, reason=reason, cost=llm.LEDGER.cost(since=start), parts=parts, failure=failure)
@@ -988,6 +1012,16 @@ def _build_simple(family_id: str, records: list[dict]) -> BuildResult:
                 ran = getattr(w, "executed", False)
                 cmp = _compare("production vs re-solve", rec["question"], rec["response"], w.final_answer,
                                f"{entry_id}:resolve{i}:cmp") if ran else None
+            except llm.OutputError as e:
+                # The model answered but the reply is unusable (cut off at max_tokens, refused, or
+                # structured output with a missing or mistyped field): a failed re-solve try, so
+                # the next try runs (fam_f0003, 2026-11-16: a ResolveOut ValidationError ended the
+                # whole build). API and network errors (plain LLMError) still reject below.
+                sp.end = len(llm.LEDGER.records)
+                parts["resolve"] = parts.get("resolve", 0.0) + sp.cost()
+                state["attempts"].append({"final_answer": "", "agree": False, "executed": False,
+                                          "working_kept": False, "output_error": str(e)[:300]})
+                continue
             except llm.LLMError as e:
                 sp.end = len(llm.LEDGER.records)
                 parts["resolve"] = parts.get("resolve", 0.0) + sp.cost()
@@ -1001,8 +1035,12 @@ def _build_simple(family_id: str, records: list[dict]) -> BuildResult:
             worked = w
             break
     if worked is None:
+        if all(a.get("output_error") for a in state["attempts"]):   # every reply was unusable
+            errors = "; ".join(a["output_error"] for a in state["attempts"])
+            return result("rejected", f"{RESOLVE_OUTPUT_REASON}: {errors}"[:400], failure="output")
         if not any(a["executed"] for a in state["attempts"]):      # no try gave a working program
-            errors = "; ".join(a.get("program_error") or "no answer" for a in state["attempts"])
+            errors = "; ".join(a.get("program_error") or a.get("output_error") or "no answer"
+                               for a in state["attempts"])
             return result("mismatch", f"{PROGRAM_FAILED_REASON}: {errors}"[:400])
         return result("mismatch", MISMATCH_REASON)
 
@@ -1013,6 +1051,7 @@ def _build_simple(family_id: str, records: list[dict]) -> BuildResult:
     builders = config.LABELFREE_BUILDERS or [config.BUILDER_MODEL]
     state["cascade"] = cascade = []
     status, reason, failure = "rejected", "", None
+    feedback: list[str] = []          # semantic test feedback, carried to repairs and later builders
     for k, bmodel in enumerate(builders):
         spent = llm.LEDGER.cost(since=start)
         if spent >= config.LABELFREE_MAX_COST:
@@ -1021,19 +1060,40 @@ def _build_simple(family_id: str, records: list[dict]) -> BuildResult:
             # a builder already failed: its failure stands (code failures still count); none yet: the cap
             return result(status, f"{reason}; {cap}"[:500] if reason else cap,
                           failure=failure if reason else "cost_cap")
-        before = len(llm.LEDGER.records)
-        for key in _ATTEMPT_KEYS:          # top-level details always describe the latest attempt
-            state.pop(key, None)
-        cache, pre, status, reason, retry, failure = _build_attempt(bmodel, entry_id, rec, t, recs, parts, state,
-                                                                    start)
-        row = {"model": bmodel, "status": "accepted" if cache is not None else status, "reason": reason,
-               "retry": retry, "failure": failure, "cost": llm.LEDGER.cost(since=before),
-               **{key: state[key] for key in _ATTEMPT_KEYS if key in state}}
-        cascade.append(row)
+        repairs = 0
+        while True:
+            if config.TESTER_CASES > 0 and not bank.can_test(bmodel):
+                from .tester import LIMIT_REASON      # no build that can't be tested: stop before paying
+                cascade.append({"model": bmodel, "status": "skipped", "retry": False, "cost": 0.0,
+                                "reason": f"{LIMIT_REASON} ({config.TESTER_MAX_SUITES} suites)"})
+                return result("mismatch", f"{reason}; {LIMIT_REASON}"[:500] if reason else LIMIT_REASON,
+                              failure="tests" if failure is None else failure)
+            before = len(llm.LEDGER.records)
+            for key in _ATTEMPT_KEYS:          # top-level details always describe the latest attempt
+                state.pop(key, None)
+            cache, pre, status, reason, retry, failure = _build_attempt(bmodel, entry_id, rec, t, recs, parts,
+                                                                        state, start, feedback=feedback,
+                                                                        tctx=tctx, bank=bank)
+            row = {"model": bmodel, "status": "accepted" if cache is not None else status, "reason": reason,
+                   "retry": retry, "failure": failure, "cost": llm.LEDGER.cost(since=before),
+                   "repair": repairs, "feedback_given": list(feedback),
+                   **{key: state[key] for key in _ATTEMPT_KEYS if key in state}}
+            cascade.append(row)
+            # independent tests failed and said why: the same builder rebuilds once with that
+            # semantic feedback (never the tests), and faces a fresh suite (arc/tester.py)
+            new = (state.get("tests") or {}).get("feedback") or []
+            if (cache is not None or not new or repairs >= config.TESTER_REPAIRS
+                    or llm.LEDGER.cost(since=start) >= config.LABELFREE_MAX_COST):
+                break
+            feedback = feedback + [f for f in new if f not in feedback]
+            repairs += 1
+            row["next"] = f"independent tests failed, {bmodel} repairs with their feedback"
         if cache is not None:
             state["built_by"] = bmodel
             state["indexed"] = len(_publish(cache, entry_id, pre["rows"] if pre else None))
-            how = f" (after {', '.join(r['model'] for r in cascade[:-1])} failed)" if k else ""
+            failed = list(dict.fromkeys(r["model"] for r in cascade[:-1] if r["model"] != bmodel))
+            how = f" (after {', '.join(failed)} failed)" if failed else ""
+            how += f" (repaired {repairs}x from independent-test feedback)" if repairs else ""
             return result("accepted", f"re-solve {len(state['attempts'])} by {model} matched production; "
                                       f"built by {bmodel}{how} and published", accepted=True)
         if not retry:
@@ -1043,11 +1103,12 @@ def _build_simple(family_id: str, records: list[dict]) -> BuildResult:
     return result(status, reason, failure=failure)
 
 
-_ATTEMPT_KEYS = ("conventions", "convention_check", "outputs", "seed_questions", "prepublish")
+_ATTEMPT_KEYS = ("conventions", "convention_check", "outputs", "seed_questions", "prepublish", "tests")
 
 
 def _build_attempt(bmodel: str, entry_id: str, rec: dict, t: Transcript, recs: list[dict], parts: dict,
-                   state: dict, start: int) -> tuple[Cache | None, dict | None, str, str, bool, str | None]:
+                   state: dict, start: int, feedback: list[str] | None = None, tctx=None, bank=None
+                   ) -> tuple[Cache | None, dict | None, str, str, bool, str | None]:
     """One builder of the cascade: build from the agreed re-solve, write and check the
     conventions and output specs, run the pre-publish check. Returns (cache, prepublish,
     status, reason, retry, failure): cache is set only when every check passed (publish it); retry
@@ -1057,8 +1118,9 @@ def _build_attempt(bmodel: str, entry_id: str, rec: dict, t: Transcript, recs: l
     problem = {"id": entry_id, "question": rec["question"], "golden_label": ""}
     with llm.LEDGER.span() as sp:
         try:
+            kw = {"feedback": feedback} if feedback else {}
             cache = Builder(problem, t, use_golden=False, units="strict", model=bmodel,
-                            reference="executed").build()
+                            reference="executed", **kw).build()
             _add_gate_data(cache, problem, t)
             why, retry = "", False
         except (BuildError, llm.OutputError) as e:      # its own tests failed, or unusable output
@@ -1116,6 +1178,27 @@ def _build_attempt(bmodel: str, entry_id: str, rec: dict, t: Transcript, recs: l
         state["prepublish"] = pre
         if not pre["passed"]:      # same status as a mismatch: the family retries on a newer record
             return None, pre, "mismatch", pre["reason"], pre["code_error"] and not pre["stopped"], _prepublish_failure(pre)
+    # independent tests (arc/tester.py): written by a different model that never sees the code,
+    # so acceptance no longer rests on tests the builder wrote for itself
+    if config.TESTER_CASES > 0:
+        from . import tester
+        tctx = tctx if tctx is not None else tester.context_from(recs)
+        bank = bank if bank is not None else tester.Bank()
+        with llm.LEDGER.span() as sp:
+            try:
+                left = max(0.0, config.LABELFREE_MAX_COST - llm.LEDGER.cost(since=start))
+                tests = tester.run(cache, entry_id, tctx, bank, left, builder_model=bmodel)
+            finally:
+                sp.end = len(llm.LEDGER.records)
+        parts["tests"] = parts.get("tests", 0.0) + sp.cost()
+        state["tests"] = tests
+        if not tests["passed"]:
+            # "gate": a look-alike was answered wrongly (not the code's fault, no repair);
+            # "tests": no usable verdict. Both count toward the family's cap (arc/families.py).
+            failure = ("cost_cap" if tests["stopped"] else "code" if tests["code_error"]
+                       else "gate" if tests["gate_error"] else "tests")
+            return (None, pre, "mismatch", tests["reason"][:400], tests["code_error"] and not tests["stopped"],
+                    failure)
     return cache, pre, "accepted", "", False, None
 
 
@@ -1126,8 +1209,9 @@ def _failure_of(e: Exception) -> str:
 
 def _prepublish_failure(pre: dict) -> str | None:
     """Failed pre-publish check -> BuildResult.failure. The cost cap stopped it -> "cost_cap"; the
-    code was wrong, crashed or broke a relation -> "code"; too few questions fit -> None, unless a
-    gate/model error is why ("api": an outage is no verdict on the entry)."""
+    code was wrong, crashed or broke a relation -> "code"; too few questions fit (Clef turned them
+    away, or extraction refused them) -> None, unless a gate/model error is why ("api": an outage
+    is no verdict on the entry)."""
     if pre["stopped"]:
         return "cost_cap"
     if pre["code_error"]:
@@ -1137,17 +1221,36 @@ def _prepublish_failure(pre: dict) -> str | None:
     return None
 
 
-def build_family(family_id: str, records: list[dict]) -> BuildResult:
+def build_family(family_id: str, records: list[dict], near_misses: list[str] | None = None) -> BuildResult:
     """build_fn for arc.families.build_ready. records: the family's source-model answers.
-    Simple flow by default; LABELFREE_CERTIFY=on runs the certified flow."""
-    return _build_certified(family_id, records) if config.LABELFREE_CERTIFY else _build_simple(family_id, records)
+    near_misses: real backlog questions judged a different task (families.near_misses), shown
+    to the independent tester. Simple flow by default; LABELFREE_CERTIFY=on runs the certified flow."""
+    if config.LABELFREE_CERTIFY:
+        return _build_certified(family_id, records)
+    return _build_simple(family_id, records, near_misses)
+
+
+def _failure_history(entry_id: str) -> list[str]:
+    """What earlier build attempts for this family got wrong (the last state.json), for the
+    tester. Empty the first time a family is built."""
+    path = _state_dir(entry_id) / "state.json"
+    try:
+        prior = json.loads(path.read_text()) if path.exists() else {}
+    except (OSError, ValueError):
+        return []
+    if not prior or prior.get("status") == "accepted":
+        return []
+    lines = [str(prior.get("reason") or "")]
+    for row in prior.get("cascade") or []:
+        lines += list((row.get("tests") or {}).get("feedback") or [])
+    return [l[:300] for l in dict.fromkeys(l for l in lines if l.strip())]
 
 
 def _with_cost(fn):
     """Fill BuildResult.cost with the full spend of the call, rejected attempts included."""
-    def wrapped(family_id: str, records: list[dict]) -> BuildResult:
+    def wrapped(family_id: str, records: list[dict], near_misses: list[str] | None = None) -> BuildResult:
         before = len(llm.LEDGER.records)
-        res = fn(family_id, records)
+        res = fn(family_id, records, near_misses=near_misses)
         res.cost = llm.LEDGER.cost(since=before)
         return res
     wrapped.__doc__ = fn.__doc__
@@ -1178,5 +1281,5 @@ def audit_should_disable(outcome: str) -> bool:
     return outcome in ("cache_wrong", "unresolved")
 
 
-__all__ = ["unit_hint", "OUTPUTS_REASON", "write_outputs", "OutputSpecs", "ResolveOut", "CONVENTION_REASON", "write_conventions", "MISMATCH_REASON", "MISFIT_REASON", "CODE_WRONG_REASON", "RELATION_REASON", "BuildResult", "Certificate", "build_family", "certify", "adjudicate", "audit_hit",
+__all__ = ["unit_hint", "OUTPUTS_REASON", "write_outputs", "OutputSpecs", "ResolveOut", "CONVENTION_REASON", "write_conventions", "MISMATCH_REASON", "RESOLVE_OUTPUT_REASON", "MISFIT_REASON", "CODE_WRONG_REASON", "RELATION_REASON", "BuildResult", "Certificate", "build_family", "certify", "adjudicate", "audit_hit",
            "audit_should_disable", "error_upper_bound", "usable", "typical_first", "STATUSES"]
