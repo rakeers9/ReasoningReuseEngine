@@ -905,3 +905,16 @@ def test_code_failures_reported_as_mismatch_also_count(tmp_path, monkeypatch):
         fid = fid or next(f.id for f in tr.families.values() if f.label.startswith("mortgage"))
     fam = tr.families[fid]
     assert fam.failed_builds == 2 and fam.status == "rejected"
+
+
+def test_independent_test_failures_count_toward_the_failed_build_cap(tmp_path):
+    """arc/tester.py: when the test-maker can't give a verdict (failure "tests") the family
+    must still use up its retries, or it would be rebuilt on every newer question forever."""
+    tr, path = _ready_tracker(tmp_path)
+
+    def build(fid, recs):
+        r = _mismatch(recs[-1]["id"])
+        r.failure = "tests"
+        return r
+    families.build_ready(tr, build, max_builds=1, path=path)
+    assert sum(f.failed_builds == 1 for f in tr.families.values()) == 1

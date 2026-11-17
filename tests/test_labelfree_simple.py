@@ -32,7 +32,12 @@ class FakeBuilder:
     fail = False
     cost = {}
 
-    def __init__(self, problem, transcript, use_golden=True, units="paper", model=None, reference="transcript"):
+    feedbacks = []              # Builder(feedback=...) of every build (repair rounds)
+
+    def __init__(self, problem, transcript, use_golden=True, units="paper", model=None, reference="transcript",
+                 feedback=None):
+        FakeBuilder.feedbacks.append(list(feedback or []))
+        self.feedback = list(feedback or [])
         assert use_golden is False and problem["golden_label"] == ""
         FakeBuilder.references.append(reference)
         assert units == "strict"            # label-free builds always use the strict unit rules
@@ -51,7 +56,7 @@ class FakeBuilder:
             raise BuildError("code did not run")
         FakeBuilder.built.append(self.transcript)
         c = Cache(self.problem["id"])
-        c.built_by = self.model
+        c.built_by = self.model + ("+repaired" if self.feedback else "")
         c.entry_points = [EntryPoint(self.problem["question"], "original", "root", [ParamSpec("x")],
                                      self.problem["id"])]
         return c
@@ -71,6 +76,7 @@ def sim(monkeypatch, tmp_path):
     monkeypatch.setattr(config, "LABELFREE_CONVENTION_CHECK", False)   # convention tests turn it on
     monkeypatch.setattr(config, "CLEF_SEEDS", 1)                  # seed tests raise it
     monkeypatch.setattr(config, "LABELFREE_BUILDERS", ["claude-haiku-5-5"])   # cascade tests use two
+    monkeypatch.setattr(config, "TESTER_CASES", 0)               # tests/test_tester.py turns it on
     monkeypatch.setattr(labelfree, "write_conventions",
                         lambda cache, eid, t, model=None: cache.conventions.setdefault(eid, list(s.rules)))
     monkeypatch.setattr(labelfree, "write_outputs",
@@ -78,7 +84,7 @@ def sim(monkeypatch, tmp_path):
                                                                                      "decimals": None}}))
     monkeypatch.setattr(arc.builder, "Builder", FakeBuilder)
     FakeBuilder.built, FakeBuilder.models, FakeBuilder.given, FakeBuilder.fail, FakeBuilder.cost = [], [], [], False, {}
-    FakeBuilder.references = []
+    FakeBuilder.references, FakeBuilder.feedbacks = [], []
     s = SimpleNamespace(path=tmp_path, answers=[], calls=[], error=None, rules=[])
 
     def resolve(question, model, tag, unit_hint=None):
@@ -104,7 +110,7 @@ def state(s):
 
 def test_default_flow_is_simple(monkeypatch):
     seen = []
-    monkeypatch.setattr(labelfree, "_build_simple", lambda f, r: seen.append("simple") or
+    monkeypatch.setattr(labelfree, "_build_simple", lambda f, r, n=None: seen.append("simple") or
                         labelfree.BuildResult(False, None, "", 0.0))
     monkeypatch.setattr(labelfree, "_build_certified", lambda f, r: seen.append("certified") or
                         labelfree.BuildResult(False, None, "", 0.0))

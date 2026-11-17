@@ -182,7 +182,9 @@ LABELFREE_AUDIT_RATE = float(os.environ.get("ARC_LABELFREE_AUDIT_RATE", 0.02))  
 # a Sonnet build alone measured $0.21-0.26 (up to ~$0.33 with its checks). Raised to $1.20
 # (owner decision 2026-11-16) for the three-step cascade: Haiku ~$0.04 + Sonnet ~$0.33 + Opus
 # ~$0.65 (estimated, not yet measured: Opus is 2x Sonnet's per-token price, $4/$20 vs $2/$10
-# per M) is ~$1.02 worst case, plus the re-solve and checks.
+# per M) is ~$1.02 worst case, plus the re-solve and checks. Independent tests and their repair
+# rebuilds (2026-11-17) spend from the same cap, so a family that needs every repair and every
+# cascade step stops at the cap; revisit once real builds are measured.
 LABELFREE_MAX_COST = float(os.environ.get("ARC_LABELFREE_MAX_COST", 1.20))
 # Builder (units="strict"): scan generated code for hand-typed unit factors and send them back.
 # Off by default (owner decision 2026-11-15: no unit library; the builder writes its own conversions).
@@ -217,16 +219,40 @@ LABELFREE_PROGRAM_SECONDS = float(os.environ.get("ARC_LABELFREE_PROGRAM_SECONDS"
 LABELFREE_CONVENTION_CHECK = os.environ.get("ARC_LABELFREE_CONVENTION_CHECK", "1") == "1"
 LABELFREE_FAMILY_INDEX = os.environ.get("ARC_LABELFREE_FAMILY_INDEX", "1") == "1"
 LABELFREE_INDEX_MAX = int(os.environ.get("ARC_LABELFREE_INDEX_MAX", 20))
-# DEVIATION (label-free builds, user decisions 2026-11-15 and 2026-11-16): builder cascade, in
-# order: Haiku, then Sonnet, then Opus. The simple flow builds with the first model; if that
-# build fails for a CODE reason (the builder's own tests, the conventions or output-spec step,
-# the convention check, a wrong / unresolved / crashed pre-publish answer, a violated rewrite
-# relation) it rebuilds with the next model from the same re-solve, within what is left of
-# LABELFREE_MAX_COST. A re-solve mismatch, a fit failure with no code errors, a cost cap or an
-# API error is not retried. Opus may run only here (arc/llm.py OPUS_BUILDER_ROLES): a family
-# neither cheaper model can build is still worth one costly build if it recurs often.
+# DEVIATION (label-free builds, user decisions 2026-11-15, 2026-11-16, kept 2026-11-17): builder
+# cascade, in order: Haiku, then Sonnet, then Opus. The simple flow builds with the first model;
+# if that build fails for a CODE reason (the builder's own tests, the conventions or output-spec
+# step, the convention check, a wrong / unresolved / crashed pre-publish answer, a violated
+# rewrite relation, a failed independent test after its repair round) it rebuilds with the next
+# model from the same re-solve, within what is left of LABELFREE_MAX_COST. A re-solve mismatch,
+# a fit failure with no code errors, a cost cap or an API error is not retried. Opus may run
+# here without ARC_ALLOW_OPUS (arc/llm.py OPUS_BUILDER_ROLES).
 LABELFREE_BUILDERS = [m.strip() for m in os.environ.get(
     "ARC_LABELFREE_BUILDERS", "claude-haiku-5-5,claude-sonnet-5-5,claude-opus-5-5").split(",") if m.strip()]
+# Independent tests (arc/tester.py, owner decision 2026-11-17): a DIFFERENT model from the
+# builder writes acceptance tests from the family's questions, never seeing the code: in-scope
+# questions with programs that compute the expected answer, and look-alike questions the entry
+# must decline. The builder's own tests still drive its write-test-fix loop, but no longer
+# decide acceptance alone. TESTER_CASES=0 turns the check off. The tester is never the model
+# that built the entry: when TESTER_MODEL built it, TESTER_FALLBACK_MODEL tests it instead.
+# On a failed test the tester writes a semantic description of the problem (no test questions
+# or answers) and the same builder rebuilds with it, up to TESTER_REPAIRS times; each repaired
+# entry faces a freshly written suite.
+TESTER_MODEL = os.environ.get("ARC_TESTER_MODEL", "claude-sonnet-5-5")
+TESTER_FALLBACK_MODEL = os.environ.get("ARC_TESTER_FALLBACK_MODEL", "claude-opus-5-5")
+TESTER_REPAIRS = int(os.environ.get("ARC_TESTER_REPAIRS", 1))
+TESTER_EFFORT = os.environ.get("ARC_TESTER_EFFORT", "high")
+TESTER_CASES = int(os.environ.get("ARC_TESTER_CASES", 6))          # in-scope questions with a program
+TESTER_DECLINES = int(os.environ.get("ARC_TESTER_DECLINES", 3))    # look-alikes the entry must decline
+TESTER_MIN_CASES = int(os.environ.get("ARC_TESTER_MIN_CASES", 3))  # CONFIRMED passes required (unresolved don't count)
+TESTER_EXAMPLES = int(os.environ.get("ARC_TESTER_EXAMPLES", 8))    # answered family questions shown to the tester
+TESTER_NEAR_MISSES = int(os.environ.get("ARC_TESTER_NEAR_MISSES", 8))  # real different-task questions shown
+# Hard limits (owner decision 2026-11-17). One suite = two halves of TESTER_CASES + TESTER_DECLINES
+# each; extra questions the tester returns are dropped. A half that produced repair feedback is
+# never reused on a build that got it. TESTER_MAX_SUITES caps suites written per build_family call
+# across the cascade and repairs; once spent, the build stops before paying for another build.
+# Test-maker and gate failures count toward FAMILY_MAX_FAILED_BUILDS, so no family retries forever.
+TESTER_MAX_SUITES = int(os.environ.get("ARC_TESTER_MAX_SUITES", 3))
 
 # --- Builder settings (paper gives no numbers for these) ---
 MAX_FUNCTION_ATTEMPTS = int(os.environ.get("ARC_MAX_FUNCTION_ATTEMPTS", 4))       # write/test/fix rounds per function
@@ -285,8 +311,9 @@ CACHE_ANSWER_COST = float(os.environ.get("ARC_CACHE_ANSWER_COST", 0.0001))   # m
 # Starting estimate until 3 builds are logged (families.effective_build_cost then measures it).
 # Builder cascade (Haiku first, Sonnet on a code failure): a passing Haiku build measured
 # ~$0.04 all in; a Sonnet fallback adds ~$0.33. With roughly 1 in 5 builds falling back,
-# about $0.04 + 0.2 x $0.33 = ~$0.10.
-BUILD_COST_DEFAULT = float(os.environ.get("ARC_BUILD_COST_DEFAULT", 0.10))
+# about $0.04 + 0.2 x $0.33 = ~$0.10. Independent tests (2026-11-17) add one Sonnet suite
+# (~$0.05-0.10, ESTIMATED) per attempt, plus repair rebuilds when they fail: ~$0.20 in all.
+BUILD_COST_DEFAULT = float(os.environ.get("ARC_BUILD_COST_DEFAULT", 0.20))
 # Real build attempts (not re-solve mismatches) logged before the measured cost replaces it.
 BUILD_COST_MIN_BUILDS = int(os.environ.get("ARC_BUILD_COST_MIN_BUILDS", 10))
 # A family whose build fails (the builder can't pass its own tests) waits for a newer question
@@ -309,7 +336,7 @@ DEFAULT_PRICE = PRICES["claude-opus-5-5"]
 SETTING_NAMES = [
     "PROFILE", "SOURCE_MODEL", "EXPLAINER_MODEL", "BUILDER_MODEL", "JUDGE_MODEL", "GENERATOR_MODEL", "TARGET_MODEL",
     "SOURCE_EFFORT", "BUILDER_EFFORT", "JUDGE_EFFORT", "GENERATOR_EFFORT", "EMBED_MODEL",
-    "EXPAND_SHORTHAND", "EXTRACT_FORM", "LOAD_THRESHOLD", "DO_THRESHOLD", "ENTRY_THRESHOLD", "GATE", "GATE_CHECKS", "INDEX", "SPEC_DECIDER", "SPEC_THRESHOLD", "CLEF_MODEL", "CLEF_THRESHOLD", "CLEF_TOP_K", "CLEF_SEEDS", "CLEF_RETRIEVAL", "CLEF_PROMPT", "LABELFREE_MIN_CHECKED", "LABELFREE_MAX_CHECKED", "LABELFREE_BUILD_TRIES", "LABELFREE_RELATIONS", "LABELFREE_FAIL_FAST", "LABELFREE_AUDIT_RATE", "LABELFREE_MAX_COST", "BUILDER_FACTOR_SCAN", "LABELFREE_FAMILY_INDEX", "LABELFREE_INDEX_MAX", "LABELFREE_CERTIFY", "LABELFREE_RESOLVE_TRIES", "LABELFREE_FIT_CHECKS", "LABELFREE_FIT_MIN", "LABELFREE_ADJUDICATOR", "LABELFREE_PROGRAM_SECONDS", "LABELFREE_CONVENTION_CHECK", "LABELFREE_BUILDERS",
+    "EXPAND_SHORTHAND", "EXTRACT_FORM", "LOAD_THRESHOLD", "DO_THRESHOLD", "ENTRY_THRESHOLD", "GATE", "GATE_CHECKS", "INDEX", "SPEC_DECIDER", "SPEC_THRESHOLD", "CLEF_MODEL", "CLEF_THRESHOLD", "CLEF_TOP_K", "CLEF_SEEDS", "CLEF_RETRIEVAL", "CLEF_PROMPT", "LABELFREE_MIN_CHECKED", "LABELFREE_MAX_CHECKED", "LABELFREE_BUILD_TRIES", "LABELFREE_RELATIONS", "LABELFREE_FAIL_FAST", "LABELFREE_AUDIT_RATE", "LABELFREE_MAX_COST", "BUILDER_FACTOR_SCAN", "LABELFREE_FAMILY_INDEX", "LABELFREE_INDEX_MAX", "LABELFREE_CERTIFY", "LABELFREE_RESOLVE_TRIES", "LABELFREE_FIT_CHECKS", "LABELFREE_FIT_MIN", "LABELFREE_ADJUDICATOR", "LABELFREE_PROGRAM_SECONDS", "LABELFREE_CONVENTION_CHECK", "LABELFREE_BUILDERS", "TESTER_MODEL", "TESTER_FALLBACK_MODEL", "TESTER_REPAIRS", "TESTER_MAX_SUITES", "TESTER_EFFORT", "TESTER_CASES", "TESTER_DECLINES", "TESTER_MIN_CASES", "TESTER_EXAMPLES", "TESTER_NEAR_MISSES",
     "MAX_FUNCTION_ATTEMPTS", "MAX_ROOT_REPAIRS", "EXTRACTION_ROUNDS", "GRANULARITY",
     "FUNCTION_TIMEOUT_SECONDS", "VARIANTS_PER_MODE", "JUDGE_COMMITTEE_SIZE",
     "FAMILY_SIMILARITY", "FAMILY_CHECK", "FAMILY_CLEF_TOP_K", "FAMILY_CLEF_THRESHOLD", "FAMILY_CLEF_SIMILARITY", "FAMILY_CLEF_ANCHORS", "FAMILY_CLEF_PROMPT", "FAMILY_BUILD_CHECK", "FAMILY_HALF_LIFE_DAYS", "FAMILY_MIN_SIGHTINGS", "CACHE_ANSWER_COST",

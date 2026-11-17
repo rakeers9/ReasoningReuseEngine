@@ -28,9 +28,10 @@ SMALL_ROLES = {"target", "extractor", "converter"}   # the target model T at inv
 # Roles that run the customer's own production model (which may be Opus). Only these may
 # call Opus without ARC_ALLOW_OPUS=1; every other role stays Haiku-only.
 CUSTOMER_MODEL_ROLES = {"resolve"}
-# The builder cascade's last step may be Opus (user decision 2026-11-16: Haiku, then Sonnet,
-# then Opus, for a family neither cheaper model can build). Only the builder role.
-OPUS_BUILDER_ROLES = {"builder"}
+# Build-time roles may run Opus without the opt-in (owner decision 2026-11-17: one strong
+# builder, Opus by default; the independent test-maker, arc/tester.py, may be set to Opus too).
+# Build time is rare and spread over every cached answer; serve-time roles stay cheap.
+OPUS_BUILDER_ROLES = {"builder", "tester"}
 
 
 class LLMError(RuntimeError):

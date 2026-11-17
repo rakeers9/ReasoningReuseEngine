@@ -282,7 +282,7 @@ class BuildError(RuntimeError):
 class Builder:
     def __init__(self, problem: dict, transcript: Transcript, use_golden: bool = True,
                  granularity: str = config.GRANULARITY, units: str = "paper", model: str | None = None,
-                 reference: str = "transcript"):
+                 reference: str = "transcript", feedback: list[str] | None = None):
         """units="paper": the paper's builder, unchanged. units="strict" (label-free builds,
         DEVIATION): raw-text inputs parsed by the code, Decimal money, full precision, output
         names with units; with config.BUILDER_FACTOR_SCAN on, a scan also sends hand-typed
@@ -290,7 +290,10 @@ class Builder:
         config.BUILDER_MODEL; the label-free cascade passes each of LABELFREE_BUILDERS).
         reference="transcript": the paper's build judges, unchanged. reference="executed"
         (label-free builds, DEVIATION): the transcript's values come from an executed program,
-        so the judges compare with those values and never redo the arithmetic by hand."""
+        so the judges compare with those values and never redo the arithmetic by hand.
+        feedback (label-free repair round, arc/tester.py): semantic descriptions of what an
+        earlier build of this entry got wrong in independent tests. The tests themselves are
+        never shown, and the repaired entry is tested again with fresh ones."""
         if units not in ("paper", "strict"):
             raise ValueError(f"units must be 'paper' or 'strict', not {units!r}")
         if reference not in ("transcript", "executed"):
@@ -306,6 +309,14 @@ class Builder:
         self.report = BuildReport(problem["id"])
         golden = (f"\n\n## Golden label (correct final answer)\n\n{problem['golden_label']}"
                   if use_golden else "")
+        self.feedback = list(feedback or [])
+        if self.feedback:
+            golden += ("\n\n## Problems independent testing found in an earlier build of this entry\n\n"
+                       "A separate tester checked an earlier version on new questions of this kind. Make "
+                       "sure this build handles these correctly. Fix the general behaviour each line "
+                       "describes; do not special-case particular values or questions (the tests "
+                       "themselves are hidden and new ones will be used):\n"
+                       + "\n".join(f"- {f}" for f in self.feedback))
         self._context_block = {
             "type": "text",
             "text": (f"## User query q(o)\n\n{transcript.question}\n\n"
