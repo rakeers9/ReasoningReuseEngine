@@ -114,7 +114,7 @@ EXPAND_SHORTHAND = os.environ.get("ARC_EXPAND_SHORTHAND", "0") == "1"
 #   any value with digits is in the question as written.
 # "number_unit": number + unit + text + evidence per value, rebuilt by code (kept as an option).
 # "evidence": the text form, plus the exact words that state each value (code checks every number
-#   in a value is in its OWN evidence), no value without words in the question behind it, an ambiguity flag for same-kind inputs,
+#   in a value is in its OWN evidence), no implied values, an ambiguity flag for same-kind inputs,
 #   fixed rules in the system prompt, and the entry's build question with its original values as a
 #   worked example (arc/extraction.extract_evidence). Opt-in until measured against "text".
 EXTRACT_FORM = os.environ.get("ARC_EXTRACT_FORM", "text")
