@@ -18,6 +18,7 @@ import importlib.util
 import json
 import os
 import shutil
+import signal
 import sys
 import time
 import traceback
@@ -236,7 +237,16 @@ def cmd_all(args) -> None:
         step(args)
 
 
+def stop_on_ctrl_break() -> None:
+    """Windows: the web UI stops a run with Ctrl+Break (it can't send Ctrl+C to another
+    process). Raise KeyboardInterrupt for it, as for Ctrl+C, so the run still records its
+    result and costs. No-op where SIGBREAK doesn't exist."""
+    if hasattr(signal, "SIGBREAK"):
+        signal.signal(signal.SIGBREAK, signal.default_int_handler)
+
+
 def main() -> None:
+    stop_on_ctrl_break()
     parser = argparse.ArgumentParser(prog="python -m arc", description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="cmd", required=True)

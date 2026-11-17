@@ -1,6 +1,6 @@
 """Local experiment server for the ARC pipeline.
 
-    .venv/bin/python web/server.py [port]      (default port 8765, binds 127.0.0.1 only)
+    python web/server.py [port]      (default port 8765, binds 127.0.0.1 only; macOS, Linux or Windows)
 
 Starts pipeline commands as subprocesses with ARC_RUN_ID set, and serves every
 experiment's calls, console output, settings and reports as JSON to web/index.html.
@@ -40,7 +40,19 @@ from arc.walkthrough import STAGE_NAMES, _prompt_text, _stage  # noqa: E402
 
 WEB = ROOT / "web"
 EXP_DIR = config.RUNS_DIR / "experiments"
-PYTHON = str(ROOT / ".venv" / "bin" / "python")
+WINDOWS = os.name == "nt"
+
+
+def venv_python(root: Path) -> str:
+    """The project's virtualenv Python (Scripts\\python.exe on Windows, bin/python elsewhere),
+    else the Python running this server."""
+    for path in (root / ".venv" / "Scripts" / "python.exe", root / ".venv" / "bin" / "python"):
+        if path.exists():
+            return str(path)
+    return sys.executable
+
+
+PYTHON = venv_python(ROOT)
 LEGACY_ID = "legacy-gas_law"
 LEGACY_PID = "gas_law"
 
@@ -526,8 +538,10 @@ def start_run(body: dict) -> dict:
     if moved:
         out_file.write(f"  fresh eval: moved eval_progress.json into this experiment's folder\n".encode())
     out_file.flush()
+    # Windows: the run gets its own process group, so Stop can send it Ctrl+Break (see interrupt).
+    group = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if WINDOWS else {}
     proc = subprocess.Popen([PYTHON, "-m", "arc", *argv], cwd=ROOT, env=env, stdout=out_file,
-                            stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
+                            stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, **group)
     out_file.close()
     meta["pid"] = proc.pid
     (folder / "meta.json").write_text(json.dumps(meta, indent=2))
@@ -568,6 +582,16 @@ def _watch(run_id: str, proc: subprocess.Popen) -> None:
         f.write(f"\n[process exited with code {code}]\n".encode())
 
 
+def interrupt(proc: subprocess.Popen) -> None:
+    """Ask a run to stop as Ctrl+C would, so arc/__main__.py still writes result.json. Windows
+    can't send SIGINT to another process; it gets Ctrl+Break, which arc/__main__.py turns into
+    the same KeyboardInterrupt."""
+    if WINDOWS:
+        proc.send_signal(signal.CTRL_BREAK_EVENT)
+    else:
+        proc.send_signal(signal.SIGINT)
+
+
 def stop_run(run_id: str) -> dict:
     with LOCK:
         proc = RUNNING.get(run_id)
@@ -577,7 +601,10 @@ def stop_run(run_id: str) -> dict:
     meta = read_json(path, {}) or {}
     meta["stop_requested"] = True
     path.write_text(json.dumps(meta, indent=2))
-    proc.send_signal(signal.SIGINT)  # KeyboardInterrupt, so arc/__main__.py still writes result.json
+    try:
+        interrupt(proc)
+    except (OSError, ValueError):   # the force-kill below still runs
+        pass
 
     def hard_stop():
         time.sleep(8)
