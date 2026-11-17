@@ -182,7 +182,9 @@ LABELFREE_AUDIT_RATE = float(os.environ.get("ARC_LABELFREE_AUDIT_RATE", 0.02))  
 # a Sonnet build alone measured $0.21-0.26 (up to ~$0.33 with its checks). Raised to $1.20
 # (owner decision 2026-11-16) for the three-step cascade: Haiku ~$0.04 + Sonnet ~$0.33 + Opus
 # ~$0.65 (estimated, not yet measured: Opus is 2x Sonnet's per-token price, $4/$20 vs $2/$10
-# per M) is ~$1.02 worst case, plus the re-solve and checks.
+# per M) is ~$1.02 worst case, plus the re-solve and checks. Independent tests and their repair
+# rebuilds (2026-11-17) spend from the same cap, so a family that needs every repair and every
+# cascade step stops at the cap; revisit once real builds are measured.
 LABELFREE_MAX_COST = float(os.environ.get("ARC_LABELFREE_MAX_COST", 1.20))
 # Builder (units="strict"): scan generated code for hand-typed unit factors and send them back.
 # Off by default (owner decision 2026-11-15: no unit library; the builder writes its own conversions).
@@ -234,6 +236,30 @@ LABELFREE_INDEX_MAX = int(os.environ.get("ARC_LABELFREE_INDEX_MAX", 20))
 # neither cheaper model can build is still worth one costly build if it recurs often.
 LABELFREE_BUILDERS = [m.strip() for m in os.environ.get(
     "ARC_LABELFREE_BUILDERS", "claude-haiku-5-5,claude-sonnet-5-5,claude-opus-5-5").split(",") if m.strip()]
+# Independent tests (arc/tester.py, owner decision 2026-11-17): a DIFFERENT model from the
+# builder writes acceptance tests from the family's questions, never seeing the code: in-scope
+# questions with programs that compute the expected answer, and look-alike questions the entry
+# must decline. The builder's own tests still drive its write-test-fix loop, but no longer
+# decide acceptance alone. TESTER_CASES=0 turns the check off. The tester is never the model
+# that built the entry: when TESTER_MODEL built it, TESTER_FALLBACK_MODEL tests it instead.
+# On a failed test the tester writes a semantic description of the problem (no test questions
+# or answers) and the same builder rebuilds with it, up to TESTER_REPAIRS times; each repaired
+# entry faces a freshly written suite.
+TESTER_MODEL = os.environ.get("ARC_TESTER_MODEL", "claude-sonnet-5-5")
+TESTER_FALLBACK_MODEL = os.environ.get("ARC_TESTER_FALLBACK_MODEL", "claude-opus-5-5")
+TESTER_REPAIRS = int(os.environ.get("ARC_TESTER_REPAIRS", 1))
+TESTER_EFFORT = os.environ.get("ARC_TESTER_EFFORT", "high")
+TESTER_CASES = int(os.environ.get("ARC_TESTER_CASES", 6))          # in-scope questions with a program
+TESTER_DECLINES = int(os.environ.get("ARC_TESTER_DECLINES", 3))    # look-alikes the entry must decline
+TESTER_MIN_CASES = int(os.environ.get("ARC_TESTER_MIN_CASES", 3))  # CONFIRMED passes required (unresolved don't count)
+TESTER_EXAMPLES = int(os.environ.get("ARC_TESTER_EXAMPLES", 8))    # answered family questions shown to the tester
+TESTER_NEAR_MISSES = int(os.environ.get("ARC_TESTER_NEAR_MISSES", 8))  # real different-task questions shown
+# Hard limits (owner decision 2026-11-17). One suite = two halves of TESTER_CASES + TESTER_DECLINES
+# each; extra questions the tester returns are dropped. A half that produced repair feedback is
+# never reused on a build that got it. TESTER_MAX_SUITES caps suites written per build_family call
+# across the cascade and repairs; once spent, the build stops before paying for another build.
+# Test-maker and gate failures count toward FAMILY_MAX_FAILED_BUILDS, so no family retries forever.
+TESTER_MAX_SUITES = int(os.environ.get("ARC_TESTER_MAX_SUITES", 3))
 
 # --- Builder settings (paper gives no numbers for these) ---
 MAX_FUNCTION_ATTEMPTS = int(os.environ.get("ARC_MAX_FUNCTION_ATTEMPTS", 4))       # write/test/fix rounds per function
@@ -292,8 +318,9 @@ CACHE_ANSWER_COST = float(os.environ.get("ARC_CACHE_ANSWER_COST", 0.0001))   # m
 # Starting estimate until 3 builds are logged (families.effective_build_cost then measures it).
 # Builder cascade (Haiku first, Sonnet on a code failure): a passing Haiku build measured
 # ~$0.04 all in; a Sonnet fallback adds ~$0.33. With roughly 1 in 5 builds falling back,
-# about $0.04 + 0.2 x $0.33 = ~$0.10.
-BUILD_COST_DEFAULT = float(os.environ.get("ARC_BUILD_COST_DEFAULT", 0.10))
+# about $0.04 + 0.2 x $0.33 = ~$0.10. Independent tests (2026-11-17) add one Sonnet suite
+# (~$0.05-0.10, ESTIMATED) per attempt, plus repair rebuilds when they fail: ~$0.20 in all.
+BUILD_COST_DEFAULT = float(os.environ.get("ARC_BUILD_COST_DEFAULT", 0.20))
 # Real build attempts (not re-solve mismatches) logged before the measured cost replaces it.
 BUILD_COST_MIN_BUILDS = int(os.environ.get("ARC_BUILD_COST_MIN_BUILDS", 10))
 # A family whose build fails (the builder can't pass its own tests) waits for a newer question

@@ -965,7 +965,7 @@ def _prepublish_check(cache: Cache, entry_id: str, others: list[dict], budget: f
             "code_error": code_error, "stopped": stopped}
 
 
-def _build_simple(family_id: str, records: list[dict]) -> BuildResult:
+def _build_simple(family_id: str, records: list[dict], near_misses: list[str] | None = None) -> BuildResult:
     """LABELFREE_CERTIFY=off: newest record, re-solved by its own production model.
 
     Final answers match -> build from that working and publish. No match -> re-solve once
@@ -987,6 +987,10 @@ def _build_simple(family_id: str, records: list[dict]) -> BuildResult:
     parts: dict[str, float] = {}
     state: dict = {"record_id": rec["id"], "model": model, "attempts": [], "time": time.time()}
     start = len(llm.LEDGER.records)
+    # independent tests (arc/tester.py): what the tester may see, and the suites written so far
+    from . import tester
+    tctx = tester.context_from(recs, near_misses, _failure_history(entry_id))
+    bank = tester.Bank()
 
     def result(status, reason, accepted=False, failure=None):
         state.update(status=status, reason=reason, cost=llm.LEDGER.cost(since=start), parts=parts, failure=failure)
@@ -1047,6 +1051,7 @@ def _build_simple(family_id: str, records: list[dict]) -> BuildResult:
     builders = config.LABELFREE_BUILDERS or [config.BUILDER_MODEL]
     state["cascade"] = cascade = []
     status, reason, failure = "rejected", "", None
+    feedback: list[str] = []          # semantic test feedback, carried to repairs and later builders
     for k, bmodel in enumerate(builders):
         spent = llm.LEDGER.cost(since=start)
         if spent >= config.LABELFREE_MAX_COST:
@@ -1055,19 +1060,40 @@ def _build_simple(family_id: str, records: list[dict]) -> BuildResult:
             # a builder already failed: its failure stands (code failures still count); none yet: the cap
             return result(status, f"{reason}; {cap}"[:500] if reason else cap,
                           failure=failure if reason else "cost_cap")
-        before = len(llm.LEDGER.records)
-        for key in _ATTEMPT_KEYS:          # top-level details always describe the latest attempt
-            state.pop(key, None)
-        cache, pre, status, reason, retry, failure = _build_attempt(bmodel, entry_id, rec, t, recs, parts, state,
-                                                                    start)
-        row = {"model": bmodel, "status": "accepted" if cache is not None else status, "reason": reason,
-               "retry": retry, "failure": failure, "cost": llm.LEDGER.cost(since=before),
-               **{key: state[key] for key in _ATTEMPT_KEYS if key in state}}
-        cascade.append(row)
+        repairs = 0
+        while True:
+            if config.TESTER_CASES > 0 and not bank.can_test(bmodel):
+                from .tester import LIMIT_REASON      # no build that can't be tested: stop before paying
+                cascade.append({"model": bmodel, "status": "skipped", "retry": False, "cost": 0.0,
+                                "reason": f"{LIMIT_REASON} ({config.TESTER_MAX_SUITES} suites)"})
+                return result("mismatch", f"{reason}; {LIMIT_REASON}"[:500] if reason else LIMIT_REASON,
+                              failure="tests" if failure is None else failure)
+            before = len(llm.LEDGER.records)
+            for key in _ATTEMPT_KEYS:          # top-level details always describe the latest attempt
+                state.pop(key, None)
+            cache, pre, status, reason, retry, failure = _build_attempt(bmodel, entry_id, rec, t, recs, parts,
+                                                                        state, start, feedback=feedback,
+                                                                        tctx=tctx, bank=bank)
+            row = {"model": bmodel, "status": "accepted" if cache is not None else status, "reason": reason,
+                   "retry": retry, "failure": failure, "cost": llm.LEDGER.cost(since=before),
+                   "repair": repairs, "feedback_given": list(feedback),
+                   **{key: state[key] for key in _ATTEMPT_KEYS if key in state}}
+            cascade.append(row)
+            # independent tests failed and said why: the same builder rebuilds once with that
+            # semantic feedback (never the tests), and faces a fresh suite (arc/tester.py)
+            new = (state.get("tests") or {}).get("feedback") or []
+            if (cache is not None or not new or repairs >= config.TESTER_REPAIRS
+                    or llm.LEDGER.cost(since=start) >= config.LABELFREE_MAX_COST):
+                break
+            feedback = feedback + [f for f in new if f not in feedback]
+            repairs += 1
+            row["next"] = f"independent tests failed, {bmodel} repairs with their feedback"
         if cache is not None:
             state["built_by"] = bmodel
             state["indexed"] = len(_publish(cache, entry_id, pre["rows"] if pre else None))
-            how = f" (after {', '.join(r['model'] for r in cascade[:-1])} failed)" if k else ""
+            failed = list(dict.fromkeys(r["model"] for r in cascade[:-1] if r["model"] != bmodel))
+            how = f" (after {', '.join(failed)} failed)" if failed else ""
+            how += f" (repaired {repairs}x from independent-test feedback)" if repairs else ""
             return result("accepted", f"re-solve {len(state['attempts'])} by {model} matched production; "
                                       f"built by {bmodel}{how} and published", accepted=True)
         if not retry:
@@ -1077,11 +1103,12 @@ def _build_simple(family_id: str, records: list[dict]) -> BuildResult:
     return result(status, reason, failure=failure)
 
 
-_ATTEMPT_KEYS = ("conventions", "convention_check", "outputs", "seed_questions", "prepublish")
+_ATTEMPT_KEYS = ("conventions", "convention_check", "outputs", "seed_questions", "prepublish", "tests")
 
 
 def _build_attempt(bmodel: str, entry_id: str, rec: dict, t: Transcript, recs: list[dict], parts: dict,
-                   state: dict, start: int) -> tuple[Cache | None, dict | None, str, str, bool, str | None]:
+                   state: dict, start: int, feedback: list[str] | None = None, tctx=None, bank=None
+                   ) -> tuple[Cache | None, dict | None, str, str, bool, str | None]:
     """One builder of the cascade: build from the agreed re-solve, write and check the
     conventions and output specs, run the pre-publish check. Returns (cache, prepublish,
     status, reason, retry, failure): cache is set only when every check passed (publish it); retry
@@ -1091,8 +1118,9 @@ def _build_attempt(bmodel: str, entry_id: str, rec: dict, t: Transcript, recs: l
     problem = {"id": entry_id, "question": rec["question"], "golden_label": ""}
     with llm.LEDGER.span() as sp:
         try:
+            kw = {"feedback": feedback} if feedback else {}
             cache = Builder(problem, t, use_golden=False, units="strict", model=bmodel,
-                            reference="executed").build()
+                            reference="executed", **kw).build()
             _add_gate_data(cache, problem, t)
             why, retry = "", False
         except (BuildError, llm.OutputError) as e:      # its own tests failed, or unusable output
@@ -1150,6 +1178,27 @@ def _build_attempt(bmodel: str, entry_id: str, rec: dict, t: Transcript, recs: l
         state["prepublish"] = pre
         if not pre["passed"]:      # same status as a mismatch: the family retries on a newer record
             return None, pre, "mismatch", pre["reason"], pre["code_error"] and not pre["stopped"], _prepublish_failure(pre)
+    # independent tests (arc/tester.py): written by a different model that never sees the code,
+    # so acceptance no longer rests on tests the builder wrote for itself
+    if config.TESTER_CASES > 0:
+        from . import tester
+        tctx = tctx if tctx is not None else tester.context_from(recs)
+        bank = bank if bank is not None else tester.Bank()
+        with llm.LEDGER.span() as sp:
+            try:
+                left = max(0.0, config.LABELFREE_MAX_COST - llm.LEDGER.cost(since=start))
+                tests = tester.run(cache, entry_id, tctx, bank, left, builder_model=bmodel)
+            finally:
+                sp.end = len(llm.LEDGER.records)
+        parts["tests"] = parts.get("tests", 0.0) + sp.cost()
+        state["tests"] = tests
+        if not tests["passed"]:
+            # "gate": a look-alike was answered wrongly (not the code's fault, no repair);
+            # "tests": no usable verdict. Both count toward the family's cap (arc/families.py).
+            failure = ("cost_cap" if tests["stopped"] else "code" if tests["code_error"]
+                       else "gate" if tests["gate_error"] else "tests")
+            return (None, pre, "mismatch", tests["reason"][:400], tests["code_error"] and not tests["stopped"],
+                    failure)
     return cache, pre, "accepted", "", False, None
 
 
@@ -1172,17 +1221,36 @@ def _prepublish_failure(pre: dict) -> str | None:
     return None
 
 
-def build_family(family_id: str, records: list[dict]) -> BuildResult:
+def build_family(family_id: str, records: list[dict], near_misses: list[str] | None = None) -> BuildResult:
     """build_fn for arc.families.build_ready. records: the family's source-model answers.
-    Simple flow by default; LABELFREE_CERTIFY=on runs the certified flow."""
-    return _build_certified(family_id, records) if config.LABELFREE_CERTIFY else _build_simple(family_id, records)
+    near_misses: real backlog questions judged a different task (families.near_misses), shown
+    to the independent tester. Simple flow by default; LABELFREE_CERTIFY=on runs the certified flow."""
+    if config.LABELFREE_CERTIFY:
+        return _build_certified(family_id, records)
+    return _build_simple(family_id, records, near_misses)
+
+
+def _failure_history(entry_id: str) -> list[str]:
+    """What earlier build attempts for this family got wrong (the last state.json), for the
+    tester. Empty the first time a family is built."""
+    path = _state_dir(entry_id) / "state.json"
+    try:
+        prior = json.loads(path.read_text()) if path.exists() else {}
+    except (OSError, ValueError):
+        return []
+    if not prior or prior.get("status") == "accepted":
+        return []
+    lines = [str(prior.get("reason") or "")]
+    for row in prior.get("cascade") or []:
+        lines += list((row.get("tests") or {}).get("feedback") or [])
+    return [l[:300] for l in dict.fromkeys(l for l in lines if l.strip())]
 
 
 def _with_cost(fn):
     """Fill BuildResult.cost with the full spend of the call, rejected attempts included."""
-    def wrapped(family_id: str, records: list[dict]) -> BuildResult:
+    def wrapped(family_id: str, records: list[dict], near_misses: list[str] | None = None) -> BuildResult:
         before = len(llm.LEDGER.records)
-        res = fn(family_id, records)
+        res = fn(family_id, records, near_misses=near_misses)
         res.cost = llm.LEDGER.cost(since=before)
         return res
     wrapped.__doc__ = fn.__doc__

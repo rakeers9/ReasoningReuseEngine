@@ -33,11 +33,13 @@ def published(s):
 # ----------------------------------------------------------------------------- config
 
 def test_default_cascade_is_haiku_sonnet_opus_and_builder_model_is_haiku(monkeypatch):
-    for name in ("ARC_PROFILE", "ARC_BUILDER_MODEL", "ARC_LABELFREE_BUILDERS"):
+    for name in ("ARC_PROFILE", "ARC_BUILDER_MODEL", "ARC_LABELFREE_BUILDERS", "ARC_TESTER_MODEL",
+                 "ARC_TESTER_FALLBACK_MODEL"):
         monkeypatch.delenv(name, raising=False)
     try:
         c = importlib.reload(config)
         assert c.LABELFREE_BUILDERS == [HAIKU, SONNET, OPUS]
+        assert c.TESTER_MODEL == SONNET and c.TESTER_FALLBACK_MODEL == OPUS
         assert c.BUILDER_MODEL == HAIKU                                   # every other build path
         assert c.PROFILE_BUILDER_MODEL["paper"] == "claude-opus-5-5"      # paper profile unchanged
         monkeypatch.setenv("ARC_LABELFREE_BUILDERS", f" {SONNET} ")
