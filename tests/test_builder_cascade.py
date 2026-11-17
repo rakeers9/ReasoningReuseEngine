@@ -339,3 +339,59 @@ def test_three_steps_cap_stops_before_opus(cascade3, monkeypatch):
     res = labelfree.build_family(FAM, family(8))
     assert FakeBuilder.models == [HAIKU, SONNET] and res.cascade[2]["status"] == "skipped"
     assert f"{OPUS} not tried" in res.reason and res.failure == "code" and not published(cascade3)
+
+
+# ----------------------------------------------------------------------------- extraction refusals
+
+# Regression (hidden-set run 2026-11-16, runs/chat_loop_hidden/labelfree/fam_f0003/state.json):
+# Clef said all 5 family questions fit, but extraction refused 4 of them (word numbers, an implied
+# zero balance, months vs years), so 1 of 5 was served. Each refusal counted as a code crash, the
+# cascade rebuilt Haiku -> Sonnet -> Opus ($1.08) and then the family still didn't fit. The
+# messages below are the ones Haiku's entry got in that run.
+F0003_DECLINES = [
+    "extraction failed its checks: the nominal annual interest rate of the account with its unit, "
+    "as a percentage per annum: value '8% APR' states 8, which is not in the question",
+    "extraction failed its checks: the nominal annual interest rate of the account with its unit, "
+    "as a percentage per annum: value '4.25% APR' states 4.25, which is not in the question",
+    "extraction failed its checks: the starting balance of the account at time zero in dollars: "
+    "value '0 dollars' states 0, which is not in the question",
+    "extraction failed its checks: the investment horizon, meaning the length of time from the start "
+    "to the evaluation date, as a duration in years: value '8 years' states 8, which is not in the question",
+]
+
+
+def test_f0003_extraction_refusals_end_the_cascade_with_no_failure(cascade3):
+    cascade3.decline = {f"double {i} m": msg for i, msg in zip(range(3, 7), F0003_DECLINES)}
+    res = labelfree.build_family(FAM, family(8))
+    assert FakeBuilder.models == [HAIKU]                         # no Sonnet, no Opus
+    assert res.status == "mismatch" and res.failure is None and not published(cascade3)
+    assert res.reason.startswith(labelfree.MISFIT_REASON) and "1 of 5" in res.reason
+    [row] = res.cascade
+    assert row["retry"] is False and row["failure"] is None and "next" not in row
+    st = state(cascade3)
+    assert st["failure"] is None and st["status"] == "mismatch"
+    pre_rows = st["prepublish"]["rows"]
+    assert [r["outcome"] for r in pre_rows] == ["declined"] * 4 + ["agree"]
+    assert not any(r["fits"] for r in pre_rows[:4]) and st["prepublish"]["code_error"] is False
+
+
+def test_a_code_crash_among_refusals_still_rebuilds(cascade3):
+    # the cached code itself raising (ValueError on 'eight percent') is a code fault
+    cascade3.decline = {f"double {i} m": msg for i, msg in zip(range(3, 6), F0003_DECLINES)}
+    cascade3.crash, cascade3.bad_by = {"double 6 m"}, {HAIKU}
+    res = labelfree.build_family(FAM, family(8))
+    assert FakeBuilder.models == [HAIKU, SONNET] and res.cascade[0]["retry"] is True
+    assert res.cascade[0]["failure"] == "code"
+
+
+def test_a_wrong_answer_among_refusals_still_rebuilds(cascade3):
+    cascade3.decline = {f"double {i} m": msg for i, msg in zip(range(3, 6), F0003_DECLINES)}
+    cascade3.wrong, cascade3.bad_by = {"double 6 m"}, {HAIKU}
+    res = labelfree.build_family(FAM, family(8))
+    assert FakeBuilder.models[:2] == [HAIKU, SONNET] and res.cascade[0]["failure"] == "code"
+
+
+def test_one_refusal_with_enough_fits_still_publishes(cascade):
+    cascade.decline = {"double 6 m": F0003_DECLINES[0]}            # 4 of 5 served: need 4
+    res = labelfree.build_family(FAM, family(8))
+    assert res.status == "accepted" and FakeBuilder.models == [HAIKU]

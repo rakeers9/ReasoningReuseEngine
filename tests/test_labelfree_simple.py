@@ -228,14 +228,15 @@ def _x(q):
 @pytest.fixture
 def pre(sim, monkeypatch):
     """Fake serving: gate P per question from pre.p (default 0.95), served if P >= 0.8.
-    The cached code doubles x, except questions in pre.wrong (adds 1) or pre.crash.
-    Blind solves give the true answer unless pre.blind overrides it."""
+    The cached code doubles x, except questions in pre.wrong (adds 1), pre.crash (the code
+    raises) or pre.decline (extraction refuses: serve.ExtractionError). Blind solves give the true answer unless pre.blind overrides it."""
     monkeypatch.setattr(config, "GATE", "clef")
     monkeypatch.setattr(config, "CLEF_THRESHOLD", 0.8)
     monkeypatch.setattr(config, "LABELFREE_FIT_CHECKS", 5)
     monkeypatch.setattr(config, "LABELFREE_FIT_MIN", 0.8)
     monkeypatch.setattr(labelfree, "_add_gate_data", lambda *a: None)
     sim.p, sim.asked, sim.wrong, sim.crash, sim.gate_error, sim.blind = {}, [], set(), set(), set(), {}
+    sim.decline = {}           # question -> ExtractionError message
     sim.relations = []
     sim.bad_by = None          # None: pre.wrong / pre.crash apply to every builder; else only these
 
@@ -251,6 +252,8 @@ def pre(sim, monkeypatch):
             trace.update(stage="gate_rejected", rejected_by=["clef"])
             return None
         bad = sim.bad_by is None or getattr(cache, "built_by", None) in sim.bad_by
+        if q in sim.decline and bad:
+            raise serve.ExtractionError(sim.decline[q])
         if q in sim.crash and bad:
             raise serve.CacheInvocationError("ValueError: could not parse '$150k'")
         y = 2 * _x(q) + (1 if q in sim.wrong and bad else 0)
@@ -558,7 +561,7 @@ def test_unrounded_resolve_matches_production_on_the_017_million_loan(fake_llm, 
     fake_llm.queue(labelfree.ResolveOut(working="...", program=PROGRAM017, final_answer="1048.17 and 81560.86"))
     w = labelfree._resolve(Q017, "cust-model", "t")
     assert "81560.86" in w.final_answer and "1048.17" in w.final_answer
-    assert "no intermediate rounding" in fake_llm.calls[0]["prompt"]
+    assert "never round any intermediate value" in fake_llm.calls[0]["prompt"]
     assert certify._compare("t", Q017, PROD017, w.final_answer, "t").agree
     # the old payment-rounding convention gave 81560.80, which the strict compare rejects
     fake_llm.queue(labelfree.ResolveOut(working="...", program=OLD_ROUNDED017, final_answer="x"))

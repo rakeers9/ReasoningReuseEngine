@@ -152,3 +152,14 @@ def test_learning_with_no_build_budget_still_groups_questions(tmp_path):
     assert b.learn(build_fn=lambda fid, recs: calls.append(fid), max_builds=0) == []
     assert calls == [] and len(b.tracker.families) == 1 and b.tracker.families["f0001"].size == 3
     assert (tmp_path / "families.json").exists()
+
+
+def test_the_chatbot_has_room_for_thinking_plus_the_answer(fake_llm, tmp_path):
+    # regression (chat run 2026-11-16): max_tokens=4000 cut a mortgage answer off mid-sentence
+    from arc import chat as chat_mod
+    fake_llm.queue("Final answer: 4")
+    bot = chat_mod.Chatbot.__new__(chat_mod.Chatbot)
+    bot.model, bot._production = "claude-haiku-5-5", None
+    bot._answer_with_model("What is 2+2?")
+    [c] = [c for c in fake_llm.calls if c["role"] == "production"]
+    assert c["max_tokens"] >= 16000 and chat_mod.PRODUCTION_SYSTEM == c["system"]

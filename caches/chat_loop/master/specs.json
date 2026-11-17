@@ -1,12 +1,12 @@
 {
   "fam_f0002": {
     "task": "compute",
-    "deliverable": "book value of an asset after a number of years",
+    "deliverable": "book value of an asset after a set number of years",
     "method": "double-declining-balance depreciation",
     "conditions": [
-      "asset is depreciated over a stated useful life",
-      "depreciation uses an accelerated balance method",
-      "a salvage value is subtracted from the asset cost"
+      "asset depreciated using an accelerated method",
+      "book value measured at the end of a stated year",
+      "salvage value taken into account"
     ],
     "inputs": [
       {
@@ -32,31 +32,31 @@
     ],
     "output_form": "a monetary amount in dollars"
   },
-  "fam_f0004": {
+  "fam_f0003": {
     "task": "compute",
-    "deliverable": "pressure exerted by a gas",
-    "method": "perfect gas law",
+    "deliverable": "monthly payment amount and total interest paid over the life of the loan",
+    "method": "not stated",
     "conditions": [
-      "gas confined in a fixed container",
-      "perfect-gas behaviour assumed"
+      "interest compounded monthly",
+      "fixed term over the life of the loan"
     ],
     "inputs": [
       {
-        "name": "container volume",
-        "value": "8.4 L",
-        "evidence": "A 8.4 L flask"
+        "name": "loan principal",
+        "value": "$446,000",
+        "evidence": "A $446,000 mortgage"
       },
       {
-        "name": "amount of gas",
-        "value": "2.69 mol",
-        "evidence": "holds 2.69 mol of nitrogen"
+        "name": "annual interest rate",
+        "value": "7.5%",
+        "evidence": "has a 7.5% annual interest rate"
       },
       {
-        "name": "temperature",
-        "value": "260.15 K",
-        "evidence": "at 260.15 K"
+        "name": "loan term",
+        "value": "20 years",
+        "evidence": "over 20 years"
       }
     ],
-    "output_form": "a number with a pressure unit"
+    "output_form": "two amounts in currency: a monthly payment and a total interest sum"
   }
 }

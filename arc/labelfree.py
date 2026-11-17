@@ -64,12 +64,14 @@ from . import metamorphic as mm
 from .cache import Cache, EntryPoint
 from .certify import _compare
 from .checks import number_check, round_long_numbers
+from .present import ROUNDING_POLICY
 from .runtime import CacheInvocationError
 from .source import Transcript
 
 STATUSES = ("accepted", "rejected", "need_more_data", "mismatch")
 MISMATCH_REASON = "caching tried but answer didn't match"
 PROGRAM_FAILED_REASON = "re-solve program failed"
+RESOLVE_OUTPUT_REASON = "re-solve gave no usable reply"
 MISFIT_REASON = "built entry doesn't fit its family"
 CODE_WRONG_REASON = "cached code got a family question wrong"
 RELATION_REASON = "cached code changed its answer when an input was rewritten"
@@ -93,8 +95,8 @@ class BuildResult:
     built_by: str | None = None      # simple flow: the builder model of the published entry
     cascade: list = field(default_factory=list)   # simple flow: one row per builder tried
     # simple flow: why the build (the cascade's last attempt) failed. "code": the built code
-    # failed its own tests or a code check; "api": a model/API error; "cost_cap": the cost cap
-    # stopped it. None: accepted, or a mismatch that is no failure (re-solve disagrees with
+    # failed its own tests or a code check; "api": a model/API error; "output": every re-solve
+    # reply was unusable (cut off, refused, unparseable); "cost_cap": the cost cap stopped it. None: accepted, or a mismatch that is no failure (re-solve disagrees with
     # production, questions don't fit the entry).
     failure: str | None = None
 
@@ -203,12 +205,16 @@ class Program(BaseModel):
     program: str
 
 
-# Owner decision 2026-11-15 (revised): one rule, "never round until the end". Replaces the old
-# default (payments rounded to the cent before totals). The question still wins if it states a
-# rounding rule. Used by the re-solve program and the tie-break programs; the builder's strict
-# rules (arc/builder.py STRICT_UNITS_RULES) say the same.
-DEFAULT_CONVENTION = ("no intermediate rounding: compute with full precision and round only the "
-                      "final answer")
+# Owner decisions 2026-11-15/16: one rounding policy for every agent, arc/present.py
+# ROUNDING_POLICY (never round intermediates; round the final answer once; the question's own
+# rule wins; else money to the cent, counts exact, other quantities to 4 significant figures).
+# Quoted verbatim (imported, never copied) in the re-solve and tie-break programs, the
+# conventions writer and the builder's strict rules. Replaces "payments rounded to the cent first".
+DEFAULT_CONVENTION = ROUNDING_POLICY
+# The convention check compares its program with the code's exact output, so that program
+# prints full precision instead (a 4-significant-figure answer would hide convention differences).
+FULL_PRECISION = ("Never round: print every quantity at full precision, unrounded, unless the "
+                  "question itself says how to round (it is compared with exact computed values).")
 
 PROGRAM_PROMPT = """\
 Write a short, self-contained Python 3 program that computes the answer to the question below \
@@ -218,10 +224,10 @@ Rules:
 - Work only from the question{and_rules}. Put each given value in a variable, with a comment \
 naming its unit.
 - Keep exact arithmetic: full precision through every step (use decimal.Decimal with a high \
-precision for money). Round only where a rule below or the question says to, and round printed \
-money to the cent.
+precision for money).
 - Conventions, in order of priority: (1) anything the question itself says; (2) the rules \
-listed below; (3) by default, {default}.
+listed below; (3) by default, the rounding below.
+- {rounding}
 - Print one line per quantity the question asks for, with its name and unit, for example \
 "area of the plot: 12.50 square metres".
 - Allowed imports: math, fractions, decimal, statistics, itertools, functools. No input, files \
@@ -243,7 +249,7 @@ def _program_solve(question: str, tag: str, conventions: list[str] | None = None
     rules = "".join(f"\n- {r}" for r in conventions or [])
     wanted = "".join(f"\n- {q}" for q in print_as or [])
     prompt = PROGRAM_PROMPT.format(
-        question=question, default=DEFAULT_CONVENTION,
+        question=question, rounding=FULL_PRECISION if print_as else DEFAULT_CONVENTION,
         and_rules=" and the convention rules listed below" if conventions else "",
         rules=f"\nConvention rules for this kind of question:{rules}\n" if conventions else "",
         print_as=(f"\nPrint exactly these quantities, one line each, in these units (convert if you "
@@ -565,11 +571,13 @@ arithmetic (decimal.Decimal with a high precision for money). First print every 
 value at full precision, one per line, labelled with its name and unit (for example "monthly \
 rate: 0.004895833333333333333 per month"), including each final quantity unrounded. Then print a \
 line that says exactly FINAL ANSWER, and after it one line per quantity asked for, with its name \
-and unit, rounded only where a convention says to (round printed money to the cent). Allowed \
-imports: math, fractions, decimal, statistics, itertools, functools. No input, files or network.
+and unit, rounded by the rounding policy below (it applies to these FINAL ANSWER lines only; the \
+intermediate lines stay at full precision). Allowed imports: math, fractions, decimal, \
+statistics, itertools, functools. No input, files or network.
 - `final_answer`: ONE answer per quantity, with units. Give a single value for each, never \
 alternatives or "about X (or Y)".
-Conventions: follow anything the question says; otherwise {default}."""
+Conventions: follow anything the question says; otherwise this policy.
+{default}"""
 
 
 class Resolved(explain.Worked):
@@ -649,7 +657,7 @@ def _resolve(question: str, model: str, tag: str, unit_hint: str | None = None) 
         prompt += (f"\nGive the final answer in {unit_hint}, the unit(s) the answer is expected in; "
                    "the program must print it in that unit.")
     out = llm.call(RESOLVE_ROLE, prompt, model=model, schema=ResolveOut,
-                   effort=config.SOURCE_EFFORT, max_tokens=16000, tag=tag).parsed
+                   effort=config.RESOLVE_EFFORT, max_tokens=config.RESOLVE_MAX_TOKENS, tag=tag).parsed
     run = sandbox.run_program(out.program, seconds=config.LABELFREE_PROGRAM_SECONDS, max_output=12000)
     steps, printed = _split_program_output(run.stdout) if run.ok else ("", "")
     program = f"```python\n{out.program.strip()}\n```"
@@ -685,6 +693,11 @@ principal"), compounding or day-count conventions, which formula variant or rate
 exclusive bounds, how the final result is rounded and in what unit. Leave out anything that does \
 not change the answer. Return an empty list if there is nothing.
 
+Every answer is shown rounded by this policy, applied outside the code to its full-precision \
+result. Your rules must agree with it: state a different rounding only if the question itself \
+sets one.
+{policy}
+
 ## Example question
 {question}
 
@@ -702,7 +715,7 @@ def write_conventions(cache: Cache, entry_id: str, transcript: Transcript, model
     from .gatecard import _entry_code
     ep = next(e for e in cache.entry_points if e.problem_id == entry_id and e.kind == "original")
     prompt = CONVENTIONS_PROMPT.format(question=transcript.question, solution=transcript.solution,
-                                       code=_entry_code(cache, ep.root_id))
+                                       code=_entry_code(cache, ep.root_id), policy=ROUNDING_POLICY)
     rules = llm.call("builder", prompt, model=model or config.BUILDER_MODEL, schema=Conventions,
                      effort=config.BUILDER_EFFORT, max_tokens=16000, tag=f"{entry_id}:conventions").parsed.rules
     rules = [r.strip() for r in rules if r and r.strip()]
@@ -727,7 +740,7 @@ OUTPUTS_PROMPT = """\
 A cached solver returns the outputs below. For EACH output name, exactly as written, say:
 - kind: "money" (an amount of currency), "count" (a whole number of things), "measure" (a \
 physical or other quantity with a unit, or a plain ratio) or "text" (a word, label or decision);
-- unit: the unit or currency the code returns it in ("USD", "kPa", "K", "people", "" if none);
+- unit: the unit or currency the code actually returns it in, read from the code ("USD", "kPa", "°C", "people", "" if none). If the code computes in one unit and converts the result back to the unit of the question's inputs at the end (temperatures given in °C, answer converted back from K to °C), the unit is the one it converts back to;
 - decimals: how many decimals the answer should be shown with: 2 for money given to the cent, \
 0 for counts, the precision the question asks for if it asks for one, otherwise null.
 
@@ -873,11 +886,15 @@ def _prepublish_check(cache: Cache, entry_id: str, others: list[dict], budget: f
 
     A wrong or unresolved answer, or a violated relation, blocks publishing. A crash or an
     extraction refusal (serve.ExtractionError) is a safe decline in production (the question
-    falls back to the model), so it counts as "not served" toward the fit rule. Clef
+    falls back to the model), so it counts as "not served" toward the fit rule. A crash (the
+    cached code raised, outcome "crashed") is a code fault, so the builder cascade may rebuild;
+    an extraction refusal (outcome "declined") is not: it is a fit failure like a Clef
+    turn-away (hidden-set run 2026-11-16, fam_f0003: refusals counted as crashes sent the
+    cascade to Opus for $1.08 and the entry still didn't fit). Clef
     saying a question fits proves the entry is for it, not that the code reads it right.
     Gate or model errors count as "doesn't fit", so an outage never publishes unchecked.
     None = skipped (LABELFREE_FIT_CHECKS=0 or no other family questions)."""
-    from .serve import dispatch_root, format_output, use
+    from .serve import ExtractionError, dispatch_root, format_output, use
     n = config.LABELFREE_FIT_CHECKS
     ep = next((e for e in cache.entry_points if e.problem_id == entry_id and e.kind == "original"), None)
     if n <= 0 or not others or ep is None:
@@ -893,7 +910,10 @@ def _prepublish_check(cache: Cache, entry_id: str, others: list[dict], budget: f
         trace: dict = {}
         try:
             result = use(cache, r["question"], tag=tag, trace=trace, entry_point=ep)
-        except CacheInvocationError as e:   # code crash or extraction refusal: a safe decline
+        except ExtractionError as e:        # extraction refused the question: a safe decline
+            row.update(outcome="declined", detail=str(e).splitlines()[0][:200])
+            result = None
+        except CacheInvocationError as e:   # the cached code crashed: a safe decline, a code fault
             row.update(outcome="crashed", detail=str(e).splitlines()[0][:200])
             result = None
         except llm.LLMError as e:
@@ -992,6 +1012,16 @@ def _build_simple(family_id: str, records: list[dict], near_misses: list[str] | 
                 ran = getattr(w, "executed", False)
                 cmp = _compare("production vs re-solve", rec["question"], rec["response"], w.final_answer,
                                f"{entry_id}:resolve{i}:cmp") if ran else None
+            except llm.OutputError as e:
+                # The model answered but the reply is unusable (cut off at max_tokens, refused, or
+                # structured output with a missing or mistyped field): a failed re-solve try, so
+                # the next try runs (fam_f0003, 2026-11-16: a ResolveOut ValidationError ended the
+                # whole build). API and network errors (plain LLMError) still reject below.
+                sp.end = len(llm.LEDGER.records)
+                parts["resolve"] = parts.get("resolve", 0.0) + sp.cost()
+                state["attempts"].append({"final_answer": "", "agree": False, "executed": False,
+                                          "working_kept": False, "output_error": str(e)[:300]})
+                continue
             except llm.LLMError as e:
                 sp.end = len(llm.LEDGER.records)
                 parts["resolve"] = parts.get("resolve", 0.0) + sp.cost()
@@ -1005,8 +1035,12 @@ def _build_simple(family_id: str, records: list[dict], near_misses: list[str] | 
             worked = w
             break
     if worked is None:
+        if all(a.get("output_error") for a in state["attempts"]):   # every reply was unusable
+            errors = "; ".join(a["output_error"] for a in state["attempts"])
+            return result("rejected", f"{RESOLVE_OUTPUT_REASON}: {errors}"[:400], failure="output")
         if not any(a["executed"] for a in state["attempts"]):      # no try gave a working program
-            errors = "; ".join(a.get("program_error") or "no answer" for a in state["attempts"])
+            errors = "; ".join(a.get("program_error") or a.get("output_error") or "no answer"
+                               for a in state["attempts"])
             return result("mismatch", f"{PROGRAM_FAILED_REASON}: {errors}"[:400])
         return result("mismatch", MISMATCH_REASON)
 
@@ -1175,8 +1209,9 @@ def _failure_of(e: Exception) -> str:
 
 def _prepublish_failure(pre: dict) -> str | None:
     """Failed pre-publish check -> BuildResult.failure. The cost cap stopped it -> "cost_cap"; the
-    code was wrong, crashed or broke a relation -> "code"; too few questions fit -> None, unless a
-    gate/model error is why ("api": an outage is no verdict on the entry)."""
+    code was wrong, crashed or broke a relation -> "code"; too few questions fit (Clef turned them
+    away, or extraction refused them) -> None, unless a gate/model error is why ("api": an outage
+    is no verdict on the entry)."""
     if pre["stopped"]:
         return "cost_cap"
     if pre["code_error"]:
@@ -1246,5 +1281,5 @@ def audit_should_disable(outcome: str) -> bool:
     return outcome in ("cache_wrong", "unresolved")
 
 
-__all__ = ["unit_hint", "OUTPUTS_REASON", "write_outputs", "OutputSpecs", "ResolveOut", "CONVENTION_REASON", "write_conventions", "MISMATCH_REASON", "MISFIT_REASON", "CODE_WRONG_REASON", "RELATION_REASON", "BuildResult", "Certificate", "build_family", "certify", "adjudicate", "audit_hit",
+__all__ = ["unit_hint", "OUTPUTS_REASON", "write_outputs", "OutputSpecs", "ResolveOut", "CONVENTION_REASON", "write_conventions", "MISMATCH_REASON", "RESOLVE_OUTPUT_REASON", "MISFIT_REASON", "CODE_WRONG_REASON", "RELATION_REASON", "BuildResult", "Certificate", "build_family", "certify", "adjudicate", "audit_hit",
            "audit_should_disable", "error_upper_bound", "usable", "typical_first", "STATUSES"]

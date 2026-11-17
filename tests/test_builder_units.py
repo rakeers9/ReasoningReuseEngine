@@ -132,3 +132,154 @@ def test_a_raw_text_parser_in_the_strict_style_runs_and_passes_the_scan(raw, wan
     assert fn(ctx)["principal in dollars"] == Decimal(want)
 
 
+
+
+# Hidden-set run 2026-11-16: a calorimetry entry answered "equilibrium temperature in K" when
+# every temperature in the question was in °C. Rule: an output of the same kind as an input
+# comes back in that input's unit (the first one if they differ), unless the question asks for
+# another unit, converted back at the end in plain Python; the outputs writer records that unit.
+
+def test_strict_rules_return_an_output_in_its_inputs_unit():
+    rules = builder.STRICT_UNITS_RULES
+    for phrase in ("If the question asks for the answer in a unit, return it in that unit",
+                   "same kind of quantity as an input", "the unit of the first one",
+                   "convert the\n  result back at the end of your code in plain Python",
+                   "converted back to °C", "put it in the output's name"):
+        assert phrase in rules
+    # the output-unit rule comes before the naming rule it qualifies
+    assert rules.index("Output units.") < rules.index("Name each output with its unit")
+
+
+def test_output_unit_rule_reaches_only_strict_builds():
+    from arc.source import Transcript
+    t = Transcript("p", "q", "s", "", "m", 0.0)
+    problem = {"id": "p", "question": "q", "golden_label": ""}
+    assert "same kind of quantity as an input" not in builder.Builder(problem, t, use_golden=False)._system[0]["text"]
+    strict = builder.Builder(problem, t, use_golden=False, units="strict")._system[0]["text"]
+    assert "same kind of quantity as an input" in strict
+
+
+def test_outputs_writer_records_the_unit_the_code_converts_back_to(fake_llm):
+    from arc import labelfree
+    from arc.cache import Cache, EntryPoint
+    from arc.cache import ParamSpec
+    c = Cache("fam_cal")
+    c.add_function("mix water", "def semantic_function(ctx):\n"
+                                "    raw = load(ctx, 'hot water temperature', d_type=str)\n"
+                                "    k = float(raw.split()[0]) + 273.15\n"
+                                "    return {'equilibrium temperature in °C': k - 273.15}\n")
+    c.entry_points = [EntryPoint("q", "original", list(c.functions)[0],
+                                 [ParamSpec("hot water temperature", original_value="80 °C")], "fam_cal")]
+    fake_llm.queue(labelfree.OutputSpecs(outputs=[
+        labelfree.OutputItem(name="equilibrium temperature in °C", kind="measure", unit="°C", decimals=None)]))
+    specs = labelfree.write_outputs(c, "fam_cal", Transcript("fam_cal", "Mix water at 80 °C ...", "w", "", "m", 0.0))
+    assert specs == {"equilibrium temperature in °C": {"kind": "measure", "unit": "°C", "decimals": None}}
+    prompt = fake_llm.calls[0]["prompt"]
+    assert "read from the code" in prompt and "the unit is the one it converts back to" in prompt
+
+
+# ----------------------------------------------------------------------------- as-written parameters
+
+# Regression (hidden-set run 2026-11-16, fam_f0003): these parameter descriptions (Haiku, Sonnet
+# and Opus builds) asked for fixed units or forms, so extraction converted "144 months" to
+# "8 years" and "eight percent" to "8% APR", and the extraction checks refused 4 of 5 family
+# questions. Rule (units="strict"): every description asks for the value as written.
+F0003_DESCRIPTIONS = [
+    "the investment horizon, meaning the length of time from the start to the evaluation date, "
+    "as a duration in years",
+    "the nominal annual interest rate of the account with its unit, as a percentage per annum",
+    "the starting balance of the account at time zero in dollars",
+    "the nominal annual percentage rate (APR) compounded monthly",
+    "the starting balance in dollars",
+    "the starting account balance with currency",
+]
+AS_WRITTEN = [
+    "the loan term as written, e.g. '144 months' or '12 years'",
+    "the annual interest rate as written, e.g. '8%' or 'eight percent APR'",
+    "the starting balance as written, with its currency, e.g. '$50k' or '50,000 dollars'",
+    "the gas temperature as written, e.g. '27 °C' or 'given in kelvin: 300 K'",   # quoted text is not checked
+]
+
+
+def _param(desc, value="12 years"):
+    return builder.Parameter(marker="●1", description=desc, format_examples=["12 years"],
+                             original_value=value, validity_range="> 0")
+
+
+@pytest.mark.parametrize("desc", F0003_DESCRIPTIONS)
+def test_f0003_descriptions_break_the_as_written_rule(desc):
+    [problem] = builder.fixed_form_problems([_param(desc)])
+    assert repr(desc) in problem
+
+
+@pytest.mark.parametrize("desc", AS_WRITTEN)
+def test_as_written_descriptions_pass(desc):
+    assert builder.fixed_form_problems([_param(desc)]) == []
+
+
+@pytest.mark.parametrize("desc", ["the loan term as written, in years", "the loan term as written in months",
+                                  "the rate as written, expressed as a decimal",
+                                  "the balance as written, converted to dollars",
+                                  "the term as written, as a number of years"])
+def test_as_written_with_a_fixed_unit_still_fails(desc):
+    assert "fixed unit or form" in builder.fixed_form_problems([_param(desc)])[0]
+
+
+def test_strict_rules_ask_for_parameters_as_written():
+    rules = builder.STRICT_UNITS_RULES
+    for phrase in ("AS WRITTEN", "the loan term as written, e.g. '144 months' or\n  '12 years'",
+                   "not\n  \"the loan term in years\"", 'contains\n  the words "as written"',
+                   "your code parses and converts it"):
+        assert phrase in rules
+
+
+def _recognition(*descs):
+    return builder.ParameterRecognition(problem_class="c", template="t ●1",
+                                        parameters=[_param(d) for d in descs])
+
+
+def test_strict_phase3_retries_once_with_the_reasons_then_keeps_the_fix(fake_llm):
+    b = builder.Builder(PROBLEM, T, use_golden=False, units="strict")
+    fake_llm.queue(_recognition(F0003_DESCRIPTIONS[0]))
+    fake_llm.queue(_recognition(AS_WRITTEN[0]))
+    out = b.phase3()
+    assert [p.description for p in out.parameters] == [AS_WRITTEN[0]]
+    assert len(fake_llm.calls) == 2 and fake_llm.calls[1]["tag"].endswith(":phase3:as_written")
+    retry = fake_llm.calls[1]["prompt"][-1]["text"]
+    assert fake_llm.calls[0]["prompt"][-1]["text"] in retry                # same instructions, plus why
+    assert "as a duration in" in retry
+    assert b.report.phases["Phase 3 (parameter recognition)"]["parameters"][0]["description"] == AS_WRITTEN[0]
+
+
+def test_strict_phase3_failing_twice_is_a_build_error(fake_llm):
+    # BuildError is a code failure, so the label-free cascade may try the next builder
+    b = builder.Builder(PROBLEM, T, use_golden=False, units="strict")
+    fake_llm.queue(_recognition(F0003_DESCRIPTIONS[2]))
+    fake_llm.queue(_recognition(F0003_DESCRIPTIONS[4]))
+    with pytest.raises(builder.BuildError, match="as-written rule"):
+        b.phase3()
+    assert len(fake_llm.calls) == 2
+
+
+def test_strict_phase3_that_passes_costs_one_call(fake_llm):
+    b = builder.Builder(PROBLEM, T, use_golden=False, units="strict")
+    fake_llm.queue(_recognition(*AS_WRITTEN[:2]))
+    assert len(b.phase3().parameters) == 2 and len(fake_llm.calls) == 1
+
+
+def test_paper_phase3_is_unchecked_and_unchanged(fake_llm):
+    b = builder.Builder(PROBLEM, T, use_golden=False)
+    fake_llm.queue(_recognition(F0003_DESCRIPTIONS[0]))
+    out = b.phase3()
+    assert out.parameters[0].description == F0003_DESCRIPTIONS[0] and len(fake_llm.calls) == 1
+    text = fake_llm.calls[0]["prompt"][-1]["text"]
+    assert text.endswith("value in the original input copied verbatim, and an analysis of its logical "
+                         "validity range.") and "as written" not in text
+
+
+def test_strict_repair_that_breaks_the_rule_is_a_build_error(fake_llm):
+    b = builder.Builder(PROBLEM, T, use_golden=False, units="strict")
+    root = b.cache.add_function("root", CLEAN).id
+    fake_llm.queue(builder.Repair(parameters=[_param(F0003_DESCRIPTIONS[1])], root_code=None, explanation="x"))
+    with pytest.raises(builder.BuildError, match="repaired parameter descriptions"):
+        b.repair(root, _recognition(AS_WRITTEN[0]), "failed")

@@ -401,7 +401,7 @@ class FamilyTracker:
 # ---- acting on the report ----
 
 def build_ready(tracker: FamilyTracker, build_fn: Callable | None = None, max_builds: int | None = None,
-                path: Path | None = None) -> list[tuple[str, object]]:
+                path: Path | None = None, can_start: Callable[[], bool] | None = None) -> list[tuple[str, object]]:
     """Build every family whose verdict is "build", best first. PAID when build_fn is real.
 
     build_fn(family_id, records) gets the family's source-model records and returns an
@@ -412,11 +412,16 @@ def build_ready(tracker: FamilyTracker, build_fn: Callable | None = None, max_bu
     certify it; the family stays watching and is retried on newer records. Its spend is
     logged as pending: it counts toward cost per cached entry but not as an attempt.
     Each result is applied (mark_built / mark_rejected, record_build_cost, serve rate) and
-    saved immediately, so a crash part-way loses nothing already paid for."""
+    saved immediately, so a crash part-way loses nothing already paid for.
+    can_start(): asked before EACH build (e.g. "does the budget left still cover a worst-case
+    build?"); False stops the batch. Checking per build, against what earlier builds really
+    cost, lets cheap builds go ahead instead of reserving the worst case for all of them."""
     if build_fn is None:
         from .labelfree import build_family as build_fn   # label-free build path (separate module)
     done = []
     for row in [r for r in tracker.readiness() if r.verdict == "build"][:max_builds]:
+        if can_start is not None and not can_start():
+            break
         records = tracker.members_of(row.family, path, served=False, confirmed=True)
         if config.FAMILY_BUILD_CHECK == "clef" and records:
             blocked = _build_check(tracker, row.family, records)

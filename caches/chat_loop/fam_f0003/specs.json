@@ -1,0 +1,29 @@
+{
+  "fam_f0003": {
+    "task": "compute",
+    "deliverable": "monthly payment amount and total interest paid over the life of the loan",
+    "method": "not stated",
+    "conditions": [
+      "interest compounded monthly",
+      "fixed term over the life of the loan"
+    ],
+    "inputs": [
+      {
+        "name": "loan principal",
+        "value": "$446,000",
+        "evidence": "A $446,000 mortgage"
+      },
+      {
+        "name": "annual interest rate",
+        "value": "7.5%",
+        "evidence": "has a 7.5% annual interest rate"
+      },
+      {
+        "name": "loan term",
+        "value": "20 years",
+        "evidence": "over 20 years"
+      }
+    ],
+    "output_form": "two amounts in currency: a monthly payment and a total interest sum"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "fam_f0003": [
+    "Periodic rate = annual nominal rate / periods per year (simple division, no effective-rate conversion); payment frequency equals compounding frequency",
+    "Number of payments = periods per year x term in years (term in months is converted to years by dividing by 12), and must be a whole number",
+    "Payment frequency map: monthly 12, quarterly 4, semiannual 2, annual 1, weekly 52, biweekly 26, semimonthly 24, bimonthly 6, daily 365",
+    "Level payment = P x r x (1+r)^n / ((1+r)^n - 1) with the unrounded rate, or P / n if the rate is zero",
+    "Round the level payment to the cent (half up) first, and report that rounded payment",
+    "Total interest = rounded payment x number of payments - principal (not the unrounded payment), then rounded to the cent half up",
+    "Amounts and rates are in dollars and fractions of one (percent / 100); no other intermediate values are rounded"
+  ]
+}

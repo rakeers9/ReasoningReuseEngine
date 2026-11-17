@@ -907,14 +907,30 @@ def test_code_failures_reported_as_mismatch_also_count(tmp_path, monkeypatch):
     assert fam.failed_builds == 2 and fam.status == "rejected"
 
 
-def test_independent_test_failures_count_toward_the_failed_build_cap(tmp_path):
-    """arc/tester.py: when the test-maker can't give a verdict (failure "tests") the family
-    must still use up its retries, or it would be rebuilt on every newer question forever."""
-    tr, path = _ready_tracker(tmp_path)
 
+def test_can_start_is_asked_before_each_build_and_stops_the_batch(tmp_path):
+    # regression (chat run 2026-11-16): reserving the worst case for every build up front allowed
+    # 1 build per step, so the top family (failing each time) starved two ready families
+    path = tmp_path / "backlog.jsonl"
+    tr = tracker(tmp_path)
+    for word in ("alpha", "bravo", "charlie"):
+        for i in range(3):
+            backlog.log_interaction(f"{word} {i}", "a", "claude-opus-5-5", path=path, input_tokens=200,
+                                    output_tokens=1500, timestamp=float(i), id=f"{word}{i}")
+    tr.ingest(path)
+    spent = []
+    budget = 1.65
+    def can_start():
+        return budget - sum(spent) >= 1.20
     def build(fid, recs):
-        r = _mismatch(recs[-1]["id"])
-        r.failure = "tests"
-        return r
-    families.build_ready(tr, build, max_builds=1, path=path)
-    assert sum(f.failed_builds == 1 for f in tr.families.values()) == 1
+        spent.append(0.07)                      # a real Haiku build costs far less than the cap
+        return _Result(True, f"e_{fid}")
+    done = families.build_ready(tr, build, path=path, can_start=can_start)
+    assert len(done) == 3                       # all three fit: 1.65 - 0.14 >= 1.20
+    spent.clear(); spent.append(0.50)
+    for f in tr.families.values():
+        f.status = "watching"
+    calls = []
+    assert families.build_ready(tr, lambda f, r: calls.append(f), path=path, can_start=lambda: False) == []
+    assert calls == []                          # can_start False: no build starts
+    assert families.build_ready(tr, build, path=path, can_start=can_start) == [] and spent == [0.50]

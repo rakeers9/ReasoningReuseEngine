@@ -1,6 +1,6 @@
 {
   "fam_f0002": {
-    "final book value after the elapsed years, formatted in dollars to two decimal places": {
+    "book value after the elapsed years in dollars": {
       "kind": "money",
       "unit": "USD",
       "decimals": 2

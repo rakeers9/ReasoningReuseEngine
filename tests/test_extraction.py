@@ -212,3 +212,21 @@ def test_the_million_case_now_reaches_the_code_as_full_digits(fake_llm):
     params = [ParamSpec("cost", ["$80,000"])]
     queue(fake_llm, [v("A machine costs $0.42 million", "0.42", "$ million")])
     assert serve.extract_parameters("A machine costs $0.42 million, ...", params) == {"cost": "$420,000"}
+
+
+def test_the_answer_unit_defaults_to_the_unit_of_same_kind_inputs():
+    # hidden run 2026-11-16: a final temperature asked with °C inputs was served in K
+    from arc import extraction
+    assert "the reader expects the answer in the units they used" in extraction.ANSWER_RULES
+    q = "A 260 g piece of titanium at 80 °C is dropped into 410 g of water at 21.5 °C. Final temperature?"
+    fmt = {"unit": "°C", "rounding": "", "evidence": "80 °C"}       # evidence is an input, as written
+    assert extraction.check_answer_form(fmt, [], q) == []
+
+
+def test_an_answer_unit_from_the_inputs_that_differs_from_the_entry_goes_to_the_model():
+    from arc import present
+    spec = {"equilibrium temperature": {"kind": "measure", "unit": "°C"}}
+    with pytest.raises(present.PresentError):
+        present.apply({"equilibrium temperature": "35.57"}, {"unit": "K", "rounding": "", "evidence": "418.15 K"}, spec)
+    assert present.apply({"equilibrium temperature": "35.5712"}, {"unit": "°C", "rounding": "", "evidence": "80 °C"},
+                         spec) == {"equilibrium temperature": "35.57"}

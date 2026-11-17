@@ -43,8 +43,12 @@ CURRENCY = {"$", "£", "€", "¥", "₹", "US$", "USD", "EUR", "GBP"}
 
 ANSWER_RULES = """\
 Then, about the ANSWER the question asks for:
-- output_format: unit = the unit the question asks the answer to be given in, copied ("" if it \
-asks for none); rounding = how the question asks the answer to be rounded, written as "dp:N" (N \
+- output_format: unit = the unit the question asks the answer to be given in, copied. If it asks \
+for none, but its own inputs include the SAME kind of quantity as the answer (temperatures when it \
+asks for a final temperature, lengths when it asks for a length, money when it asks for an amount \
+of money), unit = the unit of those inputs as written (the first one if they differ), and the \
+evidence is that input as written; the reader expects the answer in the units they used. \
+Otherwise "". rounding = how the question asks the answer to be rounded, written as "dp:N" (N \
 decimal places), "sf:N" (N significant figures), "nearest:X" (to the nearest X, e.g. nearest:1, \
 nearest:1000, nearest:0.01) or "" if it asks for no rounding; evidence = the exact words that ask \
 for the unit or the rounding ("" if none).
