@@ -146,7 +146,7 @@ def _compare(name: str, question: str, reference: str, candidate: str, tag: str)
 
 
 def _run_cache(cache: Cache, ep: EntryPoint, question: str, tag: str) -> str:
-    values = extract_parameters(question, ep.params, tag=tag)
+    values = extract_parameters(question, ep.params, tag=tag, example=ep.text if ep.kind == "original" else None)
     output, _ = dispatch_root(cache, ep.root_id, values)
     return format_output(output)
 

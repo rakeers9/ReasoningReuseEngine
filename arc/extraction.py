@@ -303,3 +303,115 @@ def extract_text(request: str, params: list[ParamSpec], tag: str | None = None,
     if problems:
         raise ExtractionError("extraction failed its checks: " + "; ".join(problems))
     return values
+
+
+# ----------------------------------------------------------------------------- evidence form
+
+# config.EXTRACT_FORM == "evidence" (DEVIATION, opt-in until measured against "text"). The text
+# form's only per-value check is "every number in the value is somewhere in the question", so a
+# value in the wrong slot, a guessed "implied" value without digits ("monthly") and a number used
+# twice all pass. Here the fixed rules go in the system prompt, the entry's build question is
+# shown as a worked example (its original values are already stored), and every value comes with
+# the words in the question that state it, which plain code checks. A value may be written in
+# other words than the question uses ("carbon dioxide" for "CO2(g)"), but never without words in
+# the question to back it, and never as a converted number.
+EVIDENCE_SYSTEM = """\
+A saved program will handle the user's question. You read the question and fill in the \
+program's inputs. You only find and copy; the program does all the work (converting units, \
+calculating, applying rules).
+
+For each input:
+1. evidence: copy the words in the question that state this input: the value plus the words \
+that show what it is, e.g. "a $150k mortgage", "served on March 3, 2025", "an 11-year useful \
+life".
+2. value: the input as the question states it, with its unit and any shorthand ("$150k", \
+"March 3, 2025", "4.860 dm3", "ten moles"). If the question states it in other words than the \
+format examples use, you may write it in the style of the format examples ("carbon dioxide" for \
+"CO2(g)", "monthly" for "monthly payments"). Never convert, expand, round or compute a number.
+
+Every input must come from words in the question. If the question does not state an input, \
+even in other words, leave its evidence and value empty: never guess, never assume a usual \
+value, and never copy a value from the example question. A value in the question fills at most \
+one input, unless the question says it applies to several ("both start at 25°C").
+
+Some inputs are the same kind of value: two amounts of money, two dates, two temperatures, two \
+percentages. Decide which value belongs to which input from the words next to it ("cost" vs \
+"salvage", "sensitivity" vs "specificity", "filed" vs "served"). Go by order only when the \
+question itself ties values to inputs by order ("$50k and $5k, respectively"). If the question \
+does not make clear which value belongs to which input, set ambiguous to true.
+
+""" + ANSWER_RULES
+
+
+def evidence_message(request: str, params: list[ParamSpec], example: str | None = None) -> str:
+    """The user message: the worked example (when the entry's build question and every original
+    value are known), the inputs to fill, then the question."""
+    parts = []
+    if example and params and all((p.original_value or "").strip() for p in params):
+        shown = "\n".join(f'p{i} ({p.description}): "{p.original_value}"' for i, p in enumerate(params))
+        parts.append(f"Example. The program was built from this question:\n<<<{example}>>>\n"
+                     f"Its inputs in that question were:\n{shown}\n")
+    lines = "\n".join(f"p{i}: {p.description} (format examples: {', '.join(map(repr, p.format_examples)) or 'none'})"
+                      for i, p in enumerate(params))
+    parts.append(f"Inputs to fill:\n{lines}\n")
+    parts.append(f"Question:\n<<<{request}>>>")
+    return "\n".join(parts)
+
+
+def _words(text: str) -> str:
+    """Text as its words only, for matching evidence: case, spacing, punctuation and quote or
+    dash styles are ignored ("Cost: $50k," and "cost $50k" match); the words and their order
+    are not."""
+    return " ".join(re.findall(r"\w+", unicodedata.normalize("NFKC", text or "").lower()))
+
+
+def check_evidence_value(evidence: str, value: str, request: str) -> str | None:
+    """Why one extracted input can't be trusted, or None. The value must be stated (no guesses),
+    its evidence must be words in the question (punctuation aside), and every number in the
+    value must be in its OWN evidence, not just somewhere in the question. A value without
+    digits may reword its evidence ("carbon dioxide" for "CO2(g)")."""
+    if not (value or "").strip():
+        return "not stated in the question"
+    ev = _words(evidence)
+    if not ev:
+        return f"no evidence for {value!r}"
+    if f" {ev} " not in f" {_words(request)} ":
+        return f"evidence {evidence!r} is not in the question"
+    missing = sorted(_digit_tokens(value) - _digit_tokens(evidence))
+    if missing:
+        return f"value {value!r} states {', '.join(format(m, 'f') for m in missing)}, which is not in its evidence {evidence!r}"
+    return None
+
+
+def extract_evidence(request: str, params: list[ParamSpec], tag: str | None = None,
+                     example: str | None = None, form_out: dict | None = None) -> dict[str, str]:
+    """config.EXTRACT_FORM == "evidence": like the text form (values copied as written, so cached
+    code is unchanged), plus evidence per value, a worked example, and an ambiguity flag."""
+    from .serve import ExtractionError
+    Slot = create_model("Slot", __config__=ConfigDict(extra="forbid"), evidence=(str, ...), value=(str, ...))
+    OutputFormat = create_model("OutputFormat", __config__=ConfigDict(extra="forbid"),
+                                unit=(str, ...), rounding=(str, ...), evidence=(str, ...))
+    Extra = create_model("Extra", __config__=ConfigDict(extra="forbid"),
+                         kind=(Literal["explanation", "format", "other"], ...), text=(str, ...), evidence=(str, ...))
+    Model = create_model("ExtractedEvidence", __config__=ConfigDict(extra="forbid"),
+                         **{f"p{i}": (Slot, ...) for i in range(len(params))},
+                         ambiguous=(bool, ...), output_format=(OutputFormat, ...), extras=(list[Extra], ...))
+    data = llm.call("extractor", evidence_message(request, params, example), model=config.TARGET_MODEL,
+                    schema=Model, system=EVIDENCE_SYSTEM, max_tokens=2048, tag=tag).parsed.model_dump()
+    output_format, extras = data.get("output_format") or {}, data.get("extras") or []
+    problems = check_answer_form(output_format, extras, request)
+    if data.get("ambiguous"):
+        problems.append("the question doesn't make clear which value belongs to which input")
+    values = {}
+    for i, p in enumerate(params):
+        slot = data.get(f"p{i}") or {}
+        value = (slot.get("value") or "").strip()
+        why = check_evidence_value(slot.get("evidence", ""), value, request)
+        if why:
+            problems.append(f"{p.description}: {why}")
+        values[p.description] = value
+    if form_out is not None:
+        form_out.update(fields=data, values=values, problems=problems, output_format=output_format, extras=extras)
+    if problems:
+        raise ExtractionError("extraction failed its checks: " + "; ".join(problems))
+    return values
