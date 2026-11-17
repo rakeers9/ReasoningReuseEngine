@@ -312,29 +312,33 @@ def extract_text(request: str, params: list[ParamSpec], tag: str | None = None,
 # value in the wrong slot, a guessed "implied" value without digits ("monthly") and a number used
 # twice all pass. Here the fixed rules go in the system prompt, the entry's build question is
 # shown as a worked example (its original values are already stored), and every value comes with
-# the exact words that state it, which plain code checks. Nothing may be implied.
+# the words in the question that state it, which plain code checks. A value may be written in
+# other words than the question uses ("carbon dioxide" for "CO2(g)"), but never without words in
+# the question to back it, and never as a converted number.
 EVIDENCE_SYSTEM = """\
-You fill in the inputs of a calculator that has already been chosen for a user's question. You \
-only find and copy values; the calculator does every conversion and every calculation.
+A saved program will handle the user's question. You read the question and fill in the \
+program's inputs. You only find and copy; the program does all the work (converting units, \
+calculating, applying rules).
 
 For each input:
-1. evidence: copy, character for character, the words in the question that state this input: \
-the value plus the words that show what it is, e.g. "a $150k mortgage", "at 27°C", "an 11-year \
-useful life".
-2. value: copy the value from those words exactly as written, with its unit and any shorthand \
-("$150k", "2.0 million", "4.860 dm3", "27°C", "ten moles"). Never convert, expand, round or \
-compute anything.
+1. evidence: copy the words in the question that state this input: the value plus the words \
+that show what it is, e.g. "a $150k mortgage", "served on March 3, 2025", "an 11-year useful \
+life".
+2. value: the input as the question states it, with its unit and any shorthand ("$150k", \
+"March 3, 2025", "4.860 dm3", "ten moles"). If the question states it in other words than the \
+format examples use, you may write it in the style of the format examples ("carbon dioxide" for \
+"CO2(g)", "monthly" for "monthly payments"). Never convert, expand, round or compute a number.
 
-Use only what the question states. If it does not state an input, leave that input's evidence \
-and value empty. Never guess, never assume a usual value, and never copy a value from the \
-example question. A value in the question fills at most one input, unless the question says it \
-applies to several ("both start at 25°C").
+Every input must come from words in the question. If the question does not state an input, \
+even in other words, leave its evidence and value empty: never guess, never assume a usual \
+value, and never copy a value from the example question. A value in the question fills at most \
+one input, unless the question says it applies to several ("both start at 25°C").
 
-Some inputs are the same kind of quantity: two amounts of money, two temperatures, two \
-percentages, two durations. Decide which value belongs to which input from the words next to \
-it ("cost" vs "salvage", "sensitivity" vs "specificity", "initial" vs "final"), never from the \
-order of the inputs in the list or of the values in the question. If the question does not make \
-clear which value belongs to which input, set ambiguous to true.
+Some inputs are the same kind of value: two amounts of money, two dates, two temperatures, two \
+percentages. Decide which value belongs to which input from the words next to it ("cost" vs \
+"salvage", "sensitivity" vs "specificity", "filed" vs "served"). Go by order only when the \
+question itself ties values to inputs by order ("$50k and $5k, respectively"). If the question \
+does not make clear which value belongs to which input, set ambiguous to true.
 
 """ + ANSWER_RULES
 
@@ -345,7 +349,7 @@ def evidence_message(request: str, params: list[ParamSpec], example: str | None 
     parts = []
     if example and params and all((p.original_value or "").strip() for p in params):
         shown = "\n".join(f'p{i} ({p.description}): "{p.original_value}"' for i, p in enumerate(params))
-        parts.append(f"Example. The calculator was built from this question:\n<<<{example}>>>\n"
+        parts.append(f"Example. The program was built from this question:\n<<<{example}>>>\n"
                      f"Its inputs in that question were:\n{shown}\n")
     lines = "\n".join(f"p{i}: {p.description} (format examples: {', '.join(map(repr, p.format_examples)) or 'none'})"
                       for i, p in enumerate(params))
@@ -354,15 +358,24 @@ def evidence_message(request: str, params: list[ParamSpec], example: str | None 
     return "\n".join(parts)
 
 
+def _words(text: str) -> str:
+    """Text as its words only, for matching evidence: case, spacing, punctuation and quote or
+    dash styles are ignored ("Cost: $50k," and "cost $50k" match); the words and their order
+    are not."""
+    return " ".join(re.findall(r"\w+", unicodedata.normalize("NFKC", text or "").lower()))
+
+
 def check_evidence_value(evidence: str, value: str, request: str) -> str | None:
-    """Why one extracted input can't be trusted, or None. The value must be stated (no implied
-    values), its evidence must be in the question, and every number in the value must be in its
-    OWN evidence, not just somewhere in the question."""
+    """Why one extracted input can't be trusted, or None. The value must be stated (no guesses),
+    its evidence must be words in the question (punctuation aside), and every number in the
+    value must be in its OWN evidence, not just somewhere in the question. A value without
+    digits may reword its evidence ("carbon dioxide" for "CO2(g)")."""
     if not (value or "").strip():
         return "not stated in the question"
-    if not (evidence or "").strip():
+    ev = _words(evidence)
+    if not ev:
         return f"no evidence for {value!r}"
-    if _norm(evidence) not in _norm(request):
+    if f" {ev} " not in f" {_words(request)} ":
         return f"evidence {evidence!r} is not in the question"
     missing = sorted(_digit_tokens(value) - _digit_tokens(evidence))
     if missing:
