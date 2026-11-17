@@ -24,7 +24,7 @@ Caching an answer is easy. Caching reasoning so that it only fires when it's act
 
 **Questions that look the same but aren't.** "What's the pressure of this gas?" and "What volume does this gas need to reach this pressure?" use almost the same words but need different math. Embedding similarity, the usual way to match questions, scores these near-misses at 0.91–0.95, which is *higher* than real rewordings of the same question (0.84–0.89). No threshold separates them. So every cache hit goes through a gate that asks whether this entry really solves this question. Our current gate uses a small yes/no model called Clef. On our dev set it served 117 of the 119 questions it should have. It never served any of the 214 near-misses and unrelated questions it should have left alone. We still need to confirm that on the held-out test split.
 
-**No answer key.** The research we started from builds every cache entry with the correct answer in hand. In real life nobody hands you one. We build from the log of real questions and answers instead: re-solve with the production model and check they agree, run the new entry on other questions from the same family before publishing it, and run rewrite checks no model is involved in ("25 m/s" and "90 km/h" are the same speed, so they must give the same answer).
+**No answer key.** The research we started from builds every cache entry with the correct answer in hand. In real life nobody hands you one. We build from the log of real questions and answers instead: re-solve with the production model and check they agree, run the new entry on other questions from the same family before publishing it, have a different model write acceptance tests without ever seeing the builder's code (so the code and its tests don't share blind spots), and run rewrite checks no model is involved in ("25 m/s" and "90 km/h" are the same speed, so they must give the same answer).
 
 **Knowing what's worth caching.** Most questions never come back, and every build costs money. We group questions into task families and only build an entry once a family has come up often enough that caching it would have paid for itself. It's the ski-rental rule: keep renting until the rent you've paid equals the price of buying. A build on Haiku costs about $0.04. If Haiku can't write working code, the build moves up to Sonnet, then Opus.
 
@@ -90,6 +90,6 @@ arc/        the engine: runtime, builder, serving, gates, label-free builds, CLI
 eval/       the experiments behind our numbers (each script says whether it costs money)
 problems/   problems to build from: the paper's two, plus 17 seeds across science, medicine, finance and law
 caches/     built caches, one folder of plain Python functions per cache
-tests/      923 offline tests (python -m pytest, no API calls)
+tests/      offline tests (python -m pytest, no API calls)
 web/        the experiment UI
 ```
