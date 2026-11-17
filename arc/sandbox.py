@@ -11,6 +11,7 @@ slow) while blocking the obvious ways generated code could misbehave.
 
 from __future__ import annotations
 
+import _thread
 import ast
 import builtins
 import math
@@ -85,15 +86,33 @@ def load_function(source: str, primitives: dict):
     return namespace["semantic_function"]
 
 
+_HAS_ALARM = hasattr(signal, "SIGALRM") and hasattr(signal, "setitimer")   # False on Windows
+_timer_active = False   # the Windows fallback's "an outer limit is already running"
+
+
 @contextmanager
 def time_limit(seconds: float):
     """Raise FunctionTimeout if the block runs longer than `seconds`.
 
-    Uses SIGALRM, which only works in the main thread; elsewhere it is a no-op.
-    Nested uses keep the outermost (earliest) deadline.
+    Only works in the main thread; elsewhere it is a no-op. Nested uses keep the outermost
+    (earliest) deadline. Uses SIGALRM where it exists (macOS, Linux). Windows has no SIGALRM, so
+    a timer thread interrupts the main thread instead (_TimerLimit). Either way the limit takes
+    effect between Python steps, not inside one long C call.
     """
+    global _timer_active
     if threading.current_thread() is not threading.main_thread() or seconds <= 0:
         yield
+        return
+    if not _HAS_ALARM:
+        if _timer_active:   # an outer limit is already running
+            yield
+            return
+        _timer_active = True
+        try:
+            with _TimerLimit(seconds):
+                yield
+        finally:
+            _timer_active = False
         return
     remaining, _ = signal.getitimer(signal.ITIMER_REAL)
     if remaining > 0:  # an outer limit is already running
@@ -110,6 +129,57 @@ def time_limit(seconds: float):
     finally:
         signal.setitimer(signal.ITIMER_REAL, 0)
         signal.signal(signal.SIGALRM, previous)
+
+
+class _TimerLimit:
+    """time_limit without SIGALRM (Windows). A timer thread sends the main thread a simulated
+    Ctrl+C (_thread.interrupt_main). While the block runs, a temporary SIGINT handler decides
+    what that interrupt means, at the moment it lands:
+      - the timer fired and the block hasn't ended  -> FunctionTimeout
+      - the timer fired but the block has ended      -> dropped (it arrived late)
+      - the timer didn't fire                        -> a real Ctrl+C: the previous handler
+    The lock makes "check done, then interrupt" atomic, so once __exit__ has set `done` no new
+    interrupt can be sent, and one already sent lands in this handler before the old one is back.
+    """
+
+    def __init__(self, seconds: float):
+        self.seconds, self.done, self.fired = seconds, False, False
+        self.lock = threading.Lock()
+
+    def _fire(self) -> None:
+        with self.lock:
+            if not self.done:
+                self.fired = True
+                _thread.interrupt_main(signal.SIGINT)
+
+    def _on_sigint(self, signum, frame):
+        if self.fired:
+            if not self.done:
+                raise FunctionTimeout(f"cached code exceeded {self.seconds:.0f}s")
+            return
+        if self.previous == signal.SIG_IGN:
+            return
+        if callable(self.previous):
+            return self.previous(signum, frame)
+        raise KeyboardInterrupt
+
+    def __enter__(self):
+        self.previous = signal.signal(signal.SIGINT, self._on_sigint)
+        self.timer = threading.Timer(self.seconds, self._fire)
+        self.timer.daemon = True
+        self.timer.start()
+        return self
+
+    def __exit__(self, *exc) -> bool:
+        try:
+            with self.lock:
+                self.done = True
+            self.timer.cancel()
+            for _ in range(100):   # let an interrupt sent just before `done` land in our handler
+                pass
+        finally:
+            signal.signal(signal.SIGINT, self.previous)
+        return False
 
 
 # ----------------------------------------------------------------------------- standalone programs
