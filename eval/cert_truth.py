@@ -42,7 +42,7 @@ def main() -> None:
         detail = []
         for c in rows:
             try:
-                values = extract_parameters(c["question"], ep.params, tag=f"cert_truth:{pid}")
+                values = extract_parameters(c["question"], ep.params, tag=f"cert_truth:{pid}", example=ep.text)
                 ans = format_output(dispatch_root(cache, ep.root_id, values)[0])
                 ok, how = score(c, ans)
                 status = "right" if ok else "WRONG" if ok is False else "unscored"

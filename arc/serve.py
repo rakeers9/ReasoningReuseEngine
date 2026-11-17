@@ -50,7 +50,8 @@ class ExtractionError(CacheInvocationError):
 
 
 def extract_parameters(request: str, params: list[ParamSpec], tag: str | None = None,
-                       allow_implied: bool = True, form_out: dict | None = None) -> dict[str, str]:
+                       allow_implied: bool = True, form_out: dict | None = None,
+                       example: str | None = None) -> dict[str, str]:
     """IS2: the target model extracts each expected parameter from the raw input.
 
     config.EXTRACT_FORM "copy" (paper): each value copied as written, e.g. "$150k".
@@ -60,7 +61,14 @@ def extract_parameters(request: str, params: list[ParamSpec], tag: str | None = 
     the style of the format examples ("$150,000"), so cached code never sees shorthand.
 
     allow_implied=False (spec gate) drops the paper-style "implied value" rule, which is
-    where made-up values such as "300 K" came from."""
+    where made-up values such as "300 K" came from.
+
+    config.EXTRACT_FORM "evidence" (DEVIATION, opt-in): the text form plus the exact words that
+    state each value (checked in code), no implied values, and `example` (the question the entry
+    was built from) shown with its original values as a worked example."""
+    if config.EXTRACT_FORM == "evidence":
+        from .extraction import extract_evidence
+        return extract_evidence(request, params, tag=tag, example=example, form_out=form_out)
     if config.EXTRACT_FORM == "text":
         from .extraction import extract_text
         return extract_text(request, params, tag=tag, allow_implied=allow_implied, form_out=form_out)
@@ -236,7 +244,8 @@ def _use_clef(cache: Cache, request: str, tag: str | None, trace: dict, shadow: 
             return None
     try:
         values = extract_parameters(request, best.params, tag=tag,
-                                    form_out=trace.setdefault("extraction", {}))   # IS2
+                                    form_out=trace.setdefault("extraction", {}),
+                                    example=_original_text(cache, best))   # IS2
         trace["values"] = values
         if ep is not None:
             trace.update(stage="dispatch", rejected_by=[])
@@ -321,11 +330,12 @@ def use(cache: Cache, request: str, tag: str | None = None,
                 d = specmod.decide(qspec, cache.specs[ep.problem_id], request)
                 rejected = d["rejected"]
                 trace.update(spec_checks=d["checks"], spec_scores=d["scores"], spec_score=d["score"])
-                values = extract_parameters(request, ep.params, tag=tag, allow_implied=False) \
+                values = extract_parameters(request, ep.params, tag=tag, allow_implied=False,
+                                            example=_original_text(cache, ep)) \
                     if (not rejected and not below) or shadow else {}
                 trace["values"] = values
         else:
-            values = extract_parameters(request, ep.params, tag=tag)   # IS2
+            values = extract_parameters(request, ep.params, tag=tag, example=_original_text(cache, ep))   # IS2
             trace["values"] = values
         trace["rejected_by"] = rejected
         turned_away = below or bool(rejected)
