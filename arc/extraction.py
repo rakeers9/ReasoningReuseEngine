@@ -55,7 +55,9 @@ for the unit or the rounding ("" if none).
 - extras: every OTHER instruction about the answer itself, for example "explain your reasoning", \
 "show each step", "give the answer as a fraction", "answer in words", "also compare it with...". \
 Each item: kind ("explanation", "format" or "other"), text, and evidence (the exact words). The \
-problem's own setup, method and assumptions are NOT extras ("assuming ideal behaviour", \
+question's own request for its results ("what is the monthly payment and the total interest?", \
+"find the book value") and the problem's own setup, method and assumptions are NOT extras \
+("assuming ideal behaviour", \
 "compounded monthly", "using the perfect gas equation", "taking g = 9.81"): leave them out. Use \
 an empty list if there are none.
 """
@@ -365,6 +367,30 @@ def _words(text: str) -> str:
     return " ".join(re.findall(r"\w+", unicodedata.normalize("NFKC", text or "").lower()))
 
 
+EVIDENCE_SLACK = 3   # words the question may have inside a quoted span that the quote skipped
+
+
+def _near_copy(ev: str, request: str, slack: int = EVIDENCE_SLACK) -> bool:
+    """Is `ev` (words) in the question, allowing the quote to skip up to `slack` words inside the
+    span? "a $722,000 home loan" matches "a 20-year, $722,000 home loan": the model dropped a
+    modifier. The words must stay in order and close together, so the evidence still says where
+    in the question the value came from (which is what tells cost from salvage)."""
+    want, words = ev.split(), _words(request).split()
+    if not want:
+        return False
+    for start, w in enumerate(words):
+        if w != want[0]:
+            continue
+        i, j = 1, start + 1
+        while i < len(want) and j < len(words) and j - start < len(want) + slack:
+            if words[j] == want[i]:
+                i += 1
+            j += 1
+        if i == len(want):
+            return True
+    return False
+
+
 def check_evidence_value(evidence: str, value: str, request: str) -> str | None:
     """Why one extracted input can't be trusted, or None. The value must be stated (no guesses),
     its evidence must be words in the question (punctuation aside), and every number in the
@@ -375,7 +401,7 @@ def check_evidence_value(evidence: str, value: str, request: str) -> str | None:
     ev = _words(evidence)
     if not ev:
         return f"no evidence for {value!r}"
-    if f" {ev} " not in f" {_words(request)} ":
+    if f" {ev} " not in f" {_words(request)} " and not _near_copy(ev, request):
         return f"evidence {evidence!r} is not in the question"
     missing = sorted(_digit_tokens(value) - _digit_tokens(evidence))
     if missing:

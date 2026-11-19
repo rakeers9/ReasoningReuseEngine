@@ -39,12 +39,18 @@ PRODUCTION_SYSTEM = ("You are a helpful assistant. For calculations, show brief 
 # Room for adaptive thinking plus the answer (a 4000 cap cut a mortgage answer off mid-sentence).
 PRODUCTION_MAX_TOKENS = 16000
 _HAS_NUMBER = re.compile(r"\d")
+# Numbers written as words count too ("Eight people sit at a round table..."). The filter only
+# saves a gate call on chit-chat; the gate decides what is served, so a loose match is safe.
+_NUMBER_WORD = re.compile(
+    r"\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|"
+    r"fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|"
+    r"ninety|hundred|thousand|million|billion|dozen|half|quarter|twice|double|triple)\b", re.I)
 
 
 def is_reusable(message: str, min_words: int = 8) -> bool:
-    """Free first-pass filter: a reusable calculation states at least one number and is
-    long enough to be a full question. 'hi', 'thanks!', 'what can you do?' are not."""
-    return bool(_HAS_NUMBER.search(message)) and len(message.split()) >= min_words
+    """Free first-pass filter: a reusable calculation states at least one number (in digits or
+    words) and is long enough to be a full question. 'hi', 'thanks!', 'what can you do?' are not."""
+    return bool(_HAS_NUMBER.search(message) or _NUMBER_WORD.search(message)) and len(message.split()) >= min_words
 
 
 @dataclass
@@ -119,4 +125,7 @@ class Chatbot:
         results = families.build_ready(self.tracker, build_fn, max_builds=max_builds, path=self.backlog_path,
                                        can_start=can_start)
         self.reload()
+        if config.GUARDS_AUTOWRITE and any(getattr(r, "accepted", False) for _, r in results if r):
+            from . import guards   # new or rebuilt entries get their hit guards before their first hit
+            guards.ensure(self.cache, config.cache_dir(self.cache_name), tag="chat:guards")
         return results

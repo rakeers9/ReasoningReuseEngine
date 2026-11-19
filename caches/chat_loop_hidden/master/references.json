@@ -1,0 +1,22 @@
+{
+  "fam_f0002": {
+    "model": "claude-sonnet-5-5",
+    "time": "2026-11-19 16:35:47",
+    "examples": 10,
+    "source": "def reference(inputs):\n    def get(sub):\n        for k, v in inputs.items():\n            if sub in k:\n                return v\n        raise ValueError(sub)\n    def mass(t):\n        n = number(t)\n        if n is None:\n            raise ValueError('mass')\n        s = t.lower()\n        if 'kg' in s:\n            return n * 1000.0\n        if 'mg' in s:\n            return n / 1000.0\n        if 'lb' in s:\n            return n * 453.59237\n        return n\n    def temp(t):\n        n = number(t)\n        if n is None:\n            raise ValueError('temp')\n        if '\\u00b0f' in t.lower() or t.strip().lower().endswith('f'):\n            return (n - 32) * 5.0 / 9.0 + 273.15\n        if '\\u00b0c' in t.lower() or t.strip().lower().endswith('c'):\n            return n + 273.15\n        return n\n    def sh(t):\n        n = number(t)\n        if n is None:\n            raise ValueError('sh')\n        s = t.lower()\n        if 'cal' in s and 'kcal' not in s:\n            n = n * 4.184\n        elif 'kcal' in s:\n            n = n * 4184.0\n        elif 'kj' in s:\n            n = n * 1000.0\n        if '/(kg' in s or '/kg' in s:\n            n = n / 1000.0\n        return n\n    mw = mass(get('mass of the water'))\n    tw = temp(get('initial temperature of the water'))\n    ma = mass(get('mass of the aluminum'))\n    ta = temp(get('initial temperature of the aluminum'))\n    ca = sh(get('specific heat of aluminum'))\n    cw = sh(get('specific heat of water'))\n    Cw = mw * cw\n    Ca = ma * ca\n    T = (Cw * tw + Ca * ta) / (Cw + Ca)\n    return {'equilibrium temperature in K': T}",
+    "approach": "Parse each input text, convert mass to grams (kg x1000), temperature to K (C+273.15, F: (F-32)*5/9+273.15), and specific heat to J/(g·K) (J/(kg·K) /1000, cal x4.184, kJ x1000). Compute heat capacities, then the weighted average temperature, returned unrounded.",
+    "status": "ok",
+    "code": {
+      "functions": [
+        "Compute the equilibrium temperature of two bodies mixed in an isolated system from their masses, specific heats and initial temperatures.",
+        "Compute the heat capacity of a body as mass in grams times specific heat in J/(g·K).",
+        "Parse a mass given as text with a unit (g, kg, mg, lb) into grams as a Decimal.",
+        "Parse a specific heat given as text with a unit (J/(g·°C), J/(g·K), J/(kg·K), kJ/(kg·K), cal/(g·°C)) into J/(g·K) as a Decimal.",
+        "Parse a temperature given as text with a unit (K, °C, °F) into kelvin as a Decimal, applying the proper offset.",
+        "Solve the energy balance for the final temperature as the heat-capacity-weighted average of the initial temperatures.",
+        "Verify that the heat gained by the colder body equals the heat lost by the hotter body at the equilibrium temperature."
+      ],
+      "hash": "2cd3c3ec65c3db15"
+    }
+  }
+}

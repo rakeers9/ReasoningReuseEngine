@@ -1,0 +1,26 @@
+{
+  "fam_f0002": {
+    "model": "claude-sonnet-5-5",
+    "time": "2026-11-19 16:35:37",
+    "examples": 10,
+    "source": "def check(inputs, outputs):\n    res = []\n    try:\n        t = outputs.get('equilibrium temperature in K')\n        if not isinstance(t, (int, float)) or isinstance(t, bool) or t != t:\n            return res\n        if t <= 0:\n            res.append('equilibrium temperature %s K not positive' % t)\n        def tk(text):\n            if not isinstance(text, str):\n                return None\n            v = number(text)\n            if v is None:\n                return None\n            s = text.replace(' ', '')\n            if '\\u00b0F' in s or s.endswith('F'):\n                return (v - 32.0) * 5.0 / 9.0 + 273.15\n            if '\\u00b0C' in s or s.endswith('C'):\n                return v + 273.15\n            if s.endswith('K') or s.endswith('k'):\n                return v\n            return None\n        a = None\n        b = None\n        for k, v in inputs.items():\n            if 'initial temperature of the water' in k:\n                a = tk(v)\n            elif 'initial temperature of the aluminum' in k:\n                b = tk(v)\n        if a is not None and b is not None:\n            lo = min(a, b)\n            hi = max(a, b)\n            tol = 0.01 + 1e-6 * abs(hi) + 0.001 * abs(hi)\n            if t < lo - tol or t > hi + tol:\n                res.append('equilibrium %s K outside initial temperatures %s K and %s K' % (t, lo, hi))\n    except Exception:\n        pass\n    return res",
+    "rules": [
+      "equilibrium temperature is positive in K (absolute temperature)",
+      "equilibrium temperature lies between the two initial temperatures (converted to K), within rounding tolerance, since it is a positive-weighted average",
+      "if both initial temperatures are given in K, equilibrium is at least min and at most max of them"
+    ],
+    "status": "ok",
+    "code": {
+      "functions": [
+        "Compute the equilibrium temperature of two bodies mixed in an isolated system from their masses, specific heats and initial temperatures.",
+        "Compute the heat capacity of a body as mass in grams times specific heat in J/(g·K).",
+        "Parse a mass given as text with a unit (g, kg, mg, lb) into grams as a Decimal.",
+        "Parse a specific heat given as text with a unit (J/(g·°C), J/(g·K), J/(kg·K), kJ/(kg·K), cal/(g·°C)) into J/(g·K) as a Decimal.",
+        "Parse a temperature given as text with a unit (K, °C, °F) into kelvin as a Decimal, applying the proper offset.",
+        "Solve the energy balance for the final temperature as the heat-capacity-weighted average of the initial temperatures.",
+        "Verify that the heat gained by the colder body equals the heat lost by the hotter body at the equilibrium temperature."
+      ],
+      "hash": "2cd3c3ec65c3db15"
+    }
+  }
+}

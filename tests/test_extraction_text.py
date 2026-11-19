@@ -1,4 +1,4 @@
-"""IS2 in text form (arc/extraction.extract_text, the default): values copied exactly as written."""
+"""IS2 in text form (arc/extraction.extract_text, ARC_EXTRACT_FORM=text): values copied exactly as written."""
 
 from typing import Literal
 
@@ -37,12 +37,12 @@ def text_mode(monkeypatch):
     monkeypatch.setattr(config, "EXTRACT_FORM", "text")
 
 
-def test_text_is_the_default_form():
+def test_evidence_replaced_text_as_the_default_form():
+    # text was the default until 2026-11-19; evidence replaced it after the dev replay
+    # (eval/hit_replay.py: 50/50 covered questions vs 47 for text). Text stays selectable.
     import importlib
-    import os
-    assert "ARC_EXTRACT_FORM" not in os.environ
-    assert 'EXTRACT_FORM = os.environ.get("ARC_EXTRACT_FORM", "text")' in \
-        (importlib.import_module("arc.config").ROOT / "arc/config.py").read_text()
+    assert 'EXTRACT_FORM = os.environ.get("ARC_EXTRACT_FORM", "evidence")' in \
+        (importlib.import_module("arc.config").ROOT / "arc/config.py").read_text(encoding="utf-8")
 
 
 def test_values_come_back_exactly_as_written(fake_llm):

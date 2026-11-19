@@ -1,0 +1,55 @@
+{
+  "fam_f0002": {
+    "model": "claude-sonnet-5-5",
+    "time": "2026-11-19 16:36:57",
+    "examples": 10,
+    "source": "def check(inputs, outputs):\n    res = []\n    try:\n        def find(words):\n            for k, v in inputs.items():\n                kl = k.lower()\n                if all(w in kl for w in words):\n                    return number(str(v))\n            return None\n        yrs = find(['elapsed'])\n        cost = find(['original cost'])\n        life = find(['useful life'])\n        salv = find(['salvage'])\n        bv = None\n        for k, v in outputs.items():\n            if isinstance(v, (int, float)):\n                bv = float(v)\n                break\n        if bv is None:\n            return res\n        tol = 0.01 + 1e-6 * abs(bv)\n        if salv is not None and bv < salv - tol:\n            res.append('book value %s below salvage value %s' % (bv, salv))\n        if cost is not None and bv > cost + tol:\n            res.append('book value %s above cost %s' % (bv, cost))\n        if bv < -tol:\n            res.append('book value %s negative' % bv)\n        if yrs is not None and cost is not None and yrs == 0 and abs(bv - cost) > tol:\n            res.append('book value %s differs from cost %s at zero years' % (bv, cost))\n        if yrs is not None and cost is not None and salv is not None and life is not None:\n            if yrs >= 1 and life >= 2 and cost > salv + 0.01 and bv >= cost - tol:\n                res.append('book value %s not below cost %s after %s years' % (bv, cost, yrs))\n    except Exception:\n        pass\n    return res",
+    "rules": [
+      "book value is at least salvage value (tolerance 0.01), because the charge is capped at the salvage floor",
+      "book value is at most original cost, because depreciation is never negative",
+      "book value is non-negative when cost and salvage are non-negative",
+      "if elapsed years is 0, book value equals cost",
+      "with life >= 2 and years >= 1 and cost > salvage, book value is strictly below cost, because at least some depreciation is charged"
+    ],
+    "status": "ok",
+    "code": {
+      "functions": [
+        "Compute the book value after a given number of elapsed years under double-declining-balance depreciation that never falls below salvage value.",
+        "Iterate double-declining-balance yearly depreciation with a salvage-value floor from the original cost for the elapsed years and return the unrounded book value.",
+        "Parse a monetary amount in dollars from raw text, handling currency sign, thousands separators and scale words such as k, thousand, million, bn and billion.",
+        "Parse a whole number of years or a useful life from raw text, handling digits and number words."
+      ],
+      "hash": "bb761c192832f44f"
+    }
+  },
+  "fam_f0003": {
+    "model": "claude-sonnet-5-5",
+    "time": "2026-11-19 16:40:55",
+    "examples": 12,
+    "source": "def check(inputs, outputs):\n    res = []\n    try:\n        def find(d, key):\n            for k in d:\n                if key in k.lower():\n                    return d[k]\n            return None\n        def num(x):\n            if isinstance(x, (int, float)):\n                return float(x)\n            if isinstance(x, str):\n                return number(x)\n            return None\n        P = number(find(inputs, 'principal') or '')\n        rate = number(find(inputs, 'rate') or '')\n        term_txt = find(inputs, 'term') or ''\n        t = number(term_txt)\n        freq_txt = (find(inputs, 'frequency') or '').lower()\n        pay = None\n        ti = None\n        for k, v in outputs.items():\n            kl = k.lower()\n            if 'payment' in kl:\n                pay = num(v)\n            if 'interest' in kl:\n                ti = num(v)\n        fm = {'semimonthly': 24, 'bimonthly': 6, 'biweekly': 26, 'semiannual': 2, 'semi-annual': 2, 'monthly': 12, 'quarterly': 4, 'annual': 1, 'yearly': 1, 'weekly': 52, 'daily': 365}\n        m = None\n        for name, val in fm.items():\n            if name in freq_txt:\n                m = val\n                break\n        years = None\n        if t is not None:\n            tl = term_txt.lower()\n            if 'month' in tl:\n                years = t / 12.0\n            elif 'year' in tl or 'yr' in tl:\n                years = t\n        n = None\n        if m is not None and years is not None:\n            n = m * years\n        if pay is not None and P is not None and P > 0 and pay <= 0:\n            res.append('payment %s not positive' % pay)\n        if ti is not None and P is not None and rate is not None and years is not None:\n            simple = P * rate / 100.0\n            simple = simple * years\n            extra = 0.01 * ((n or 0) + 1)\n            if ti > simple + extra + 1e-6 * abs(simple):\n                res.append('total interest %s exceeds simple interest %s' % (ti, simple))\n        if pay is not None and ti is not None and P is not None and n is not None:\n            tol = 0.01 * (n + 2) + 1e-6 * abs(P)\n            if abs(pay * n - P - ti) > tol:\n                res.append('payment %s x %s payments - principal %s != interest %s' % (pay, n, P, ti))\n        if pay is not None and P is not None and n is not None and n > 0:\n            if pay < P / n - 0.01 - 1e-6 * P / n:\n                res.append('payment %s below principal/n %s' % (pay, P / n))\n        if pay is not None and P is not None and m is not None and rate is not None:\n            ub = P * (1 + rate / 100.0 / m)\n            if pay > ub + 0.01 + 1e-6 * ub:\n                res.append('payment %s exceeds principal plus first interest %s' % (pay, ub))\n    except Exception:\n        pass\n    return res",
+    "rules": [
+      "Payment must be positive when principal is positive: a loan with positive principal requires positive payments.",
+      "Total interest is at most simple interest on the full principal over the whole term, plus a rounding allowance of half a cent per payment. Amortizing reduces the balance over time, so interest cannot exceed that.",
+      "Payment times number of payments minus principal equals total interest, within 0.01 per payment for rounding. This is how the outputs are defined.",
+      "Payment is at least principal divided by the number of payments, within a cent. Even at 0% the payments must repay the principal.",
+      "Payment is at most principal times (1 + periodic rate). Otherwise the first payment would exceed the whole balance plus its interest."
+    ],
+    "status": "ok",
+    "flagged": [
+      "total interest -0.8 negative"
+    ],
+    "code": {
+      "functions": [
+        "Compute the growth factor (1+r)^n and the unrounded level periodic annuity payment from principal, periodic rate and number of payments, treating a zero rate as principal divided by number of payments.",
+        "Compute the periodic interest rate (annual rate divided by periods per year) and the total number of payments (periods per year times term in years).",
+        "Determine the number of compounding periods per year from a frequency description such as monthly, quarterly, semiannual, annual, weekly, biweekly or daily.",
+        "Parse a loan term from raw text (digits or number words, in years or months) into a term in years and a term in months.",
+        "Parse a money amount from raw text with currency symbols, separators and scale suffixes into an exact Decimal dollar amount.",
+        "Parse a percentage rate from raw text such as '7.5%' or '7.5 percent' into an exact Decimal annual rate as a fraction.",
+        "Round the periodic payment to the cent with half-up rounding and compute total interest as the rounded payment times the number of payments minus the principal.",
+        "Solve a fixed-rate amortizing loan: compute the level periodic payment and the total interest paid over the term, from the principal, the annual nominal rate, the compounding frequency and the term."
+      ],
+      "hash": "880c35c0a6b7813b"
+    }
+  }
+}

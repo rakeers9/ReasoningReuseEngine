@@ -108,7 +108,7 @@ ENTRY_THRESHOLD = float(os.environ.get("ARC_ENTRY_THRESHOLD", 0.80))
 # Copy mode only; off by default since values are kept exactly as written (user decision).
 EXPAND_SHORTHAND = os.environ.get("ARC_EXPAND_SHORTHAND", "0") == "1"
 # IS2 output form (DEVIATION). "copy" = the paper's prompt, values copied as written.
-# "text" (default, user decision 2026-11-15): each value copied exactly as written, unit and
+# "text" (default until 2026-11-19, user decision 2026-11-15): each value copied exactly as written, unit and
 #   shorthand included ("$150k"), in one field, since the Sonnet builder writes code that reads
 #   it; plus output_format and extras (what the question asks of the answer), and a check that
 #   any value with digits is in the question as written.
@@ -116,8 +116,10 @@ EXPAND_SHORTHAND = os.environ.get("ARC_EXPAND_SHORTHAND", "0") == "1"
 # "evidence": the text form, plus the exact words that state each value (code checks every number
 #   in a value is in its OWN evidence), no value without words in the question behind it, an ambiguity flag for same-kind inputs,
 #   fixed rules in the system prompt, and the entry's build question with its original values as a
-#   worked example (arc/extraction.extract_evidence). Opt-in until measured against "text".
-EXTRACT_FORM = os.environ.get("ARC_EXTRACT_FORM", "text")
+#   worked example (arc/extraction.extract_evidence). Default since 2026-11-19: measured on the
+#   dev replay (eval/hit_replay.py), it extracted 50 of 50 covered questions vs 47 for "text" (which
+#   left "end of year 1" empty), with no near-miss served, at about 20% more per answer.
+EXTRACT_FORM = os.environ.get("ARC_EXTRACT_FORM", "evidence")
 
 # --- Turn-away gate (DEVIATION from the paper; off = paper behaviour) ---
 # The paper serves any request whose embedding clears ENTRY_THRESHOLD. Near-misses
@@ -250,6 +252,23 @@ LABELFREE_BUILDERS = [m.strip() for m in os.environ.get(
 # or answers) and the same builder rebuilds with it, up to TESTER_REPAIRS times; each repaired
 # entry faces a freshly written suite.
 TESTER_MODEL = os.environ.get("ARC_TESTER_MODEL", "claude-sonnet-5-5")
+
+# --- Output checks on every cache hit (DEVIATION, arc/outchecks.py) ---
+# Each entry carries rules every correct answer satisfies (book value between salvage and cost,
+# payment x count >= principal). A hit whose answer breaks one goes to the model instead.
+# Measured on dev (eval/outcheck_mutants.py): 0 of 47 right answers blocked, 191 of 238 mutant
+# wrong answers stopped. On by default; entries without a written check are unaffected.
+OUTPUT_CHECKS = os.environ.get("ARC_OUTPUT_CHECKS", "1") == "1"
+CHECKER_MODEL = os.environ.get("ARC_CHECKER_MODEL", "claude-sonnet-5-5")   # writes the checks, once per entry
+
+# --- Reference implementation cross-check on every cache hit (DEVIATION, arc/reference.py) ---
+# A second program per entry, written without seeing the entry's code. A hit is served only if
+# both agree at the shown precision. Entries without a reference are unaffected.
+REFERENCE_CHECK = os.environ.get("ARC_REFERENCE_CHECK", "1") == "1"   # measured: 0 of 47 right answers blocked, 238 of 238 mutant wrong answers stopped
+REFERENCE_MODEL = os.environ.get("ARC_REFERENCE_MODEL", "claude-sonnet-5-5")
+# Chatbot.learn() writes missing or stale guards after every accepted build (arc/guards.py):
+# about $0.03 per guard, once per entry version.
+GUARDS_AUTOWRITE = os.environ.get("ARC_GUARDS_AUTOWRITE", "1") == "1"
 TESTER_FALLBACK_MODEL = os.environ.get("ARC_TESTER_FALLBACK_MODEL", "claude-opus-5-5")
 TESTER_REPAIRS = int(os.environ.get("ARC_TESTER_REPAIRS", 1))
 TESTER_EFFORT = os.environ.get("ARC_TESTER_EFFORT", "high")
@@ -352,6 +371,7 @@ SETTING_NAMES = [
     "FUNCTION_TIMEOUT_SECONDS", "VARIANTS_PER_MODE", "JUDGE_COMMITTEE_SIZE",
     "FAMILY_SIMILARITY", "FAMILY_CHECK", "FAMILY_CLEF_TOP_K", "FAMILY_CLEF_THRESHOLD", "FAMILY_CLEF_SIMILARITY", "FAMILY_CLEF_ANCHORS", "FAMILY_CLEF_PROMPT", "FAMILY_BUILD_CHECK", "FAMILY_HALF_LIFE_DAYS", "FAMILY_MIN_SIGHTINGS", "CACHE_ANSWER_COST",
     "BUILD_COST_DEFAULT", "BUILD_COST_MIN_BUILDS", "FAMILY_MAX_FAILED_BUILDS", "BUILD_ACCEPT_RATE_DEFAULT", "SERVE_RATE_DEFAULT",
+    "OUTPUT_CHECKS", "CHECKER_MODEL", "REFERENCE_CHECK", "REFERENCE_MODEL", "GUARDS_AUTOWRITE",
 ]
 
 

@@ -83,6 +83,8 @@ class Cache:
         # measure | text, "unit": str, "decimals": int | None}}. The presenter rounds and
         # converts at the end from this; the cached code returns full precision.
         self.outputs: dict[str, dict[str, dict]] = {}
+        self.checks: dict[str, dict] = {}         # output checks per entry (arc/outchecks.py)
+        self.references: dict[str, dict] = {}     # reference implementations (arc/reference.py)
 
     # -- functions -----------------------------------------------------------
 
@@ -155,6 +157,12 @@ class Cache:
             (folder / "conventions.json").write_text(json.dumps(self.conventions, indent=2, ensure_ascii=False))
         if self.outputs:
             (folder / "outputs.json").write_text(json.dumps(self.outputs, indent=2, ensure_ascii=False))
+        if self.checks:
+            (folder / "checks.json").write_text(json.dumps(self.checks, indent=2, ensure_ascii=False),
+                                                encoding="utf-8")
+        if self.references:
+            (folder / "references.json").write_text(json.dumps(self.references, indent=2, ensure_ascii=False),
+                                                    encoding="utf-8")
 
     @classmethod
     def load(cls, folder: Path) -> "Cache":
@@ -179,6 +187,10 @@ class Cache:
             cache.conventions = json.loads((folder / "conventions.json").read_text())
         if (folder / "outputs.json").exists():
             cache.outputs = json.loads((folder / "outputs.json").read_text())
+        if (folder / "checks.json").exists():
+            cache.checks = json.loads((folder / "checks.json").read_text(encoding="utf-8"))
+        if (folder / "references.json").exists():
+            cache.references = json.loads((folder / "references.json").read_text(encoding="utf-8"))
         return cache
 
     def merge(self, other: "Cache") -> None:
@@ -191,6 +203,8 @@ class Cache:
         self.specs.update(other.specs)
         self.conventions.update(other.conventions)
         self.outputs.update(other.outputs)
+        self.checks.update(other.checks)
+        self.references.update(other.references)
 
     def summary(self) -> dict[str, Any]:
         return {"functions": len(self.functions), "entry_points": len(self.entry_points)}

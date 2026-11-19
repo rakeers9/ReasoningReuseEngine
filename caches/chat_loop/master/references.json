@@ -1,0 +1,40 @@
+{
+  "fam_f0002": {
+    "model": "claude-sonnet-5-5",
+    "time": "2026-11-19 16:34:58",
+    "examples": 10,
+    "source": "def reference(inputs):\n    from decimal import Decimal\n    vals = {}\n    for k, v in inputs.items():\n        n = number(v)\n        if n is None:\n            raise ValueError('unreadable')\n        vals[k] = n\n    years = cost = life = salv = None\n    for k, n in vals.items():\n        kl = k.lower()\n        if 'elapsed' in kl:\n            years = n\n        elif 'original cost' in kl:\n            cost = n\n        elif 'useful life' in kl:\n            life = n\n        elif 'salvage' in kl:\n            salv = n\n    if years is None or cost is None or life is None or salv is None:\n        raise ValueError('missing')\n    if life <= 0 or years < 0:\n        raise ValueError('bad')\n    n = int(round(years))\n    cost = Decimal(repr(cost))\n    salv = Decimal(repr(salv))\n    rate = Decimal(2) / Decimal(repr(life))\n    bv = cost\n    for _ in range(n):\n        dep = bv * rate\n        room = bv - salv\n        if dep > room:\n            dep = room\n        bv = bv - dep\n    return {'book value after the elapsed years in dollars': float(bv)}",
+    "approach": "Parse the four inputs with number(), validate them, then use Decimal to apply 'years' steps of DDB. Each step charges beginning book value times 2/life, capped at book minus salvage, and the value is carried forward unrounded.",
+    "status": "ok",
+    "code": {
+      "functions": [
+        "Compute the book value after a given number of elapsed years under double-declining-balance depreciation that never falls below salvage value.",
+        "Iterate double-declining-balance yearly depreciation with a salvage-value floor from the original cost for the elapsed years and return the unrounded book value.",
+        "Parse a monetary amount in dollars from raw text, handling currency sign, thousands separators and scale words such as k, thousand, million, bn and billion.",
+        "Parse a whole number of years or a useful life from raw text, handling digits and number words."
+      ],
+      "hash": "bb761c192832f44f"
+    }
+  },
+  "fam_f0003": {
+    "model": "claude-sonnet-5-5",
+    "time": "2026-11-19 16:35:19",
+    "examples": 10,
+    "source": "def reference(inputs):\n    from decimal import Decimal, ROUND_HALF_UP\n    keys = list(inputs.keys())\n    def find(sub):\n        for k in keys:\n            if sub in k:\n                return inputs[k]\n        raise ValueError('missing')\n    P = number(find('principal'))\n    rate = number(find('interest rate'))\n    freq = find('frequency').lower()\n    term_text = find('term')\n    tn = number(term_text)\n    if P is None or rate is None or tn is None:\n        raise ValueError('bad')\n    fmap = [('semimonth', 24), ('bimonth', 6), ('biweek', 26), ('semiannual', 2), ('semi-annual', 2), ('twice', 2), ('monthly', 12), ('quarter', 4), ('annual', 1), ('yearly', 1), ('weekly', 52), ('daily', 365)]\n    ppy = None\n    for name, v in fmap:\n        if name in freq:\n            ppy = v\n            break\n    if ppy is None:\n        raise ValueError('freq')\n    t = term_text.lower()\n    if 'month' in t:\n        years = Decimal(repr(float(tn))) / Decimal(12)\n    else:\n        years = Decimal(repr(float(tn)))\n    nd = years * ppy\n    n = int(nd.to_integral_value(ROUND_HALF_UP))\n    if abs(nd - n) > Decimal('0.000001') or n <= 0:\n        raise ValueError('n')\n    Pd = Decimal(repr(float(P)))\n    r = Decimal(repr(float(rate))) / Decimal(100) / Decimal(ppy)\n    if r == 0:\n        pay = Pd / n\n    else:\n        g = (1 + r) ** n\n        pay = Pd * r * g / (g - 1)\n    cent = Decimal('0.01')\n    pr = pay.quantize(cent, rounding=ROUND_HALF_UP)\n    ti = (pr * n - Pd).quantize(cent, rounding=ROUND_HALF_UP)\n    return {'monthly payment in dollars': pr, 'total interest in dollars': ti}",
+    "approach": "Parse principal, rate, frequency and term. Map the frequency to periods per year. Convert the term to years (months divided by 12) and compute n = ppy * years, which must be a whole number. Use Decimal for the level payment with r = rate/100/ppy, or P/n if r is 0. Round the payment half up to the cent. Total interest = rounded payment * n - P, rounded half up to the cent.",
+    "status": "ok",
+    "code": {
+      "functions": [
+        "Compute the growth factor (1+r)^n and the unrounded level periodic annuity payment from principal, periodic rate and number of payments, treating a zero rate as principal divided by number of payments.",
+        "Compute the periodic interest rate (annual rate divided by periods per year) and the total number of payments (periods per year times term in years).",
+        "Determine the number of compounding periods per year from a frequency description such as monthly, quarterly, semiannual, annual, weekly, biweekly or daily.",
+        "Parse a loan term from raw text (digits or number words, in years or months) into a term in years and a term in months.",
+        "Parse a money amount from raw text with currency symbols, separators and scale suffixes into an exact Decimal dollar amount.",
+        "Parse a percentage rate from raw text such as '7.5%' or '7.5 percent' into an exact Decimal annual rate as a fraction.",
+        "Round the periodic payment to the cent with half-up rounding and compute total interest as the rounded payment times the number of payments minus the principal.",
+        "Solve a fixed-rate amortizing loan: compute the level periodic payment and the total interest paid over the term, from the principal, the annual nominal rate, the compounding frequency and the term."
+      ],
+      "hash": "880c35c0a6b7813b"
+    }
+  }
+}
