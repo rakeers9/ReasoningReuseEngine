@@ -55,7 +55,7 @@ def extract_parameters(request: str, params: list[ParamSpec], tag: str | None = 
     """IS2: the target model extracts each expected parameter from the raw input.
 
     config.EXTRACT_FORM "copy" (paper): each value copied as written, e.g. "$150k".
-    config.EXTRACT_FORM "number_unit" (DEVIATION, default): each value comes back as separate
+    config.EXTRACT_FORM "number_unit" (DEVIATION, opt-in): each value comes back as separate
     fields, number (full plain digits, never shorthand), unit, text (non-numbers) and evidence
     (the exact words). Code checks the number against its evidence, then rebuilds one value in
     the style of the format examples ("$150,000"), so cached code never sees shorthand.
@@ -63,7 +63,7 @@ def extract_parameters(request: str, params: list[ParamSpec], tag: str | None = 
     allow_implied=False (spec gate) drops the paper-style "implied value" rule, which is
     where made-up values such as "300 K" came from.
 
-    config.EXTRACT_FORM "evidence" (DEVIATION, opt-in): the text form plus the exact words that
+    config.EXTRACT_FORM "evidence" (DEVIATION, default): the text form plus the exact words that
     state each value (checked in code), no value without words in the question behind it, and `example` (the question the entry
     was built from) shown with its original values as a worked example."""
     if config.EXTRACT_FORM == "evidence":
@@ -193,6 +193,40 @@ def dispatch_root(cache: Cache, root_id: str, values: dict[str, Any]) -> tuple[d
     return output, ctx
 
 
+def _output_check(cache: Cache, ep: EntryPoint, values: dict, output: dict, trace: dict) -> list[str]:
+    """Reasons not to serve this answer; [] when every enabled check passes or none exists.
+      output checks (arc/outchecks.py): rules every correct answer satisfies, on the raw output
+      reference (arc/reference.py): a second program must agree at the precision shown
+    Both run in shadow mode too, so every check's verdict is recorded."""
+    broken: list[str] = []
+    if config.OUTPUT_CHECKS:
+        from . import outchecks
+        b = outchecks.run(cache, ep.problem_id, values, output)
+        trace["output_check"] = "none" if b is None else ("fail" if b else "pass")
+        if b is None:
+            from .guards import usable
+            trace.setdefault("unguarded", {})["checks"] = usable(cache, ep.problem_id, "checks")[1]
+        if b:
+            trace["output_violations"] = b[:5]
+            broken += b
+    if config.REFERENCE_CHECK:
+        from . import reference
+        fmt = (trace.get("extraction") or {}).get("output_format")
+        d = reference.run(cache, ep.problem_id, values, output, fmt)
+        trace["reference_check"] = "none" if d is None else ("fail" if d else "pass")
+        if d is None:
+            from .guards import usable
+            trace.setdefault("unguarded", {})["references"] = usable(cache, ep.problem_id, "references")[1]
+        if d:
+            trace["reference_disagreements"] = d[:5]
+            broken += d
+    return broken
+
+
+def _failed_checks(trace: dict) -> list[str]:
+    return [k for k in ("output_check", "reference_check") if trace.get(k) == "fail"]
+
+
 def _find(cache: Cache, request: str, qspec: dict | None = None) -> tuple[EntryPoint | None, float]:
     if config.INDEX == "spec" and qspec is not None and cache.specs:
         from .spec import rank
@@ -256,6 +290,12 @@ def _use_clef(cache: Cache, request: str, tag: str | None, trace: dict, shadow: 
                 raise
             trace["shadow_error"] = f"{type(e).__name__}: {e}"[:300]
             return None
+        broken = _output_check(cache, best, values, output, trace)   # DEVIATION: arc/outchecks.py
+        if ep is not None and broken:
+            trace.update(stage="output_rejected", rejected_by=_failed_checks(trace))
+            if not shadow:
+                return None
+            ep = None                                              # shadow: record what it would have said
         if ep is None:
             trace["shadow_output"] = format_output(output)
             return None
@@ -351,7 +391,13 @@ def use(cache: Cache, request: str, tag: str | None = None,
                 raise
             trace["shadow_error"] = f"{type(e).__name__}: {e}"[:300]
             return None
+        broken = _output_check(cache, ep, values, output, trace)    # DEVIATION: arc/outchecks.py
+        if broken and not turned_away:
+            trace.update(stage="output_rejected", rejected_by=_failed_checks(trace))
+            turned_away = True
         if turned_away:
+            if not shadow:
+                return None
             trace["shadow_output"] = format_output(output)
             return None
     except CacheInvocationError:

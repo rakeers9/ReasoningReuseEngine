@@ -150,6 +150,7 @@ def test_clef_serving_passes_the_build_question_as_the_example(monkeypatch):
     assert seen["example"] == EXAMPLE
 
 
-def test_text_is_still_the_default_form():
-    src = (config.ROOT / "arc/config.py").read_text()
-    assert 'EXTRACT_FORM = os.environ.get("ARC_EXTRACT_FORM", "text")' in src
+def test_evidence_is_the_default_form():
+    # default since 2026-11-19 (measured on eval/hit_replay.py: 50/50 covered questions vs 47 for text)
+    src = (config.ROOT / "arc/config.py").read_text(encoding="utf-8")
+    assert 'EXTRACT_FORM = os.environ.get("ARC_EXTRACT_FORM", "evidence")' in src
